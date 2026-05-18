@@ -1,0 +1,39 @@
+# Assistant Evaluation Datasets
+
+> M5.5: 离线评测集 — 用于评估 AI Strategy Assistant 的输出质量。
+
+## 评测维度
+
+| 维度 | 说明 | 通过标准 |
+|---|---|---|
+| 因子解释准确性 | assistant 是否能正确解释 DSL 表达式 | ≥ 90% |
+| 策略建议合理性 | 自然语言描述 → 策略建议是否符合 ALFQ 最佳实践 | ≥ 80% |
+| 风险分析准确性 | 给定参数的风险敞口分析是否合理 | ≥ 85% |
+| 文档检索召回率 | RAG 搜索是否能找到相关文档 | Top-5 ≥ 80% |
+
+## 评测样例
+
+```json
+[
+  {
+    "input": "解释因子 ema($close, 20) / ema($close, 60) - 1",
+    "tool": "explain_factor",
+    "expected_keywords": ["ema", "20", "60", "动量", "均线"]
+  },
+  {
+    "input": "我想要一个能在 EURUSD 上做趋势跟踪的策略",
+    "tool": "suggest_strategy",
+    "expected_keywords": ["EURUSD", "趋势", "止损", "目标"]
+  },
+  {
+    "input": "最大回撤 15%，每日止损 2%",
+    "tool": "analyze_risk",
+    "expected_keywords": ["回撤", "止损", "建议"]
+  },
+  {
+    "input": "订单状态机",
+    "tool": "search_docs",
+    "expected_keywords": ["14-领域", "状态"]
+  }
+]
+```

@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package alfq.v1;
+
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+import "alfq/v1/common.proto";
+
+// OrderState is the canonical order state enum.
+// Unique source: docs/14-领域模型与交易规则.md §3.1
+enum OrderState {
+  ORDER_STATE_UNSPECIFIED = 0;
+  ORDER_STATE_NEW = 1;
+  ORDER_STATE_VALIDATED = 2;
+  ORDER_STATE_RISK_APPROVED = 3;
+  ORDER_STATE_SUBMITTED = 4;
+  ORDER_STATE_WORKING = 5;
+  ORDER_STATE_PARTIALLY_FILLED = 6;
+  ORDER_STATE_FILLED = 7;
+  ORDER_STATE_CANCELLED = 8;
+  ORDER_STATE_EXPIRED = 9;
+  ORDER_STATE_REJECTED = 10;
+  ORDER_STATE_FAILED = 11;
+}
+
+// OrderSide is buy or sell.
+enum OrderSide {
+  ORDER_SIDE_UNSPECIFIED = 0;
+  ORDER_SIDE_BUY = 1;
+  ORDER_SIDE_SELL = 2;
+}
+
+// OrderType is market, limit, stop, etc.
+enum OrderType {
+  ORDER_TYPE_UNSPECIFIED = 0;
+  ORDER_TYPE_MARKET = 1;
+  ORDER_TYPE_LIMIT = 2;
+  ORDER_TYPE_STOP = 3;
+  ORDER_TYPE_STOP_LIMIT = 4;
+}
+
+// Order is the core domain entity for a trading order.
+message Order {
+  string order_id = 1;           // internal UUIDv7
+  string tenant_id = 2;
+  string account_id = 3;
+  string strategy_id = 4;
+  string client_order_id = 5;    // idempotency key
+  string broker_ticket = 6;      // broker-assigned ticket
+  string symbol = 7;
+  OrderSide side = 8;
+  OrderType type = 9;
+  OrderState state = 10;
+  Money price = 11;
+  Money stop_price = 12;
+  double qty = 13;
+  double filled_qty = 14;
+  Money avg_fill_price = 15;
+  int64 created_ts_ms = 16;
+  int64 updated_ts_ms = 17;
+}
+
+// Position represents a broker position.
+message Position {
+  string position_id = 1;
+  string tenant_id = 2;
+  string account_id = 3;
+  string symbol = 4;
+  double qty = 5;              // positive = long, negative = short
+  Money avg_price = 6;
+  Money unrealized_pnl = 7;
+  Money realized_pnl = 8;
+}
+
+// OrderRequest is the normalized order submission request.
+message OrderRequest {
+  string client_order_id = 1;
+  string tenant_id = 2;
+  string account_id = 3;
+  string strategy_id = 4;
+  string symbol = 5;
+  OrderSide side = 6;
+  OrderType type = 7;
+  Money price = 8;
+  Money stop_price = 9;
+  double qty = 10;
+}
+
+// RiskCheckResult is returned by risk-svc.
+message RiskCheckResult {
+  bool approved = 1;
+  string reason = 2;           // rejection reason if !approved
+  string rule_id = 3;          // which rule rejected
+}

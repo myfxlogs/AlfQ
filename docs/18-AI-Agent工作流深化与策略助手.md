@@ -245,9 +245,10 @@ T-2026-0123 实现 risk-svc max_lot
                                 │
         ┌───────────────────────┼──────────────────────────┐
         ▼                       ▼                          ▼
-   [LLM Provider]      [Tool Layer]                  [Audit / Quota]
+   [Cloud LLM API]     [Tool Layer]                  [Audit / Quota]
    OpenAI / Claude /   - DSL 校验 (factor-svc)
-   本地 vLLM           - 因子预览 (PreviewFactor)
+   Gemini / 国内厂商   - 因子预览 (PreviewFactor)
+   （仅云端 API，见 ADR 0009；不自建本地大模型）
                        - 数据查询 (CH)
                        - 回测启动 (BacktestService)
                        - 历史样本检索 (RAG)
@@ -385,9 +386,10 @@ DSL 算子列表：<注入 docs/09 §2 算子表>
 
 ### B5.5 数据合规
 
-- 不允许把账户资金/PII 信息发送给外部 LLM
-- 默认 redact：账户号、邮箱、IP、订单 id
-- 提供"本地 LLM only"开关给注重隐私的租户
+- 不允许把账户资金 / PII 信息发送给云端 LLM
+- 默认 redact：账户号、邮箱、IP、订单 id（在 `assistant-svc` 出站前过滤，过滤白名单严格 schema 校验）
+- 隐私敏感租户走**云厂商企业级合规端点**（如 Azure OpenAI 数据驻留、Anthropic Zero Data Retention、OpenAI Enterprise No-Training 条款），通过 provider 抽象层选择
+- **不自建本地大模型作为隐私方案**（详见 ADR 0009）：成本/运维/能力代差不可接受
 
 ## B6. 用户交互流程
 
@@ -448,7 +450,7 @@ Assistant 调用 create_strategy_draft → 返回 strategy_id（draft 态）
 | **M3.5 AI 助手 MVP** | assistant-svc + 工具集 + 基础对话 | M3 完成后 |
 | **M4.5 AI 助手 RAG** | docs/知识库向量检索 | M4 完成后 |
 | **M5.5 AI 助手评测** | 离线评测集 + 准确率门禁 | M5 完成后 |
-| **M6.5 多模型 / 本地化** | vLLM 自建 / 多 provider 切换 | M6 完成后 |
+| **M6.5 多 provider / 容灾** | 云端 LLM provider 抽象层 + 多家切换（OpenAI / Anthropic / Gemini / 国内厂商）+ 成本路由 + 故障 fallback；**不含本地大模型部署**（见 ADR 0009） | M6 完成后 |
 
 ## B11. 验收
 

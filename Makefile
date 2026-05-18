@@ -31,7 +31,7 @@ go-test:
 	cd backend/go && GOTOOLCHAIN=local go test -race -count=1 ./...
 
 go-build: proto-gen
-	cd backend/go && GOTOOLCHAIN=local go build ./cmd/admin-api
+	cd backend/go && GOTOOLCHAIN=local go build ./cmd/admin-api ./cmd/md-gateway ./cmd/factor-svc ./cmd/oms ./cmd/risk-svc ./cmd/strategy-svc
 
 # ============================================================
 # Python (Research)
