@@ -22,6 +22,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26"
+      - run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
       - run: make proto-gen
       - run: make proto-mtapi-gen
       - run: make go-lint
@@ -35,6 +36,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26"
+      - run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
       - run: make proto-gen
       - run: make proto-mtapi-gen
       - run: make go-build

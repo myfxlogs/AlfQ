@@ -54,7 +54,7 @@ plugins:
       - paths=source_relative
 EOF
 
-# 4. 调用 buf generate
+# 4. 调用 buf generate (uses remote plugins from buf.build)
 mkdir -p "$GEN_DIR"
 PATH="$PATH:$HOME/go/bin" buf generate "$TMP_DIR" --template "$TMP_DIR/buf.gen.yaml"
 
