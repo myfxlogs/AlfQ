@@ -70,7 +70,7 @@
 来自 `docs/README.md`：
 
 - 三域：`backend/` `research/` `frontend/`
-- Go 1.22+ / Python 3.12（uv）/ Node 20+ / TS 5.4+
+- Go 1.26+ / Python 3.12（uv）/ Node 20+ / TS 5.4+
 - Connect RPC + SSE，**不**用 REST/WS
 - proto 单一源 `backend/proto/alfq/v1/`
 - 配置 YAML + Viper + fsnotify

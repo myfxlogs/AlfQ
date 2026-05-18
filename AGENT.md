@@ -10,7 +10,7 @@
 
 `backend/`（Go 服务 + proto）| `research/`（Python 研究，uv）| `frontend/`（React SPA，pnpm）
 
-- Go 1.22+ / Python 3.12 / TS 5.4+ / Node 20+
+- Go 1.26+ / Python 3.12 / TS 5.4+ / Node 20+
 - Proto 单一源 `backend/proto/alfq/v1/` → `buf generate` 出 Go/TS/Python stub
 - 7 服务：admin-api:8080, md-gateway:9001, factor-svc:9002, strategy-svc:9003, risk-svc:9004, oms:9005, assistant-svc:9006
 

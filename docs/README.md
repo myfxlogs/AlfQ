@@ -40,7 +40,7 @@
 ## 全局约定（所有 Agent 必须遵守）
 
 1. **Monorepo 根目录**：`/opt/alfq/`，前后端三域独立：`backend/` `research/` `frontend/`
-2. **语言版本**：Go 1.22+；Python 3.12（uv 管理）；Node 20+；TypeScript 5.4+
+2. **语言版本**：Go 1.26+；Python 3.12（uv 管理）；Node 20+；TypeScript 5.4+
 3. **所有跨服务通信**：Connect RPC（对外）/ gRPC（内部），不用 REST
 4. **服务器推送**：Server Streaming RPC（SSE 传输），不用 WebSocket
 5. **协议单一源**：所有消息定义在 `backend/proto/alfq/v1/`，`buf generate` 出 Go/TS/Python stub
@@ -54,7 +54,7 @@
 
 | 议题 | 决策 |
 |---|---|
-| 实盘语言 | **Go 1.22+** |
+| 实盘语言 | **Go 1.26+** |
 | 研究语言 | **Python 3.12** |
 | 前后端 | **分离**，前端独立 SPA |
 | 协议 | **Connect RPC + SSE（Server Streaming）** |
