@@ -4,8 +4,7 @@ FROM golang:1.25-alpine AS builder
 RUN apk add --no-cache git ca-certificates curl bash
 ARG BUF_VERSION=v1.50.0
 RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/${BUF_VERSION}/buf-$(uname -s)-$(uname -m)" -o /usr/local/bin/buf && chmod +x /usr/local/bin/buf
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
-    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+ENV GOPROXY=https://goproxy.cn,direct
 
 WORKDIR /app
 COPY gprc/ gprc/

@@ -44,11 +44,11 @@ EOF
 cat > "$TMP_DIR/buf.gen.yaml" <<EOF
 version: v1
 plugins:
-  - plugin: go
+  - plugin: buf.build/protocolbuffers/go
     out: $GEN_DIR
     opt:
       - paths=source_relative
-  - plugin: go-grpc
+  - plugin: buf.build/grpc/go
     out: $GEN_DIR
     opt:
       - paths=source_relative
@@ -56,7 +56,7 @@ EOF
 
 # 4. 调用 buf generate (uses remote plugins from buf.build)
 mkdir -p "$GEN_DIR"
-PATH="$PATH:$HOME/go/bin" buf generate "$TMP_DIR" --template "$TMP_DIR/buf.gen.yaml"
+buf generate "$TMP_DIR" --template "$TMP_DIR/buf.gen.yaml"
 
 # 5. 整理产物到 mt4/ mt5/ 子目录
 mkdir -p "$GEN_DIR/mt4" "$GEN_DIR/mt5"
