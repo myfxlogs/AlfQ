@@ -51,6 +51,9 @@ func main() {
 
 	manager := mdgateway.NewManager(mgrCfg)
 	publisher := mdgateway.NewPublisher(log, "nats://localhost:4222")
+	if err := publisher.Connect(ctx); err != nil {
+		log.Warn("nats connect failed, ticks will be logged only", zap.Error(err))
+	}
 
 	chCfg := mdgateway.DefaultCHWriterConfig()
 	chWriter, err := mdgateway.NewCHWriter(chCfg, log)

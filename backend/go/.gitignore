@@ -1,0 +1,8 @@
+# Compiled binaries (go build output in module root)
+/admin-api
+/md-gateway
+/factor-svc
+/strategy-svc
+/risk-svc
+/oms
+/assistant-svc

@@ -10,3 +10,5 @@ __pycache__/
 backend/go/gen/
 frontend/src/gen/
 research/alfq_research/_gen/
+gprc/mt4goExample/
+gprc/mt5goExample/

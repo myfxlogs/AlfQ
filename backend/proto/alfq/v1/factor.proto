@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package alfq.v1;
+
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+// FactorValue represents a single computed factor value at a point in time.
+message FactorValue {
+  string tenant_id = 1;
+  string factor = 2;
+  string symbol = 3;
+  int64 ts_unix_ms = 4;
+  double value = 5;
+}

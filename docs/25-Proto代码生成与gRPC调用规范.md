@@ -282,7 +282,26 @@ export PATH="$PATH:$HOME/go/bin"
 
 ---
 
-## 5. 验收清单
+## 6. 序列化格式边界（JSON vs Protobuf）
+
+**总原则**：跨进程契约（RPC、事件总线、SSE 推送）→ **protobuf**；进程内 / 工具链交互（日志、配置、JSONB、健康检查）→ **JSON / YAML**。
+
+完整决策矩阵见 [doc 01 §2.1.1](./01-总体架构与技术决策.md)，关键场景：
+
+| 场景 | 格式 | 规范位置 |
+|---|---|---|
+| Connect / gRPC RPC | protobuf | doc 03 + 本文 §2 |
+| mtapi MT4/MT5 客户端 | protobuf（官方 schema） | 本文 §3 |
+| **NATS JetStream 事件** | **protobuf**（`EventEnvelope` + body） | doc 21 §5.6 |
+| SSE Server Streaming | protobuf（Connect 自动协商） | doc 03 §4 |
+| 结构化日志 | **JSON**（不是 protobuf） | doc 15 §4 |
+| 配置文件 | YAML + Viper | doc 08 §3 |
+| DB JSONB 字段 | JSON | doc 02 |
+| `/healthz` `/readyz` | JSON | doc 11 |
+
+**枚举单一源**：跨语言离散值（错误码、订单状态、`position_mode` 等）以 `backend/proto/alfq/v1/` 中的 `enum` 为唯一源，由 codegen 反哺 Go 常量、TS 类型、SQL CHECK 约束。**禁止**在 Go / TS / SQL 中各自手写枚举字面量。
+
+## 6. 验收清单
 
 - [x] `make proto-gen` 输出 Go + TS（业务 proto）
 - [x] `make proto-mtapi-gen` 输出 `backend/go/gen/{mt4,mt5}/`（mtapi proto）
