@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx"],"version":"6.0.3"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/gen/alfq/v1/common_pb.ts","./src/gen/alfq/v1/errors_pb.ts","./src/gen/alfq/v1/factor_pb.ts","./src/gen/alfq/v1/health_connect.ts","./src/gen/alfq/v1/health_pb.ts","./src/gen/alfq/v1/market_data_pb.ts"],"version":"6.0.3"}

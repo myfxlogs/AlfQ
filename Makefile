@@ -30,7 +30,7 @@ go-lint:
 go-test:
 	cd backend/go && GOTOOLCHAIN=local go test -race -count=1 ./...
 
-go-build:
+go-build: proto-gen
 	cd backend/go && GOTOOLCHAIN=local go build ./cmd/admin-api
 
 # ============================================================
