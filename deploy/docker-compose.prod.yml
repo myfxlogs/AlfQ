@@ -1,0 +1,117 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: alfq
+      POSTGRES_PASSWORD: alfq_dev
+      POSTGRES_DB: alfq
+    ports: ["5432:5432"]
+    volumes: [pg_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alfq"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks: [alfq-net]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    environment:
+      CLICKHOUSE_USER: alfq
+      CLICKHOUSE_PASSWORD: alfq_dev
+      CLICKHOUSE_DB: alfq
+    ports: ["8123:8123", "9000:9000"]
+    volumes: [ch_data:/var/lib/clickhouse]
+    networks: [alfq-net]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: [redis_data:/data]
+    networks: [alfq-net]
+
+  nats:
+    image: nats:2-alpine
+    command: ["-js", "-m", "8222"]
+    ports: ["4222:4222", "8222:8222"]
+    volumes: [nats_data:/data]
+    networks: [alfq-net]
+
+  admin-api:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/admin-api/Dockerfile
+    ports: ["8080:8080"]
+    environment:
+      ADMIN_API_LISTEN: ":8080"
+      ADMIN_API_LOG_LEVEL: info
+    networks: [alfq-net]
+
+  md-gateway:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/md-gateway/Dockerfile
+    ports: ["9001:9001"]
+    environment:
+      NATS_URL: "nats://nats:4222"
+      CH_ADDR: "clickhouse:9000"
+    networks: [alfq-net]
+
+  factor-svc:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/factor-svc/Dockerfile
+    ports: ["9002:9002"]
+    environment:
+      NATS_URL: "nats://nats:4222"
+    networks: [alfq-net]
+
+  strategy-svc:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/strategy-svc/Dockerfile
+    ports: ["9003:9003"]
+    environment:
+      NATS_URL: "nats://nats:4222"
+      PG_DSN: "postgres://alfq:alfq_dev@postgres:5432/alfq"
+    networks: [alfq-net]
+
+  risk-svc:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/risk-svc/Dockerfile
+    ports: ["9004:9004"]
+    environment:
+      NATS_URL: "nats://nats:4222"
+    networks: [alfq-net]
+
+  oms:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/oms/Dockerfile
+    ports: ["9005:9005"]
+    environment:
+      PG_DSN: "postgres://alfq:alfq_dev@postgres:5432/alfq"
+      REDIS_ADDR: "redis:6379"
+      NATS_URL: "nats://nats:4222"
+    networks: [alfq-net]
+
+  assistant-svc:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/assistant-svc/Dockerfile
+    ports: ["9006:9006"]
+    environment: {}
+    networks: [alfq-net]
+
+volumes:
+  pg_data:
+  ch_data:
+  redis_data:
+  nats_data:
+
+networks:
+  alfq-net:
+    name: alfq-net

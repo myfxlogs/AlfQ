@@ -18,10 +18,10 @@ WORKDIR /app/backend/go
 COPY backend/go/go.mod backend/go/go.sum ./
 RUN go mod download
 COPY backend/go/ ./
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/admin-api
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/oms
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /bin/svc /usr/local/bin/svc
-EXPOSE 8080
+EXPOSE 9005
 ENTRYPOINT ["/usr/local/bin/svc"]
