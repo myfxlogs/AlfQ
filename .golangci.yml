@@ -1,0 +1,38 @@
+linters:
+  enable:
+    - gofumpt
+    - goimports
+    - gocyclo
+    - gocognit
+    - funlen
+    - lll
+    - gomnd
+    - gocritic
+    - revive
+    - nakedret
+    - nestif
+    - dupl
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+
+linters-settings:
+  gocyclo:
+    min-complexity: 10
+  gocognit:
+    min-complexity: 15
+  funlen:
+    lines: 50
+    statements: 40
+  lll:
+    line-length: 120
+  nestif:
+    min-complexity: 4
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

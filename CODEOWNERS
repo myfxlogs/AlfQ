@@ -1,0 +1,8 @@
+# Architecture Decision Records → 需双人 review
+docs/adr/     @architecture
+
+# 核心 proto → 需 backend review
+backend/proto/ @backend
+
+# Default owners (占位)
+* @alfq-team

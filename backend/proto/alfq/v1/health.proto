@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package alfq.v1;
+
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+// HealthService provides a minimal health-check endpoint.
+service HealthService {
+  // Check returns the current service health status.
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    SERVING_STATUS_UNSPECIFIED = 0;
+    SERVING_STATUS_SERVING = 1;
+    NOT_SERVING = 2;
+  }
+  ServingStatus status = 1;
+}

@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.proto linguist-language=Protocol-Buffers
+*.sql linguist-language=SQL
+*.sqlc.yaml linguist-language=YAML

@@ -1,0 +1,26 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/alfq/backend/go/gen
+    except:
+      - buf.build/bufbuild/protovalidate
+plugins:
+  # Go 后端
+  - plugin: buf.build/protocolbuffers/go
+    out: ../go/gen
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/connectrpc/go
+    out: ../go/gen
+    opt:
+      - paths=source_relative
+  # 前端 TypeScript (V2: @bufbuild/protobuf + @connectrpc/connect-web)
+  - plugin: buf.build/bufbuild/es
+    out: ../../frontend/src/gen
+    opt:
+      - target=ts
+  - plugin: buf.build/connectrpc/es
+    out: ../../frontend/src/gen
+    opt:
+      - target=ts

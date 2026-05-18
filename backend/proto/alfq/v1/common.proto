@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package alfq.v1;
+
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+// Pagination represents cursor-based pagination parameters.
+message Pagination {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+// TimeRange represents an inclusive-exclusive time interval in UTC.
+// Both boundaries are optional; if omitted, the range is unbounded on that side.
+message TimeRange {
+  int64 start_unix_ms = 1;
+  int64 end_unix_ms = 2;
+}
+
+// Money represents a decimal monetary value, stored as a UTF-8 string
+// to avoid floating-point precision issues (e.g. "123.45").
+// Always store using NUMERIC(20,8) in the database.
+message Money {
+  string value = 1;
+  string currency = 2;  // ISO 4217
+}

@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package alfq.v1;
+
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+// ErrCode is the canonical error code enum. See docs/20-错误码与异常处理规范.md §1.2.
+enum ErrCode {
+  ERR_UNSPECIFIED = 0;
+
+  // ── Common (1xxx) ──
+  ERR_INTERNAL                  = 1000;
+  ERR_NOT_IMPLEMENTED           = 1001;
+  ERR_DEPENDENCY_UNAVAILABLE    = 1002;
+  ERR_TIMEOUT                   = 1003;
+  ERR_INVALID_ARGUMENT          = 1004;
+  ERR_NOT_FOUND                 = 1005;
+  ERR_ALREADY_EXISTS            = 1006;
+  ERR_RESOURCE_EXHAUSTED        = 1007;
+  ERR_DEADLINE_EXCEEDED         = 1008;
+  ERR_RATE_LIMITED              = 1009;
+
+  // ── Auth (11xx) ──
+  ERR_UNAUTHENTICATED           = 1100;
+  ERR_TOKEN_EXPIRED             = 1101;
+  ERR_TOKEN_INVALID             = 1102;
+  ERR_TOTP_REQUIRED             = 1103;
+  ERR_TOTP_INVALID              = 1104;
+  ERR_PERMISSION_DENIED         = 1110;
+  ERR_TENANT_MISMATCH           = 1111;
+  ERR_PASSWORD_EXPIRED          = 1120;
+  ERR_ACCOUNT_LOCKED            = 1121;
+
+  // ── Validation (12xx) ──
+  ERR_VALIDATION_FAILED         = 1200;
+  ERR_SCHEMA_INVALID            = 1201;
+  ERR_DSL_SYNTAX                = 1210;
+  ERR_DSL_UNKNOWN_FIELD         = 1211;
+  ERR_DSL_UNKNOWN_FUNCTION      = 1212;
+  ERR_DSL_ARITY                 = 1213;
+  ERR_DSL_CYCLIC_REFERENCE      = 1214;
+
+  // ── Idempotency (13xx) ──
+  ERR_IDEMPOTENCY_CONFLICT      = 1300;
+  ERR_IDEMPOTENCY_KEY_MISSING   = 1301;
+
+  // ── Risk (20xx) ──
+  ERR_RISK_REJECTED             = 2000;
+  ERR_RISK_RULE_MAX_LOT         = 2001;
+  ERR_RISK_RULE_DAILY_LOSS      = 2002;
+  ERR_RISK_RULE_DRAWDOWN        = 2003;
+  ERR_RISK_RULE_POSITION_LIMIT  = 2004;
+  ERR_RISK_RULE_SESSION         = 2005;
+  ERR_RISK_RULE_WHITELIST       = 2006;
+  ERR_RISK_RULE_CORRELATION     = 2007;
+  ERR_RISK_BREAKER_ACTIVE       = 2010;
+  ERR_RISK_KILLSWITCH_ACTIVE    = 2011;
+
+  // ── Order/OMS (21xx) ──
+  ERR_ORDER_DUPLICATE           = 2100;
+  ERR_ORDER_STATE_INVALID       = 2101;
+  ERR_ORDER_BROKER_REJECT       = 2102;
+  ERR_ORDER_INSUFFICIENT_MARGIN = 2103;
+  ERR_ORDER_OUT_OF_SESSION      = 2104;
+  ERR_ORDER_SYMBOL_NOT_TRADABLE = 2105;
+  ERR_ORDER_PRICE_INVALID       = 2106;
+  ERR_ORDER_QTY_INVALID         = 2107;
+
+  // ── Broker/Adapter (22xx) ──
+  ERR_BROKER_DISCONNECTED       = 2200;
+  ERR_BROKER_AUTH_FAILED        = 2201;
+  ERR_BROKER_TIMEOUT            = 2202;
+  ERR_BROKER_INTERNAL           = 2203;
+  ERR_MTAPI_RPC_ERROR           = 2210;
+
+  // ── Market Data (23xx) ──
+  ERR_MD_STREAM_LOST            = 2300;
+  ERR_MD_SYMBOL_UNKNOWN         = 2301;
+
+  // ── Strategy (24xx) ──
+  ERR_STRATEGY_SPEC_INVALID     = 2400;
+  ERR_STRATEGY_MODEL_LOAD       = 2401;
+  ERR_STRATEGY_INFERENCE        = 2402;
+  ERR_STRATEGY_DEPLOY_LIMIT     = 2403;
+  ERR_STRATEGY_PARITY_FAILED    = 2410;
+
+  // ── Sandbox/Notebook (25xx) ──
+  ERR_SANDBOX_QUOTA_EXCEEDED    = 2500;
+  ERR_SANDBOX_TIMEOUT           = 2501;
+  ERR_SANDBOX_OOM_KILLED        = 2502;
+  ERR_SANDBOX_NETWORK_DENIED    = 2503;
+
+  // ── AI Assistant (26xx) ──
+  ERR_AI_QUOTA_EXCEEDED         = 2600;
+  ERR_AI_MODEL_UNAVAILABLE      = 2601;
+  ERR_AI_SAFETY_BLOCKED         = 2602;
+
+  // ── Data/Governance (30xx) ──
+  ERR_DATA_RETENTION_VIOLATION  = 3000;
+  ERR_CONSENT_REQUIRED          = 3001;
+  ERR_GDPR_RESTRICTED           = 3002;
+}

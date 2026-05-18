@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "alfq-research"
+version = "0.1.0"
+description = "ALFQ 量化研究层 — Python SDK for factor DSL, backtesting, and optimization"
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+
+[tool.hatch.build.targets.wheel]
+packages = ["alfq_research"]
+
+dependencies = [
+    "polars>=1.0",
+    "pyarrow>=16",
+    "clickhouse-connect>=0.7",
+    "loguru>=0.7",
+    "pyyaml>=6",
+    "pydantic>=2",
+    "numpy>=2",
+    "scipy>=1.14",
+    "scikit-learn>=1.5",
+    "optuna>=4",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    "jupyter>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.8",
+    "mypy>=1.14",
+    "ipykernel>=6",
+]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

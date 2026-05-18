@@ -1,0 +1,19 @@
+# ALFQ Research Layer — Ruff Configuration
+# Extracted from pyproject.toml (2026-05-18)
+
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = [
+    "E", "F", "W",     # pycodestyle
+    "C901",             # mccabe complexity
+    "PLR0911", "PLR0912", "PLR0913", "PLR0915",  # pylint refactor
+    "S",                # flake8-bandit (security)
+    "B",                # flake8-bugbear
+    "SIM",              # flake8-simplify
+]
+ignore = ["S101"]  # assert in non-test code
+
+[lint.mccabe]
+max-complexity = 10

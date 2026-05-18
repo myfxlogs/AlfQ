@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package alfq.v1;
+
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+import "alfq/v1/common.proto";
+
+// Tick is a single bid/ask quote update from a broker.
+message Tick {
+  string tenant_id = 1;
+  string broker = 2;
+  string symbol = 3;
+  int64 ts_unix_ms = 4;     // UTC timestamp as reported by broker
+  int64 arrived_unix_ms = 5; // local timestamp when the gateway received the tick
+  Money bid = 6;
+  Money ask = 7;
+  double bid_volume = 8;
+  double ask_volume = 9;
+}
+
+// Quote is a bid/ask pair at a point in time (alias).
+// Kept as a separate type for clarity in streaming APIs.
+message Quote {
+  string symbol = 1;
+  int64 ts_unix_ms = 2;
+  Money bid = 3;
+  Money ask = 4;
+}
+
+// Bar is an OHLCV candle for a given period.
+message Bar {
+  string tenant_id = 1;
+  string broker = 2;
+  string symbol = 3;
+  string period = 4;        // e.g. "1m", "5m", "1h", "1d"
+  int64 open_ts_unix_ms = 5;
+  int64 close_ts_unix_ms = 6;
+  Money open = 7;
+  Money high = 8;
+  Money low = 9;
+  Money close = 10;
+  double volume = 11;
+  int32 tick_count = 12;
+}
