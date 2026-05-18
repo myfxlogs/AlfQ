@@ -28,9 +28,9 @@
 
 **日志**：结构化 JSON，必带 `trace_id` `tenant_id` `user_id` `request_id`。
 
-## 8 份 ADR（不可逆）
+## 9 份 ADR（不可逆）
 
-0001 Connect RPC+SSE · 0002 三域 monorepo · 0003 PG+CH+Redis · 0004 用户 Python 不进生产 · 0005 多租户 RLS + broker 物理隔离 · 0006 Vault 秘钥 · 0007 sqlc 不用 ORM · 0008 AI 助手 bounded tools
+0001 Connect RPC+SSE · 0002 三域 monorepo · 0003 PG+CH+Redis · 0004 用户 Python 不进生产 · 0005 多租户 RLS + broker 物理隔离 · 0006 Vault 秘钥 · 0007 sqlc 不用 ORM · 0008 AI 助手 bounded tools · 0009 仅云端 LLM API（禁止本地大模型）
 
 新增决策 → `docs/adr/NNNN-<slug>.md`，编号单调递增。详见 `docs/19-架构决策记录.md`。
 

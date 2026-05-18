@@ -37,6 +37,17 @@ func main() {
 		registry.SetKB(kb)
 	}
 
+	// M6.5: Cloud LLM provider abstraction (ADR 0009)
+	router := assistantsvc.NewRouter()
+	router.Register(
+		&assistantsvc.Provider{Name: "openai", Endpoint: "https://api.openai.com", Model: "gpt-4o", Priority: 1, Timeout: 30 * time.Second},
+		assistantsvc.NewHTTPClient("openai", "https://api.openai.com", "gpt-4o", "{{vault:openai_key}}"),
+	)
+	router.Register(
+		&assistantsvc.Provider{Name: "anthropic", Endpoint: "https://api.anthropic.com", Model: "claude-sonnet-4-20250514", Priority: 2, Timeout: 30 * time.Second},
+		assistantsvc.NewHTTPClient("anthropic", "https://api.anthropic.com", "claude-sonnet-4-20250514", "{{vault:anthropic_key}}"),
+	)
+
 	tools := registry.List()
 	log.Info("assistant-svc starting",
 		zap.Int("tools", len(tools)),
@@ -71,5 +82,6 @@ func main() {
 	server.Shutdown(shutdownCtx)
 	log.Info("assistant-svc stopped")
 
+	_ = router
 	_ = fmt.Sprintf
 }

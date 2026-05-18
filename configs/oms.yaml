@@ -1,0 +1,10 @@
+server:
+  listen: ":9005"
+log:
+  level: info
+postgres:
+  dsn: "postgres://alfq:alfq_dev@localhost:5432/alfq"
+redis:
+  addr: "localhost:6379"
+nats:
+  url: "nats://localhost:4222"

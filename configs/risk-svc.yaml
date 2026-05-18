@@ -1,0 +1,16 @@
+server:
+  listen: ":9004"
+log:
+  level: info
+nats:
+  url: "nats://localhost:4222"
+rules:
+  max_lot: 100.0
+  max_per_symbol: 10.0
+  daily_loss: 5000.0
+  max_drawdown: 0.15
+  min_margin_level: 1.5
+  max_slippage_points: 5.0
+  heartbeat_timeout: 5m
+  max_reject_rate: 0.3
+whitelist: ["EURUSD","GBPUSD","USDJPY"]
