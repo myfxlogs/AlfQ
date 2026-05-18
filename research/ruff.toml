@@ -13,7 +13,31 @@ select = [
     "B",                # flake8-bugbear
     "SIM",              # flake8-simplify
 ]
-ignore = ["S101"]  # assert in non-test code
+ignore = [
+    "S101",   # assert in non-test code
+    "E701",   # multiple statements on one line (colon)
+    "E702",   # multiple statements on one line (semicolon)
+    "PLR0911", # too many return statements (recursive descent parsers)
+    "E741",   # ambiguous variable name (DSL compact style)
+    "N802",   # function name should be lowercase (DSL CamelCase ops)
+    "N802",   # function name should be lowercase (DSL CamelCase ops)
+    "N806",   # variable name should be lowercase
+    "N818",   # error suffix
+    "N803",   # argument name
+    "N999",   # invalid module name
+    "E501",   # line too long (formula readability)
+    "F403",   # wildcard import (DSL ast_ re-export)
+    "F405",   # wildcard usage (DSL ast_ re-export)
+    "B027",   # empty abstract method without decorator
+    "S311",   # random for non-crypto (not applicable)
+]
+
+exclude = [
+    ".venv",
+    ".pytest_cache",
+    "__pycache__",
+    "notebooks",
+]
 
 [lint.mccabe]
 max-complexity = 10

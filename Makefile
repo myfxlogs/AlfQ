@@ -25,22 +25,22 @@ proto-mtapi-gen:
 # Go
 # ============================================================
 go-lint:
-	cd backend/go && golangci-lint run ./...
+	cd backend/go && GOTOOLCHAIN=local golangci-lint run ./...
 
 go-test:
-	cd backend/go && go test -race -count=1 ./...
+	cd backend/go && GOTOOLCHAIN=local go test -race -count=1 ./...
 
 go-build:
-	cd backend/go && go build ./cmd/admin-api
+	cd backend/go && GOTOOLCHAIN=local go build ./cmd/admin-api
 
 # ============================================================
 # Python (Research)
 # ============================================================
 py-lint:
-	cd research && uv run ruff check .
+	cd research && uv run --extra dev ruff check .
 
 py-test:
-	cd research && uv run pytest
+	cd research && uv run --extra dev pytest
 
 # ============================================================
 # Frontend

@@ -5,7 +5,6 @@ Golden test data is generated from known expression + bar sequence pairs.
 """
 
 import math
-import pytest
 from alfq_research.factor.dsl.parser import parse
 from alfq_research.factor.dsl.compile import compile_expr
 
@@ -23,7 +22,7 @@ def eval_expr(expr: str, bars: list[float]) -> list[float]:
 
 
 def assert_close(actual, expected):
-    for i, (a, e) in enumerate(zip(actual, expected)):
+    for i, (a, e) in enumerate(zip(actual, expected, strict=True)):
         if math.isnan(e):
             assert math.isnan(a), f"bar {i}: expected NaN, got {a}"
         else:
@@ -58,5 +57,5 @@ def test_rsi_warmup():
 
 def test_binary_ops():
     result = eval_expr("$close + 10", BARS)
-    for i, (a, e) in enumerate(zip(result, [b + 10 for b in BARS])):
+    for _, (a, e) in enumerate(zip(result, [b + 10 for b in BARS], strict=False)):
         assert abs(a - e) < 1e-9
