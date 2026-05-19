@@ -113,6 +113,7 @@ services:
     ports: ["9000:9000"]
     volumes:
       - ../configs:/app/configs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       DATABASE_URL: "postgres://alfq:alfq_dev@postgres:5432/alfq?sslmode=disable"
       REDIS_ADDR: "redis:6379"
@@ -130,6 +131,7 @@ services:
       args: { SVC: quant-engine }
     ports: ["9002:9002"]
     environment:
+      LISTEN_ADDR: ":9002"
       NATS_URL: "nats://nats:4222"
     depends_on:
       nats: { condition: service_healthy }
@@ -142,6 +144,7 @@ services:
       args: { SVC: md-gateway }
     ports: ["9001:9001"]
     environment:
+      LISTEN_ADDR: ":9001"
       NATS_URL: "nats://nats:4222"
       REDIS_ADDR: "redis:6379"
       CH_ADDR: "clickhouse:9000"
@@ -157,7 +160,8 @@ services:
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: assistant-svc }
     ports: ["9003:9003"]
-    environment: {}
+    environment:
+      LISTEN_ADDR: ":9003"
     networks: [alfq-net]
 
   frontend:

@@ -25,7 +25,7 @@ ARG SVC
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/${SVC}
 
 FROM alpine:3.23
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates docker-cli
 WORKDIR /app
 COPY --from=builder /bin/svc /usr/local/bin/svc
 ENTRYPOINT ["/usr/local/bin/svc"]

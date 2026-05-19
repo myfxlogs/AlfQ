@@ -14,4 +14,7 @@ gprc/mt5goExample/
 # Go build artifacts (prevent binary recommit)
 backend/go/trading-core
 backend/go/quant-engine
-backend/go/cover.out
+backend/go/cover.out-e 
+# Build artifacts
+*.tsbuildinfo
+tools/buf
