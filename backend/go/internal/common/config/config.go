@@ -3,6 +3,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -45,7 +47,7 @@ func Load(path string, cfg *Config) (*viper.Viper, error) {
 	v.SetDefault("log.level", cfg.Log.Level)
 
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		if !os.IsNotExist(err) && !strings.Contains(err.Error(), "no such file") {
 			return nil, fmt.Errorf("config read: %w", err)
 		}
 		// Config file not found — proceed with defaults.
