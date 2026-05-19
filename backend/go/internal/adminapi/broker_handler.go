@@ -4,6 +4,9 @@ package adminapi
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
 )
@@ -85,28 +88,55 @@ func (s *Service) UpdateBroker(ctx context.Context, req *pb.Broker) (*pb.Broker,
 }
 
 func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest) (*pb.SearchBrokerResponse, error) {
-	// Return brokers from DB filtered by platform
+	// 1. Try DB first
 	rows, err := s.pool.Query(ctx,
 		`SELECT id, tenant_id, code, name, platform, mtapi_endpoint, COALESCE(default_server,'')
 		 FROM brokers WHERE platform = $1 AND (name ILIKE '%' || $2 || '%' OR code ILIKE '%' || $2 || '%')
 		 ORDER BY name LIMIT 20`,
 		req.Platform, req.Keyword,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("search broker: %w", err)
-	}
-	defer rows.Close()
-
-	var matches []*pb.BrokerMatch
-	for rows.Next() {
-		b := &pb.Broker{}
-		if err := rows.Scan(&b.Id, &b.TenantId, &b.Code, &b.Name, &b.Platform, &b.MtapiEndpoint, &b.DefaultServer); err != nil {
-			return nil, fmt.Errorf("scan broker: %w", err)
+	if err == nil {
+		defer rows.Close()
+		var matches []*pb.BrokerMatch
+		for rows.Next() {
+			b := &pb.Broker{}
+			if err := rows.Scan(&b.Id, &b.TenantId, &b.Code, &b.Name, &b.Platform, &b.MtapiEndpoint, &b.DefaultServer); err != nil {
+				continue
+			}
+			matches = append(matches, &pb.BrokerMatch{
+				Company: b.Name,
+				Servers: []string{b.MtapiEndpoint},
+			})
 		}
-		matches = append(matches, &pb.BrokerMatch{
-			Company: b.Name,
-			Servers: []string{b.MtapiEndpoint},
-		})
+		if len(matches) > 0 {
+			return &pb.SearchBrokerResponse{Matches: matches}, nil
+		}
+	}
+
+	// 2. Try online MT5 gateway search
+	gatewayAddr := mtapi.MT5GatewayAddr()
+	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gatewayAddr, req.Keyword); err == nil && len(onlineMatches) > 0 {
+		var matches []*pb.BrokerMatch
+		for _, m := range onlineMatches {
+			matches = append(matches, &pb.BrokerMatch{
+				Company: m.Company,
+				Servers: m.Servers,
+			})
+		}
+		return &pb.SearchBrokerResponse{Matches: matches}, nil
+	}
+
+	// 3. Fallback: builtin broker list
+	builtin := mtapi.BuiltinBrokers()
+	var matches []*pb.BrokerMatch
+	kw := strings.ToLower(req.Keyword)
+	for _, m := range builtin {
+		if kw == "" || strings.Contains(strings.ToLower(m.Company), kw) {
+			matches = append(matches, &pb.BrokerMatch{
+				Company: m.Company,
+				Servers: m.Servers,
+			})
+		}
 	}
 	return &pb.SearchBrokerResponse{Matches: matches}, nil
 }
