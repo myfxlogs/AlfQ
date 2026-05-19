@@ -39,6 +39,9 @@ func (s *Service) WithLog(log *zap.Logger) *Service {
 // defaultTenantID is used when no tenant is available from context.
 const defaultTenantID = "00000000-0000-0000-0000-000000000000"
 
+// defaultBrokerID is the placeholder used by BindAccount when no broker exists.
+const defaultBrokerID = "00000000-0000-0000-0000-000000000000"
+
 // effectiveTenantID returns reqTenantID if non-empty, otherwise falls back to
 // the context tenant ID, and finally to the default tenant.
 func effectiveTenantID(ctx context.Context, reqTenantID string) string {

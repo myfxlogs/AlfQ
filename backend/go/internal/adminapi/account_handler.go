@@ -19,17 +19,24 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 
-	// 1. Look up broker to get MT endpoint
-	var brokerHost string
-	err := s.pool.QueryRow(ctx,
-		`SELECT COALESCE(mtapi_endpoint, '') FROM brokers WHERE id = $1`,
-		req.BrokerId,
-	).Scan(&brokerHost)
-	if err != nil {
-		return nil, fmt.Errorf("broker lookup: %w", err)
+	// 1. Look up broker to get MT endpoint (skip for placeholder ID)
+	var err error
+	var brokerHost, platform string
+	if req.BrokerId == defaultBrokerID {
+		brokerHost = req.Server // use server field as host:port directly
+		platform = req.MtType
+	} else {
+		if err := s.pool.QueryRow(ctx,
+			`SELECT COALESCE(mtapi_endpoint, ''), platform FROM brokers WHERE id = $1`,
+			req.BrokerId,
+		).Scan(&brokerHost, &platform); err != nil {
+			return nil, fmt.Errorf("broker lookup: %w", err)
+		}
 	}
 
 	// 2. Insert account with connecting status
+	tid := req.TenantId
+	if tid == "" { tid = defaultTenantID }
 	a := &pb.Account{}
 	now := time.Now()
 	err = s.pool.QueryRow(ctx, `
@@ -39,7 +46,7 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 		RETURNING id, tenant_id, broker_id, login, server, account_type, currency, leverage,
 			status, balance, equity, margin, free_margin, margin_level, profit, profit_percent,
 			is_disabled, last_error, alias
-	`, req.TenantId, req.BrokerId, req.Login, req.Password, req.Server,
+	`, tid, req.BrokerId, req.Login, req.Password, req.Server,
 		coalesce(req.AccountType, "demo"), now,
 	).Scan(
 		&a.Id, &a.TenantId, &a.BrokerId, &a.Login, &a.Server,
@@ -54,11 +61,8 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 	a.CreatedAt = timestamppb.New(now)
 	a.ConnectedAt = nil
 
-	// 3. Test MT connection if broker has mtapi_endpoint
+	// 3. Test MT connection if broker has host
 	if brokerHost != "" {
-		// Determine platform from broker
-		var platform string
-		s.pool.QueryRow(ctx, `SELECT platform FROM brokers WHERE id = $1`, req.BrokerId).Scan(&platform)
 		gw := s.mt5Gateway
 		if strings.EqualFold(platform, "MT4") {
 			gw = s.mt4Gateway

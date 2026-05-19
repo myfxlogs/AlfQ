@@ -40,6 +40,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
       const res = await accountClient.createAccount({
         tenantId: "", brokerId: "00000000-0000-0000-0000-000000000000",
         login, password, server: selectedServer.access, accountType: "demo",
+        mtType,
       });
       setResult({ balance: res.balance, equity: res.equity, status: res.status });
       setStep(3);

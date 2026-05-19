@@ -814,6 +814,7 @@ type CreateAccountRequest struct {
 	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
 	Server        string                 `protobuf:"bytes,5,opt,name=server,proto3" json:"server,omitempty"`
 	AccountType   string                 `protobuf:"bytes,6,opt,name=account_type,json=accountType,proto3" json:"account_type,omitempty"`
+	MtType        string                 `protobuf:"bytes,7,opt,name=mt_type,json=mtType,proto3" json:"mt_type,omitempty"` // "MT4" or "MT5"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -886,6 +887,13 @@ func (x *CreateAccountRequest) GetServer() string {
 func (x *CreateAccountRequest) GetAccountType() string {
 	if x != nil {
 		return x.AccountType
+	}
+	return ""
+}
+
+func (x *CreateAccountRequest) GetMtType() string {
+	if x != nil {
+		return x.MtType
 	}
 	return ""
 }
@@ -1911,14 +1919,15 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\x05alias\x18\x13 \x01(\tR\x05alias\x12=\n" +
 	"\fconnected_at\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\vconnectedAt\x129\n" +
 	"\n" +
-	"created_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xbd\x01\n" +
+	"created_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xd6\x01\n" +
 	"\x14CreateAccountRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
 	"\tbroker_id\x18\x02 \x01(\tR\bbrokerId\x12\x14\n" +
 	"\x05login\x18\x03 \x01(\tR\x05login\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x16\n" +
 	"\x06server\x18\x05 \x01(\tR\x06server\x12!\n" +
-	"\faccount_type\x18\x06 \x01(\tR\vaccountType\"#\n" +
+	"\faccount_type\x18\x06 \x01(\tR\vaccountType\x12\x17\n" +
+	"\amt_type\x18\a \x01(\tR\x06mtType\"#\n" +
 	"\x11GetAccountRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"2\n" +
 	"\x13ListAccountsRequest\x12\x1b\n" +
