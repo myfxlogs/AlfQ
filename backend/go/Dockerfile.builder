@@ -1,4 +1,7 @@
 # syntax=docker/dockerfile:1
+# Shared builder for all 4 Go services (trading-core / md-gateway / quant-engine / assistant-svc).
+# Usage: docker build --build-arg SVC=trading-core -f backend/go/Dockerfile.builder .
+
 FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates curl bash
@@ -17,10 +20,11 @@ WORKDIR /app/backend/go
 COPY backend/go/go.mod backend/go/go.sum ./
 RUN go mod download
 COPY backend/go/ ./
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/assistant-svc
+ARG SVC
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/${SVC}
 
 FROM alpine:3.23
 RUN apk add --no-cache ca-certificates
+WORKDIR /app
 COPY --from=builder /bin/svc /usr/local/bin/svc
-EXPOSE 9003
 ENTRYPOINT ["/usr/local/bin/svc"]

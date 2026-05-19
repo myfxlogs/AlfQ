@@ -108,7 +108,8 @@ services:
   trading-core:
     build:
       context: ..
-      dockerfile: backend/go/cmd/trading-core/Dockerfile
+      dockerfile: backend/go/Dockerfile.builder
+      args: { SVC: trading-core }
     ports: ["9000:9000"]
     volumes:
       - ../configs:/app/configs:ro
@@ -125,7 +126,8 @@ services:
   quant-engine:
     build:
       context: ..
-      dockerfile: backend/go/cmd/quant-engine/Dockerfile
+      dockerfile: backend/go/Dockerfile.builder
+      args: { SVC: quant-engine }
     ports: ["9002:9002"]
     environment:
       NATS_URL: "nats://nats:4222"
@@ -136,7 +138,8 @@ services:
   md-gateway:
     build:
       context: ..
-      dockerfile: backend/go/cmd/md-gateway/Dockerfile
+      dockerfile: backend/go/Dockerfile.builder
+      args: { SVC: md-gateway }
     ports: ["9001:9001"]
     environment:
       NATS_URL: "nats://nats:4222"
@@ -151,7 +154,8 @@ services:
   assistant-svc:
     build:
       context: ..
-      dockerfile: backend/go/cmd/assistant-svc/Dockerfile
+      dockerfile: backend/go/Dockerfile.builder
+      args: { SVC: assistant-svc }
     ports: ["9003:9003"]
     environment: {}
     networks: [alfq-net]
