@@ -87,25 +87,20 @@ func TestNewServer(t *testing.T) {
 
 func TestRunMinimal(t *testing.T) {
 	// Test a minimal bootstrap with no PG/Redis, using a registrar that returns immediately.
-	var registered bool
+	registered := make(chan struct{})
 	register := func(mux *ServeMuxAdapter, d *Deps) error {
-		registered = true
+		close(registered)
 		return nil
 	}
 
-	// Run in a goroutine and cancel after a short time
-	done := make(chan error, 1)
 	go func() {
-		done <- Run("test-svc", register, WithoutPG(), WithoutRedis(), WithoutNATS(), WithoutCH())
+		_ = Run("test-svc", register, WithoutPG(), WithoutRedis(), WithoutNATS(), WithoutCH())
 	}()
 
-	// Give it time to start, then interrupt
-	time.Sleep(100 * time.Millisecond)
-	// Process won't actually be signalled from tests easily.
-	// Just verify the registrar was called.
-	if !registered {
-		t.Fatal("registrar was not called")
+	select {
+	case <-registered:
+		// registrar called, ok
+	case <-time.After(2 * time.Second):
+		t.Fatal("registrar was not called within timeout")
 	}
-	// Cancel by killing the goroutine (leak is acceptable in test)
-	_ = done
 }
