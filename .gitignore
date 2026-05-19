@@ -8,7 +8,7 @@ __pycache__/
 .env.local
 *.log
 backend/go/gen/
-frontend/src/gen/
+
 research/alfq_research/_gen/
 gprc/mt4goExample/
 gprc/mt5goExample/
