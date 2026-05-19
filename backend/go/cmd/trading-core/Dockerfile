@@ -17,10 +17,10 @@ WORKDIR /app/backend/go
 COPY backend/go/go.mod backend/go/go.sum ./
 RUN go mod download
 COPY backend/go/ ./
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/assistant-svc
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/trading-core
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /bin/svc /usr/local/bin/svc
-EXPOSE 9006
+EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/svc"]
