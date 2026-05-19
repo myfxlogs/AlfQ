@@ -14,6 +14,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Tenants from "./pages/Tenants";
 import Users from "./pages/Users";
+import AdminSettings from "./pages/AdminSettings";
 
 const userRoutes: Record<string, () => React.ReactNode> = {
   "#/": Dashboard,
@@ -32,6 +33,7 @@ const userRoutes: Record<string, () => React.ReactNode> = {
 const adminRoutes: Record<string, () => React.ReactNode> = {
   "#/admin/tenants": Tenants,
   "#/admin/users": Users,
+  "#/admin/settings": AdminSettings,
 };
 
 const userNavItems: [string, string][] = [
@@ -70,6 +72,9 @@ function Sidebar({ hash, isAdmin, onClose }: { hash: string; isAdmin: boolean; o
               </a>
               <a href="#/admin/users" className={`sidebar-link${hash === "#/admin/users" ? " active" : ""}`} onClick={onClose}>
                 用户管理
+              </a>
+              <a href="#/admin/settings" className={`sidebar-link${hash === "#/admin/settings" ? " active" : ""}`} onClick={onClose}>
+                系统配置
               </a>
             </div>
             <div className="sidebar-footer">

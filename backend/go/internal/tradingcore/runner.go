@@ -72,6 +72,7 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) error {
 	mux.Handle(alfqv1connect.NewStrategyServiceHandler(adp))
 	mux.Handle(alfqv1connect.NewBacktestServiceHandler(adp))
 	mux.Handle(alfqv1connect.NewAuditServiceHandler(adp))
+	mux.Handle(alfqv1connect.NewSystemSettingsServiceHandler(adp))
 
 	// Auth
 	if d.RDB != nil {

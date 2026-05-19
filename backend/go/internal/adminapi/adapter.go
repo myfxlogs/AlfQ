@@ -168,6 +168,19 @@ func (a *Adapter) ListBacktests(ctx context.Context, req *connect.Request[pb.Lis
 	return connect.NewResponse(resp), nil
 }
 
+// -- SystemSettingsService --
+
+func (a *Adapter) GetSystemSettings(ctx context.Context, req *connect.Request[pb.GetSystemSettingsRequest]) (*connect.Response[pb.GetSystemSettingsResponse], error) {
+	resp, err := a.svc.GetSystemSettings(ctx, req.Msg)
+	if err != nil { return nil, err }
+	return connect.NewResponse(resp), nil
+}
+func (a *Adapter) UpdateSystemSetting(ctx context.Context, req *connect.Request[pb.UpdateSystemSettingRequest]) (*connect.Response[pb.UpdateSystemSettingResponse], error) {
+	resp, err := a.svc.UpdateSystemSetting(ctx, req.Msg)
+	if err != nil { return nil, err }
+	return connect.NewResponse(resp), nil
+}
+
 // -- AuditService --
 
 func (a *Adapter) ListAuditLogs(ctx context.Context, req *connect.Request[pb.ListAuditLogsRequest]) (*connect.Response[pb.ListAuditLogsResponse], error) {

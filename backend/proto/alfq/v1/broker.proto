@@ -76,3 +76,14 @@ message ConnectAccountRequest { string id = 1; }
 message ConnectAccountResponse {}
 message DisconnectAccountRequest { string id = 1; }
 message DisconnectAccountResponse {}
+
+service SystemSettingsService {
+  rpc GetSystemSettings(GetSystemSettingsRequest) returns (GetSystemSettingsResponse);
+  rpc UpdateSystemSetting(UpdateSystemSettingRequest) returns (UpdateSystemSettingResponse);
+}
+
+message SystemSetting { string key = 1; string value = 2; string description = 3; }
+message GetSystemSettingsRequest {}
+message GetSystemSettingsResponse { repeated SystemSetting settings = 1; }
+message UpdateSystemSettingRequest { string key = 1; string value = 2; }
+message UpdateSystemSettingResponse {}
