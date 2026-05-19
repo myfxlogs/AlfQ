@@ -1,6 +1,6 @@
 # AGENT.md — ALFQ
 
-> 工作仓库 `/opt/alfq/` | M1 行情阶段 | 2026-05-18
+> 工作仓库 `/opt/alfq/` | M6.5+ 架构合并阶段 | 2026-05-19
 
 ## 项目身份
 
@@ -10,15 +10,16 @@
 
 `backend/`（Go 服务 + proto）| `research/`（Python 研究，uv）| `frontend/`（React SPA，pnpm）
 
-- Go 1.26+ / Python 3.12 / TS 5.4+ / Node 20+
+- Go 1.25 / Python 3.12 / TS 6+ / Node 22 LTS（版本基线见 `docs/26 §2`）
 - Proto 单一源 `backend/proto/alfq/v1/` → `buf generate` 出 Go/TS/Python stub
-- 7 服务：admin-api:8080, md-gateway:9001, factor-svc:9002, strategy-svc:9003, risk-svc:9004, oms:9005, assistant-svc:9006
+- 4 后端服务：trading-core:8080（admin-api+oms+risk）, md-gateway:9001, quant-engine:9002（factor+strategy）, assistant-svc:9006
+- 1 前端服务：frontend:80（Nginx 静态托管 + `/api/` 反代到 trading-core）
 
 ## 硬性规则
 
 **协议**：Connect RPC + SSE（Server Streaming）。禁止 REST 新接口、禁止 WebSocket。内部 gRPC，异步走 NATS JetStream。
 
-**数据**：PG 16（主数据）+ ClickHouse 24（时序）+ Redis 7（缓存/锁）+ MinIO/S3（对象）+ Vault（秘钥）。
+**数据**：PG 17（主数据）+ ClickHouse 25（时序）+ Redis 8（缓存/锁）+ MinIO/S3（对象）+ Vault（秘钥）。版本以 `docs/26-依赖与版本管理规范.md` 为准。
 
 **MT4 vs MT5**：两套完全独立的协议/平台，proto 定义、枚举语义、撮合模型均不可共用。`md-gateway`/`oms` 必须维护两套独立 mapper：`adapter/mt4/` 与 `adapter/mt5/`。详见 `docs/14-领域模型与交易规则.md` §3.4。
 
@@ -28,9 +29,13 @@
 
 **日志**：结构化 JSON，必带 `trace_id` `tenant_id` `user_id` `request_id`。
 
-## 9 份 ADR（不可逆）
+**版本**：所有依赖、脚本、程序、语言版本号，**必须使用官网最新稳定版**。除非有明确的兼容性问题（API 不兼容 / 生态未跟进 / 数据格式不兼容 / 上游已知 regression），否则不得保留旧版本。每条豁免必须在 `docs/26-依赖与版本管理规范.md §4` 中列明原因和过期日期。详见该规范。
 
-0001 Connect RPC+SSE · 0002 三域 monorepo · 0003 PG+CH+Redis · 0004 用户 Python 不进生产 · 0005 多租户 RLS + broker 物理隔离 · 0006 Vault 秘钥 · 0007 sqlc 不用 ORM · 0008 AI 助手 bounded tools · 0009 仅云端 LLM API（禁止本地大模型）
+**部署形态**：**单机 docker-compose**。不引入 K8s/Helm/ArgoCD/Service Mesh/HPA/多副本。详见 ADR 0011（`docs/adr/0011-single-host-production.md`）+ `docs/11-部署与运维手册.md`。生产、staging 均为单机 compose；如需多机/K8s 必须先修订 ADR。
+
+## 11 份 ADR（不可逆）
+
+0001 Connect RPC+SSE · 0002 三域 monorepo · 0003 PG+CH+Redis · 0004 用户 Python 不进生产 · 0005 多租户 RLS + broker 物理隔离 · 0006 Vault 秘钥 · 0007 sqlc 不用 ORM · 0008 AI 助手 bounded tools · 0009 仅云端 LLM API（禁止本地大模型）· **0010 后端 7→4 服务合并（5 服务总架构）** · **0011 单机 docker-compose 生产部署（不用 K8s）**
 
 新增决策 → `docs/adr/NNNN-<slug>.md`，编号单调递增。详见 `docs/19-架构决策记录.md`。
 
@@ -85,11 +90,16 @@
 
 Conventional Commits: `type(scope): subject`。分支: `feat|fix|chore|docs|refactor|test/<scope>`。main 保护，PR + 2 reviewer。PR 必带：关联文档、测试结果、风险评估。详见 `docs/12-AI-Agent实施指南.md` §3.2-§3.4。
 
-## 当前阶段：M0 基建
+## 当前阶段：M6.5+（架构合并后）
 
-仓库仅有文档，无代码。5 个 PR：骨架配置 → proto 工程 → admin-api → research/frontend 空壳 → docker-compose+CI。
+已完成 M0–M6.5：基建、proto、行情、因子+研究、策略+OMS、风控、AI 助手、灰度发布、架构合并。仓库现状：
 
-范围边界：**不做**订单/风控/因子/策略/行情/DB schema/mtapi/AI 助手/K8s。详见 `docs/M0-START.md`。
+- `backend/go/cmd/`：`trading-core` `md-gateway` `quant-engine` `assistant-svc` 四服务可编译运行
+- `frontend/`：React SPA 已成型
+- `research/`：Python SDK 已搭建
+- `deploy/docker-compose.prod.yml`：单机生产编排已配置（PG17/CH25/Redis8）
+
+历史里程碑详见 `docs/handover/M0-handover.md` … `M6.5-handover.md`。范围以最新 milestone 文档为准；M0-START.md 是历史指令（保留）。部署形态：单机 compose（详见 ADR 0011）。
 
 ## Makefile
 

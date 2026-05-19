@@ -1,17 +1,16 @@
 # ALFQ Runbook
 
-> M6 灰度上线运维手册
+> M6.5+ 架构合并后运维手册
 
 ## 部署概览
 
 | 服务 | 端口 | 部署方式 |
 |---|---|---|
-| admin-api | 8080 | Docker / K8s |
-| md-gateway | 9001 | Docker / K8s |
-| factor-svc | 9002 | Docker / K8s |
-| strategy-svc | 9003 | Docker / K8s |
-| risk-svc | 9004 | Docker / K8s |
-| oms | 9005 | Docker / K8s |
+| trading-core | 8080 | Docker compose（单机） |
+| md-gateway | 9001 | Docker compose（单机） |
+| quant-engine | 9002 | Docker compose（单机） |
+| assistant-svc | 9006 | Docker compose（单机） |
+| frontend | 80 | Docker compose（单机） |
 
 ## Paper → Live 灰度流程
 
@@ -27,7 +26,7 @@
 ### Kill Switch
 ```bash
 # 全局止损
-curl -X POST http://admin-api:8080/killswitch -d '{"scope":"global","reason":"manual"}'
+curl -X POST http://trading-core:8080/killswitch -d '{"scope":"global","reason":"manual"}'
 ```
 
 ### 回滚服务
