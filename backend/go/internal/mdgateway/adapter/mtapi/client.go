@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alfq/backend/go/internal/common/config"
+	mt4pb "github.com/alfq/backend/go/gen/mt4"
 	mt5pb "github.com/alfq/backend/go/gen/mt5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -70,29 +71,18 @@ func searchMT5(ctx context.Context, conn *grpc.ClientConn, company string) ([]Br
 }
 
 func searchMT4(ctx context.Context, conn *grpc.ClientConn, company string) ([]BrokerMatch, error) {
-	// MT4 gateway uses same Service/Search pattern
-	input := map[string]interface{}{"company": company}
-	output := make(map[string]interface{})
-	if err := conn.Invoke(ctx, "/mt4grpc.Service/Search", input, output); err != nil {
+	client := mt4pb.NewServiceClient(conn)
+	resp, err := client.Search(ctx, &mt4pb.SearchRequest{Company: company})
+	if err != nil {
 		return nil, fmt.Errorf("mtapi: mt4 search: %w", err)
 	}
-	result, _ := output["result"].([]interface{})
 	var matches []BrokerMatch
-	for _, r := range result {
-		c, _ := r.(map[string]interface{})
-		companyName, _ := c["companyName"].(string)
-		results, _ := c["results"].([]interface{})
+	for _, c := range resp.GetResult() {
 		var servers []string
-		for _, rr := range results {
-			m, _ := rr.(map[string]interface{})
-			access, _ := m["access"].([]interface{})
-			for _, a := range access {
-				if s, ok := a.(string); ok {
-					servers = append(servers, s)
-				}
-			}
+		for _, r := range c.GetResults() {
+			servers = append(servers, r.GetAccess()...)
 		}
-		matches = append(matches, BrokerMatch{Company: companyName, Servers: servers})
+		matches = append(matches, BrokerMatch{Company: c.GetCompanyName(), Servers: servers})
 	}
 	return matches, nil
 }
