@@ -1,5 +1,5 @@
-// ALFQ App — hash-based routing, zero external dependencies
-import React, { useState, useEffect } from "react";
+// ALFQ App — hash-based routing with user/admin split
+import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Accounts from "./pages/Accounts";
@@ -11,13 +11,12 @@ import Backtest from "./pages/Backtest";
 import AIChat from "./pages/AIChat";
 import Audit from "./pages/Audit";
 import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import Tenants from "./pages/Tenants";
 import Users from "./pages/Users";
-import Settings from "./pages/Settings";
 
-const routes: Record<string, () => React.ReactNode> = {
+const userRoutes: Record<string, () => React.ReactNode> = {
   "#/": Dashboard,
-  "#/login": Login,
   "#/accounts": Accounts,
   "#/orders": Orders,
   "#/positions": Positions,
@@ -27,12 +26,15 @@ const routes: Record<string, () => React.ReactNode> = {
   "#/assistant": AIChat,
   "#/audit": Audit,
   "#/notifications": Notifications,
-  "#/tenants": Tenants,
-  "#/users": Users,
   "#/settings": Settings,
 };
 
-const navItems: [string, string][] = [
+const adminRoutes: Record<string, () => React.ReactNode> = {
+  "#/admin/tenants": Tenants,
+  "#/admin/users": Users,
+};
+
+const userNavItems: [string, string][] = [
   ["#/", "仪表盘"],
   ["#/accounts", "账户"],
   ["#/orders", "订单"],
@@ -42,7 +44,7 @@ const navItems: [string, string][] = [
   ["#/backtest", "回测"],
   ["#/assistant", "AI助手"],
   ["#/audit", "审计"],
-  ["#/admin", "管理"],
+  ["#/notifications", "通知"],
 ];
 
 function useHash(): string {
@@ -57,15 +59,35 @@ function useHash(): string {
 
 export default function App() {
   const hash = useHash();
-  const Page = routes[hash] || Dashboard;
+  const isAdmin = hash.startsWith("#/admin/");
 
+  // Admin layout
+  if (isAdmin) {
+    const Page = adminRoutes[hash];
+    return (
+      <div>
+        <nav className="navbar">
+          <a href="#/" className="navbar-brand">ALFQ</a>
+          <span style={{ color: "var(--color-text-secondary)", fontSize: 14, marginLeft: 8 }}>管理端</span>
+          <a href="#/admin/tenants" className={`nav-link${hash === "#/admin/tenants" ? " active" : ""}`}>租户</a>
+          <a href="#/admin/users" className={`nav-link${hash === "#/admin/users" ? " active" : ""}`}>用户</a>
+          <a href="#/" className="nav-login">返回用户端</a>
+        </nav>
+        {Page ? <Page /> : <div className="page-placeholder">页面不存在</div>}
+      </div>
+    );
+  }
+
+  // User layout
+  const Page = userRoutes[hash] || Dashboard;
   return (
     <div>
       <nav className="navbar">
         <a href="#/" className="navbar-brand">ALFQ</a>
-        {navItems.map(([path, label]) => (
+        {userNavItems.map(([path, label]) => (
           <a key={path} href={path} className={`nav-link${hash === path ? " active" : ""}`}>{label}</a>
         ))}
+        <a href="#/admin/tenants" className="nav-login">管理</a>
         <a href="#/login" className="nav-login">登录</a>
       </nav>
       <Page />

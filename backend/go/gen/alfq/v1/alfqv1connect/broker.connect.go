@@ -49,6 +49,9 @@ const (
 	// BrokerServiceDeleteBrokerProcedure is the fully-qualified name of the BrokerService's
 	// DeleteBroker RPC.
 	BrokerServiceDeleteBrokerProcedure = "/alfq.v1.BrokerService/DeleteBroker"
+	// BrokerServiceSearchBrokerProcedure is the fully-qualified name of the BrokerService's
+	// SearchBroker RPC.
+	BrokerServiceSearchBrokerProcedure = "/alfq.v1.BrokerService/SearchBroker"
 	// AccountServiceCreateAccountProcedure is the fully-qualified name of the AccountService's
 	// CreateAccount RPC.
 	AccountServiceCreateAccountProcedure = "/alfq.v1.AccountService/CreateAccount"
@@ -64,6 +67,12 @@ const (
 	// AccountServiceDeleteAccountProcedure is the fully-qualified name of the AccountService's
 	// DeleteAccount RPC.
 	AccountServiceDeleteAccountProcedure = "/alfq.v1.AccountService/DeleteAccount"
+	// AccountServiceConnectAccountProcedure is the fully-qualified name of the AccountService's
+	// ConnectAccount RPC.
+	AccountServiceConnectAccountProcedure = "/alfq.v1.AccountService/ConnectAccount"
+	// AccountServiceDisconnectAccountProcedure is the fully-qualified name of the AccountService's
+	// DisconnectAccount RPC.
+	AccountServiceDisconnectAccountProcedure = "/alfq.v1.AccountService/DisconnectAccount"
 )
 
 // BrokerServiceClient is a client for the alfq.v1.BrokerService service.
@@ -73,6 +82,7 @@ type BrokerServiceClient interface {
 	ListBrokers(context.Context, *connect.Request[v1.ListBrokersRequest]) (*connect.Response[v1.ListBrokersResponse], error)
 	UpdateBroker(context.Context, *connect.Request[v1.Broker]) (*connect.Response[v1.Broker], error)
 	DeleteBroker(context.Context, *connect.Request[v1.DeleteBrokerRequest]) (*connect.Response[v1.DeleteBrokerResponse], error)
+	SearchBroker(context.Context, *connect.Request[v1.SearchBrokerRequest]) (*connect.Response[v1.SearchBrokerResponse], error)
 }
 
 // NewBrokerServiceClient constructs a client for the alfq.v1.BrokerService service. By default, it
@@ -116,6 +126,12 @@ func NewBrokerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(brokerServiceMethods.ByName("DeleteBroker")),
 			connect.WithClientOptions(opts...),
 		),
+		searchBroker: connect.NewClient[v1.SearchBrokerRequest, v1.SearchBrokerResponse](
+			httpClient,
+			baseURL+BrokerServiceSearchBrokerProcedure,
+			connect.WithSchema(brokerServiceMethods.ByName("SearchBroker")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -126,6 +142,7 @@ type brokerServiceClient struct {
 	listBrokers  *connect.Client[v1.ListBrokersRequest, v1.ListBrokersResponse]
 	updateBroker *connect.Client[v1.Broker, v1.Broker]
 	deleteBroker *connect.Client[v1.DeleteBrokerRequest, v1.DeleteBrokerResponse]
+	searchBroker *connect.Client[v1.SearchBrokerRequest, v1.SearchBrokerResponse]
 }
 
 // CreateBroker calls alfq.v1.BrokerService.CreateBroker.
@@ -153,6 +170,11 @@ func (c *brokerServiceClient) DeleteBroker(ctx context.Context, req *connect.Req
 	return c.deleteBroker.CallUnary(ctx, req)
 }
 
+// SearchBroker calls alfq.v1.BrokerService.SearchBroker.
+func (c *brokerServiceClient) SearchBroker(ctx context.Context, req *connect.Request[v1.SearchBrokerRequest]) (*connect.Response[v1.SearchBrokerResponse], error) {
+	return c.searchBroker.CallUnary(ctx, req)
+}
+
 // BrokerServiceHandler is an implementation of the alfq.v1.BrokerService service.
 type BrokerServiceHandler interface {
 	CreateBroker(context.Context, *connect.Request[v1.CreateBrokerRequest]) (*connect.Response[v1.Broker], error)
@@ -160,6 +182,7 @@ type BrokerServiceHandler interface {
 	ListBrokers(context.Context, *connect.Request[v1.ListBrokersRequest]) (*connect.Response[v1.ListBrokersResponse], error)
 	UpdateBroker(context.Context, *connect.Request[v1.Broker]) (*connect.Response[v1.Broker], error)
 	DeleteBroker(context.Context, *connect.Request[v1.DeleteBrokerRequest]) (*connect.Response[v1.DeleteBrokerResponse], error)
+	SearchBroker(context.Context, *connect.Request[v1.SearchBrokerRequest]) (*connect.Response[v1.SearchBrokerResponse], error)
 }
 
 // NewBrokerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -199,6 +222,12 @@ func NewBrokerServiceHandler(svc BrokerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(brokerServiceMethods.ByName("DeleteBroker")),
 		connect.WithHandlerOptions(opts...),
 	)
+	brokerServiceSearchBrokerHandler := connect.NewUnaryHandler(
+		BrokerServiceSearchBrokerProcedure,
+		svc.SearchBroker,
+		connect.WithSchema(brokerServiceMethods.ByName("SearchBroker")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/alfq.v1.BrokerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BrokerServiceCreateBrokerProcedure:
@@ -211,6 +240,8 @@ func NewBrokerServiceHandler(svc BrokerServiceHandler, opts ...connect.HandlerOp
 			brokerServiceUpdateBrokerHandler.ServeHTTP(w, r)
 		case BrokerServiceDeleteBrokerProcedure:
 			brokerServiceDeleteBrokerHandler.ServeHTTP(w, r)
+		case BrokerServiceSearchBrokerProcedure:
+			brokerServiceSearchBrokerHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -240,6 +271,10 @@ func (UnimplementedBrokerServiceHandler) DeleteBroker(context.Context, *connect.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.BrokerService.DeleteBroker is not implemented"))
 }
 
+func (UnimplementedBrokerServiceHandler) SearchBroker(context.Context, *connect.Request[v1.SearchBrokerRequest]) (*connect.Response[v1.SearchBrokerResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.BrokerService.SearchBroker is not implemented"))
+}
+
 // AccountServiceClient is a client for the alfq.v1.AccountService service.
 type AccountServiceClient interface {
 	CreateAccount(context.Context, *connect.Request[v1.CreateAccountRequest]) (*connect.Response[v1.Account], error)
@@ -247,6 +282,8 @@ type AccountServiceClient interface {
 	ListAccounts(context.Context, *connect.Request[v1.ListAccountsRequest]) (*connect.Response[v1.ListAccountsResponse], error)
 	UpdateAccount(context.Context, *connect.Request[v1.Account]) (*connect.Response[v1.Account], error)
 	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
+	ConnectAccount(context.Context, *connect.Request[v1.ConnectAccountRequest]) (*connect.Response[v1.ConnectAccountResponse], error)
+	DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error)
 }
 
 // NewAccountServiceClient constructs a client for the alfq.v1.AccountService service. By default,
@@ -290,16 +327,30 @@ func NewAccountServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(accountServiceMethods.ByName("DeleteAccount")),
 			connect.WithClientOptions(opts...),
 		),
+		connectAccount: connect.NewClient[v1.ConnectAccountRequest, v1.ConnectAccountResponse](
+			httpClient,
+			baseURL+AccountServiceConnectAccountProcedure,
+			connect.WithSchema(accountServiceMethods.ByName("ConnectAccount")),
+			connect.WithClientOptions(opts...),
+		),
+		disconnectAccount: connect.NewClient[v1.DisconnectAccountRequest, v1.DisconnectAccountResponse](
+			httpClient,
+			baseURL+AccountServiceDisconnectAccountProcedure,
+			connect.WithSchema(accountServiceMethods.ByName("DisconnectAccount")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // accountServiceClient implements AccountServiceClient.
 type accountServiceClient struct {
-	createAccount *connect.Client[v1.CreateAccountRequest, v1.Account]
-	getAccount    *connect.Client[v1.GetAccountRequest, v1.Account]
-	listAccounts  *connect.Client[v1.ListAccountsRequest, v1.ListAccountsResponse]
-	updateAccount *connect.Client[v1.Account, v1.Account]
-	deleteAccount *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
+	createAccount     *connect.Client[v1.CreateAccountRequest, v1.Account]
+	getAccount        *connect.Client[v1.GetAccountRequest, v1.Account]
+	listAccounts      *connect.Client[v1.ListAccountsRequest, v1.ListAccountsResponse]
+	updateAccount     *connect.Client[v1.Account, v1.Account]
+	deleteAccount     *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
+	connectAccount    *connect.Client[v1.ConnectAccountRequest, v1.ConnectAccountResponse]
+	disconnectAccount *connect.Client[v1.DisconnectAccountRequest, v1.DisconnectAccountResponse]
 }
 
 // CreateAccount calls alfq.v1.AccountService.CreateAccount.
@@ -327,6 +378,16 @@ func (c *accountServiceClient) DeleteAccount(ctx context.Context, req *connect.R
 	return c.deleteAccount.CallUnary(ctx, req)
 }
 
+// ConnectAccount calls alfq.v1.AccountService.ConnectAccount.
+func (c *accountServiceClient) ConnectAccount(ctx context.Context, req *connect.Request[v1.ConnectAccountRequest]) (*connect.Response[v1.ConnectAccountResponse], error) {
+	return c.connectAccount.CallUnary(ctx, req)
+}
+
+// DisconnectAccount calls alfq.v1.AccountService.DisconnectAccount.
+func (c *accountServiceClient) DisconnectAccount(ctx context.Context, req *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error) {
+	return c.disconnectAccount.CallUnary(ctx, req)
+}
+
 // AccountServiceHandler is an implementation of the alfq.v1.AccountService service.
 type AccountServiceHandler interface {
 	CreateAccount(context.Context, *connect.Request[v1.CreateAccountRequest]) (*connect.Response[v1.Account], error)
@@ -334,6 +395,8 @@ type AccountServiceHandler interface {
 	ListAccounts(context.Context, *connect.Request[v1.ListAccountsRequest]) (*connect.Response[v1.ListAccountsResponse], error)
 	UpdateAccount(context.Context, *connect.Request[v1.Account]) (*connect.Response[v1.Account], error)
 	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
+	ConnectAccount(context.Context, *connect.Request[v1.ConnectAccountRequest]) (*connect.Response[v1.ConnectAccountResponse], error)
+	DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error)
 }
 
 // NewAccountServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -373,6 +436,18 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 		connect.WithSchema(accountServiceMethods.ByName("DeleteAccount")),
 		connect.WithHandlerOptions(opts...),
 	)
+	accountServiceConnectAccountHandler := connect.NewUnaryHandler(
+		AccountServiceConnectAccountProcedure,
+		svc.ConnectAccount,
+		connect.WithSchema(accountServiceMethods.ByName("ConnectAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accountServiceDisconnectAccountHandler := connect.NewUnaryHandler(
+		AccountServiceDisconnectAccountProcedure,
+		svc.DisconnectAccount,
+		connect.WithSchema(accountServiceMethods.ByName("DisconnectAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/alfq.v1.AccountService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AccountServiceCreateAccountProcedure:
@@ -385,6 +460,10 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 			accountServiceUpdateAccountHandler.ServeHTTP(w, r)
 		case AccountServiceDeleteAccountProcedure:
 			accountServiceDeleteAccountHandler.ServeHTTP(w, r)
+		case AccountServiceConnectAccountProcedure:
+			accountServiceConnectAccountHandler.ServeHTTP(w, r)
+		case AccountServiceDisconnectAccountProcedure:
+			accountServiceDisconnectAccountHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -412,4 +491,12 @@ func (UnimplementedAccountServiceHandler) UpdateAccount(context.Context, *connec
 
 func (UnimplementedAccountServiceHandler) DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.DeleteAccount is not implemented"))
+}
+
+func (UnimplementedAccountServiceHandler) ConnectAccount(context.Context, *connect.Request[v1.ConnectAccountRequest]) (*connect.Response[v1.ConnectAccountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.ConnectAccount is not implemented"))
+}
+
+func (UnimplementedAccountServiceHandler) DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.DisconnectAccount is not implemented"))
 }

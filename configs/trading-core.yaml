@@ -42,6 +42,16 @@ redis:
 nats:
   url: nats://localhost:4222
 
+# MT4/MT5 gRPC 网关（经纪商搜索、账户连接）
+mt4_gateway:
+  addr: mt4grpc3.mtapi.io:443
+  use_tls: true
+  timeout: 30s
+mt5_gateway:
+  addr: mt5grpc3.mtapi.io:443
+  use_tls: true
+  timeout: 30s
+
 # HashiCorp Vault（TOTP secret 加密、动态凭据）
 # 注：broker 账号密码因 MT 协议要求明文，不纳入 Vault，见 doc 02 §1.3
 vault:

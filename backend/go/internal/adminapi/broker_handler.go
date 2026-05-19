@@ -113,9 +113,12 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 		}
 	}
 
-	// 2. Try online MT5 gateway search
-	gatewayAddr := mtapi.MT5GatewayAddr()
-	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gatewayAddr, req.Keyword); err == nil && len(onlineMatches) > 0 {
+	// 2. Try online gateway search (MT4 and MT5)
+	gw := s.mt5Gateway
+	if strings.EqualFold(req.Platform, "MT4") {
+		gw = s.mt4Gateway
+	}
+	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gw, req.Platform, req.Keyword); err == nil && len(onlineMatches) > 0 {
 		var matches []*pb.BrokerMatch
 		for _, m := range onlineMatches {
 			matches = append(matches, &pb.BrokerMatch{

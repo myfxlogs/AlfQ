@@ -9,6 +9,7 @@ package alfqv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -401,6 +402,154 @@ func (*DeleteBrokerResponse) Descriptor() ([]byte, []int) {
 	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{6}
 }
 
+type SearchBrokerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Platform      string                 `protobuf:"bytes,1,opt,name=platform,proto3" json:"platform,omitempty"` // "MT4" or "MT5"
+	Keyword       string                 `protobuf:"bytes,2,opt,name=keyword,proto3" json:"keyword,omitempty"`   // partial company name
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchBrokerRequest) Reset() {
+	*x = SearchBrokerRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchBrokerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchBrokerRequest) ProtoMessage() {}
+
+func (x *SearchBrokerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchBrokerRequest.ProtoReflect.Descriptor instead.
+func (*SearchBrokerRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SearchBrokerRequest) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+func (x *SearchBrokerRequest) GetKeyword() string {
+	if x != nil {
+		return x.Keyword
+	}
+	return ""
+}
+
+type SearchBrokerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Matches       []*BrokerMatch         `protobuf:"bytes,1,rep,name=matches,proto3" json:"matches,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchBrokerResponse) Reset() {
+	*x = SearchBrokerResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchBrokerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchBrokerResponse) ProtoMessage() {}
+
+func (x *SearchBrokerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchBrokerResponse.ProtoReflect.Descriptor instead.
+func (*SearchBrokerResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SearchBrokerResponse) GetMatches() []*BrokerMatch {
+	if x != nil {
+		return x.Matches
+	}
+	return nil
+}
+
+type BrokerMatch struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Company       string                 `protobuf:"bytes,1,opt,name=company,proto3" json:"company,omitempty"`
+	Servers       []string               `protobuf:"bytes,2,rep,name=servers,proto3" json:"servers,omitempty"` // e.g. ["mt4-demo.roboforex.com:443"]
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BrokerMatch) Reset() {
+	*x = BrokerMatch{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BrokerMatch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BrokerMatch) ProtoMessage() {}
+
+func (x *BrokerMatch) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BrokerMatch.ProtoReflect.Descriptor instead.
+func (*BrokerMatch) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BrokerMatch) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *BrokerMatch) GetServers() []string {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
 type Account struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -411,13 +560,26 @@ type Account struct {
 	AccountType   string                 `protobuf:"bytes,6,opt,name=account_type,json=accountType,proto3" json:"account_type,omitempty"`
 	Currency      string                 `protobuf:"bytes,7,opt,name=currency,proto3" json:"currency,omitempty"`
 	Leverage      int32                  `protobuf:"varint,8,opt,name=leverage,proto3" json:"leverage,omitempty"`
+	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"` // "connecting" | "connected" | "disconnected" | "error"
+	Balance       float64                `protobuf:"fixed64,10,opt,name=balance,proto3" json:"balance,omitempty"`
+	Equity        float64                `protobuf:"fixed64,11,opt,name=equity,proto3" json:"equity,omitempty"`
+	Margin        float64                `protobuf:"fixed64,12,opt,name=margin,proto3" json:"margin,omitempty"`
+	FreeMargin    float64                `protobuf:"fixed64,13,opt,name=free_margin,json=freeMargin,proto3" json:"free_margin,omitempty"`
+	MarginLevel   float64                `protobuf:"fixed64,14,opt,name=margin_level,json=marginLevel,proto3" json:"margin_level,omitempty"`
+	Profit        float64                `protobuf:"fixed64,15,opt,name=profit,proto3" json:"profit,omitempty"`
+	ProfitPercent float64                `protobuf:"fixed64,16,opt,name=profit_percent,json=profitPercent,proto3" json:"profit_percent,omitempty"`
+	IsDisabled    bool                   `protobuf:"varint,17,opt,name=is_disabled,json=isDisabled,proto3" json:"is_disabled,omitempty"`
+	LastError     string                 `protobuf:"bytes,18,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	Alias         string                 `protobuf:"bytes,19,opt,name=alias,proto3" json:"alias,omitempty"`
+	ConnectedAt   *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=connected_at,json=connectedAt,proto3" json:"connected_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Account) Reset() {
 	*x = Account{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[7]
+	mi := &file_alfq_v1_broker_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +591,7 @@ func (x *Account) String() string {
 func (*Account) ProtoMessage() {}
 
 func (x *Account) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[7]
+	mi := &file_alfq_v1_broker_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +604,7 @@ func (x *Account) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Account.ProtoReflect.Descriptor instead.
 func (*Account) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{7}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Account) GetId() string {
@@ -501,6 +663,97 @@ func (x *Account) GetLeverage() int32 {
 	return 0
 }
 
+func (x *Account) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *Account) GetBalance() float64 {
+	if x != nil {
+		return x.Balance
+	}
+	return 0
+}
+
+func (x *Account) GetEquity() float64 {
+	if x != nil {
+		return x.Equity
+	}
+	return 0
+}
+
+func (x *Account) GetMargin() float64 {
+	if x != nil {
+		return x.Margin
+	}
+	return 0
+}
+
+func (x *Account) GetFreeMargin() float64 {
+	if x != nil {
+		return x.FreeMargin
+	}
+	return 0
+}
+
+func (x *Account) GetMarginLevel() float64 {
+	if x != nil {
+		return x.MarginLevel
+	}
+	return 0
+}
+
+func (x *Account) GetProfit() float64 {
+	if x != nil {
+		return x.Profit
+	}
+	return 0
+}
+
+func (x *Account) GetProfitPercent() float64 {
+	if x != nil {
+		return x.ProfitPercent
+	}
+	return 0
+}
+
+func (x *Account) GetIsDisabled() bool {
+	if x != nil {
+		return x.IsDisabled
+	}
+	return false
+}
+
+func (x *Account) GetLastError() string {
+	if x != nil {
+		return x.LastError
+	}
+	return ""
+}
+
+func (x *Account) GetAlias() string {
+	if x != nil {
+		return x.Alias
+	}
+	return ""
+}
+
+func (x *Account) GetConnectedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ConnectedAt
+	}
+	return nil
+}
+
+func (x *Account) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 type CreateAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
@@ -508,13 +761,14 @@ type CreateAccountRequest struct {
 	Login         string                 `protobuf:"bytes,3,opt,name=login,proto3" json:"login,omitempty"`
 	Password      string                 `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
 	Server        string                 `protobuf:"bytes,5,opt,name=server,proto3" json:"server,omitempty"`
+	AccountType   string                 `protobuf:"bytes,6,opt,name=account_type,json=accountType,proto3" json:"account_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateAccountRequest) Reset() {
 	*x = CreateAccountRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[8]
+	mi := &file_alfq_v1_broker_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -526,7 +780,7 @@ func (x *CreateAccountRequest) String() string {
 func (*CreateAccountRequest) ProtoMessage() {}
 
 func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[8]
+	mi := &file_alfq_v1_broker_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -539,7 +793,7 @@ func (x *CreateAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccountRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{8}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CreateAccountRequest) GetTenantId() string {
@@ -577,6 +831,13 @@ func (x *CreateAccountRequest) GetServer() string {
 	return ""
 }
 
+func (x *CreateAccountRequest) GetAccountType() string {
+	if x != nil {
+		return x.AccountType
+	}
+	return ""
+}
+
 type GetAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -586,7 +847,7 @@ type GetAccountRequest struct {
 
 func (x *GetAccountRequest) Reset() {
 	*x = GetAccountRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[9]
+	mi := &file_alfq_v1_broker_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -598,7 +859,7 @@ func (x *GetAccountRequest) String() string {
 func (*GetAccountRequest) ProtoMessage() {}
 
 func (x *GetAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[9]
+	mi := &file_alfq_v1_broker_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -611,7 +872,7 @@ func (x *GetAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccountRequest.ProtoReflect.Descriptor instead.
 func (*GetAccountRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{9}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetAccountRequest) GetId() string {
@@ -630,7 +891,7 @@ type ListAccountsRequest struct {
 
 func (x *ListAccountsRequest) Reset() {
 	*x = ListAccountsRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[10]
+	mi := &file_alfq_v1_broker_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -642,7 +903,7 @@ func (x *ListAccountsRequest) String() string {
 func (*ListAccountsRequest) ProtoMessage() {}
 
 func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[10]
+	mi := &file_alfq_v1_broker_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -655,7 +916,7 @@ func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccountsRequest.ProtoReflect.Descriptor instead.
 func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{10}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListAccountsRequest) GetTenantId() string {
@@ -674,7 +935,7 @@ type ListAccountsResponse struct {
 
 func (x *ListAccountsResponse) Reset() {
 	*x = ListAccountsResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[11]
+	mi := &file_alfq_v1_broker_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +947,7 @@ func (x *ListAccountsResponse) String() string {
 func (*ListAccountsResponse) ProtoMessage() {}
 
 func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[11]
+	mi := &file_alfq_v1_broker_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +960,7 @@ func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccountsResponse.ProtoReflect.Descriptor instead.
 func (*ListAccountsResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{11}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListAccountsResponse) GetAccounts() []*Account {
@@ -718,7 +979,7 @@ type DeleteAccountRequest struct {
 
 func (x *DeleteAccountRequest) Reset() {
 	*x = DeleteAccountRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[12]
+	mi := &file_alfq_v1_broker_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +991,7 @@ func (x *DeleteAccountRequest) String() string {
 func (*DeleteAccountRequest) ProtoMessage() {}
 
 func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[12]
+	mi := &file_alfq_v1_broker_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +1004,7 @@ func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{12}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DeleteAccountRequest) GetId() string {
@@ -761,7 +1022,7 @@ type DeleteAccountResponse struct {
 
 func (x *DeleteAccountResponse) Reset() {
 	*x = DeleteAccountResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[13]
+	mi := &file_alfq_v1_broker_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -773,7 +1034,7 @@ func (x *DeleteAccountResponse) String() string {
 func (*DeleteAccountResponse) ProtoMessage() {}
 
 func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[13]
+	mi := &file_alfq_v1_broker_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -786,14 +1047,174 @@ func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{13}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{16}
+}
+
+type ConnectAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConnectAccountRequest) Reset() {
+	*x = ConnectAccountRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConnectAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectAccountRequest) ProtoMessage() {}
+
+func (x *ConnectAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectAccountRequest.ProtoReflect.Descriptor instead.
+func (*ConnectAccountRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ConnectAccountRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type ConnectAccountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConnectAccountResponse) Reset() {
+	*x = ConnectAccountResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConnectAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectAccountResponse) ProtoMessage() {}
+
+func (x *ConnectAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectAccountResponse.ProtoReflect.Descriptor instead.
+func (*ConnectAccountResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{18}
+}
+
+type DisconnectAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisconnectAccountRequest) Reset() {
+	*x = DisconnectAccountRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisconnectAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisconnectAccountRequest) ProtoMessage() {}
+
+func (x *DisconnectAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisconnectAccountRequest.ProtoReflect.Descriptor instead.
+func (*DisconnectAccountRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *DisconnectAccountRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DisconnectAccountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisconnectAccountResponse) Reset() {
+	*x = DisconnectAccountResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisconnectAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisconnectAccountResponse) ProtoMessage() {}
+
+func (x *DisconnectAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisconnectAccountResponse.ProtoReflect.Descriptor instead.
+func (*DisconnectAccountResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{20}
 }
 
 var File_alfq_v1_broker_proto protoreflect.FileDescriptor
 
 const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\n" +
-	"\x14alfq/v1/broker.proto\x12\aalfq.v1\"\xc7\x01\n" +
+	"\x14alfq/v1/broker.proto\x12\aalfq.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc7\x01\n" +
 	"\x06Broker\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x12\n" +
@@ -816,7 +1237,15 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\abrokers\x18\x01 \x03(\v2\x0f.alfq.v1.BrokerR\abrokers\"%\n" +
 	"\x13DeleteBrokerRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
-	"\x14DeleteBrokerResponse\"\xdc\x01\n" +
+	"\x14DeleteBrokerResponse\"K\n" +
+	"\x13SearchBrokerRequest\x12\x1a\n" +
+	"\bplatform\x18\x01 \x01(\tR\bplatform\x12\x18\n" +
+	"\akeyword\x18\x02 \x01(\tR\akeyword\"F\n" +
+	"\x14SearchBrokerResponse\x12.\n" +
+	"\amatches\x18\x01 \x03(\v2\x14.alfq.v1.BrokerMatchR\amatches\"A\n" +
+	"\vBrokerMatch\x12\x18\n" +
+	"\acompany\x18\x01 \x01(\tR\acompany\x12\x18\n" +
+	"\aservers\x18\x02 \x03(\tR\aservers\"\x91\x05\n" +
 	"\aAccount\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x1b\n" +
@@ -825,13 +1254,32 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\x06server\x18\x05 \x01(\tR\x06server\x12!\n" +
 	"\faccount_type\x18\x06 \x01(\tR\vaccountType\x12\x1a\n" +
 	"\bcurrency\x18\a \x01(\tR\bcurrency\x12\x1a\n" +
-	"\bleverage\x18\b \x01(\x05R\bleverage\"\x9a\x01\n" +
+	"\bleverage\x18\b \x01(\x05R\bleverage\x12\x16\n" +
+	"\x06status\x18\t \x01(\tR\x06status\x12\x18\n" +
+	"\abalance\x18\n" +
+	" \x01(\x01R\abalance\x12\x16\n" +
+	"\x06equity\x18\v \x01(\x01R\x06equity\x12\x16\n" +
+	"\x06margin\x18\f \x01(\x01R\x06margin\x12\x1f\n" +
+	"\vfree_margin\x18\r \x01(\x01R\n" +
+	"freeMargin\x12!\n" +
+	"\fmargin_level\x18\x0e \x01(\x01R\vmarginLevel\x12\x16\n" +
+	"\x06profit\x18\x0f \x01(\x01R\x06profit\x12%\n" +
+	"\x0eprofit_percent\x18\x10 \x01(\x01R\rprofitPercent\x12\x1f\n" +
+	"\vis_disabled\x18\x11 \x01(\bR\n" +
+	"isDisabled\x12\x1d\n" +
+	"\n" +
+	"last_error\x18\x12 \x01(\tR\tlastError\x12\x14\n" +
+	"\x05alias\x18\x13 \x01(\tR\x05alias\x12=\n" +
+	"\fconnected_at\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\vconnectedAt\x129\n" +
+	"\n" +
+	"created_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xbd\x01\n" +
 	"\x14CreateAccountRequest\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1b\n" +
 	"\tbroker_id\x18\x02 \x01(\tR\bbrokerId\x12\x14\n" +
 	"\x05login\x18\x03 \x01(\tR\x05login\x12\x1a\n" +
 	"\bpassword\x18\x04 \x01(\tR\bpassword\x12\x16\n" +
-	"\x06server\x18\x05 \x01(\tR\x06server\"#\n" +
+	"\x06server\x18\x05 \x01(\tR\x06server\x12!\n" +
+	"\faccount_type\x18\x06 \x01(\tR\vaccountType\"#\n" +
 	"\x11GetAccountRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"2\n" +
 	"\x13ListAccountsRequest\x12\x1b\n" +
@@ -840,20 +1288,29 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\baccounts\x18\x01 \x03(\v2\x10.alfq.v1.AccountR\baccounts\"&\n" +
 	"\x14DeleteAccountRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x17\n" +
-	"\x15DeleteAccountResponse2\xd0\x02\n" +
+	"\x15DeleteAccountResponse\"'\n" +
+	"\x15ConnectAccountRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x18\n" +
+	"\x16ConnectAccountResponse\"*\n" +
+	"\x18DisconnectAccountRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x1b\n" +
+	"\x19DisconnectAccountResponse2\x9d\x03\n" +
 	"\rBrokerService\x12=\n" +
 	"\fCreateBroker\x12\x1c.alfq.v1.CreateBrokerRequest\x1a\x0f.alfq.v1.Broker\x127\n" +
 	"\tGetBroker\x12\x19.alfq.v1.GetBrokerRequest\x1a\x0f.alfq.v1.Broker\x12H\n" +
 	"\vListBrokers\x12\x1b.alfq.v1.ListBrokersRequest\x1a\x1c.alfq.v1.ListBrokersResponse\x120\n" +
 	"\fUpdateBroker\x12\x0f.alfq.v1.Broker\x1a\x0f.alfq.v1.Broker\x12K\n" +
-	"\fDeleteBroker\x12\x1c.alfq.v1.DeleteBrokerRequest\x1a\x1d.alfq.v1.DeleteBrokerResponse2\xe0\x02\n" +
+	"\fDeleteBroker\x12\x1c.alfq.v1.DeleteBrokerRequest\x1a\x1d.alfq.v1.DeleteBrokerResponse\x12K\n" +
+	"\fSearchBroker\x12\x1c.alfq.v1.SearchBrokerRequest\x1a\x1d.alfq.v1.SearchBrokerResponse2\x8f\x04\n" +
 	"\x0eAccountService\x12@\n" +
 	"\rCreateAccount\x12\x1d.alfq.v1.CreateAccountRequest\x1a\x10.alfq.v1.Account\x12:\n" +
 	"\n" +
 	"GetAccount\x12\x1a.alfq.v1.GetAccountRequest\x1a\x10.alfq.v1.Account\x12K\n" +
 	"\fListAccounts\x12\x1c.alfq.v1.ListAccountsRequest\x1a\x1d.alfq.v1.ListAccountsResponse\x123\n" +
 	"\rUpdateAccount\x12\x10.alfq.v1.Account\x1a\x10.alfq.v1.Account\x12N\n" +
-	"\rDeleteAccount\x12\x1d.alfq.v1.DeleteAccountRequest\x1a\x1e.alfq.v1.DeleteAccountResponseB\x86\x01\n" +
+	"\rDeleteAccount\x12\x1d.alfq.v1.DeleteAccountRequest\x1a\x1e.alfq.v1.DeleteAccountResponse\x12Q\n" +
+	"\x0eConnectAccount\x12\x1e.alfq.v1.ConnectAccountRequest\x1a\x1f.alfq.v1.ConnectAccountResponse\x12Z\n" +
+	"\x11DisconnectAccount\x12!.alfq.v1.DisconnectAccountRequest\x1a\".alfq.v1.DisconnectAccountResponseB\x86\x01\n" +
 	"\vcom.alfq.v1B\vBrokerProtoP\x01Z-github.com/alfq/backend/go/gen/alfq/v1;alfqv1\xa2\x02\x03AXX\xaa\x02\aAlfq.V1\xca\x02\aAlfq\\V1\xe2\x02\x13Alfq\\V1\\GPBMetadata\xea\x02\bAlfq::V1b\x06proto3"
 
 var (
@@ -868,51 +1325,68 @@ func file_alfq_v1_broker_proto_rawDescGZIP() []byte {
 	return file_alfq_v1_broker_proto_rawDescData
 }
 
-var file_alfq_v1_broker_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_alfq_v1_broker_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_alfq_v1_broker_proto_goTypes = []any{
-	(*Broker)(nil),                // 0: alfq.v1.Broker
-	(*CreateBrokerRequest)(nil),   // 1: alfq.v1.CreateBrokerRequest
-	(*GetBrokerRequest)(nil),      // 2: alfq.v1.GetBrokerRequest
-	(*ListBrokersRequest)(nil),    // 3: alfq.v1.ListBrokersRequest
-	(*ListBrokersResponse)(nil),   // 4: alfq.v1.ListBrokersResponse
-	(*DeleteBrokerRequest)(nil),   // 5: alfq.v1.DeleteBrokerRequest
-	(*DeleteBrokerResponse)(nil),  // 6: alfq.v1.DeleteBrokerResponse
-	(*Account)(nil),               // 7: alfq.v1.Account
-	(*CreateAccountRequest)(nil),  // 8: alfq.v1.CreateAccountRequest
-	(*GetAccountRequest)(nil),     // 9: alfq.v1.GetAccountRequest
-	(*ListAccountsRequest)(nil),   // 10: alfq.v1.ListAccountsRequest
-	(*ListAccountsResponse)(nil),  // 11: alfq.v1.ListAccountsResponse
-	(*DeleteAccountRequest)(nil),  // 12: alfq.v1.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil), // 13: alfq.v1.DeleteAccountResponse
+	(*Broker)(nil),                    // 0: alfq.v1.Broker
+	(*CreateBrokerRequest)(nil),       // 1: alfq.v1.CreateBrokerRequest
+	(*GetBrokerRequest)(nil),          // 2: alfq.v1.GetBrokerRequest
+	(*ListBrokersRequest)(nil),        // 3: alfq.v1.ListBrokersRequest
+	(*ListBrokersResponse)(nil),       // 4: alfq.v1.ListBrokersResponse
+	(*DeleteBrokerRequest)(nil),       // 5: alfq.v1.DeleteBrokerRequest
+	(*DeleteBrokerResponse)(nil),      // 6: alfq.v1.DeleteBrokerResponse
+	(*SearchBrokerRequest)(nil),       // 7: alfq.v1.SearchBrokerRequest
+	(*SearchBrokerResponse)(nil),      // 8: alfq.v1.SearchBrokerResponse
+	(*BrokerMatch)(nil),               // 9: alfq.v1.BrokerMatch
+	(*Account)(nil),                   // 10: alfq.v1.Account
+	(*CreateAccountRequest)(nil),      // 11: alfq.v1.CreateAccountRequest
+	(*GetAccountRequest)(nil),         // 12: alfq.v1.GetAccountRequest
+	(*ListAccountsRequest)(nil),       // 13: alfq.v1.ListAccountsRequest
+	(*ListAccountsResponse)(nil),      // 14: alfq.v1.ListAccountsResponse
+	(*DeleteAccountRequest)(nil),      // 15: alfq.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),     // 16: alfq.v1.DeleteAccountResponse
+	(*ConnectAccountRequest)(nil),     // 17: alfq.v1.ConnectAccountRequest
+	(*ConnectAccountResponse)(nil),    // 18: alfq.v1.ConnectAccountResponse
+	(*DisconnectAccountRequest)(nil),  // 19: alfq.v1.DisconnectAccountRequest
+	(*DisconnectAccountResponse)(nil), // 20: alfq.v1.DisconnectAccountResponse
+	(*timestamppb.Timestamp)(nil),     // 21: google.protobuf.Timestamp
 }
 var file_alfq_v1_broker_proto_depIdxs = []int32{
 	0,  // 0: alfq.v1.ListBrokersResponse.brokers:type_name -> alfq.v1.Broker
-	7,  // 1: alfq.v1.ListAccountsResponse.accounts:type_name -> alfq.v1.Account
-	1,  // 2: alfq.v1.BrokerService.CreateBroker:input_type -> alfq.v1.CreateBrokerRequest
-	2,  // 3: alfq.v1.BrokerService.GetBroker:input_type -> alfq.v1.GetBrokerRequest
-	3,  // 4: alfq.v1.BrokerService.ListBrokers:input_type -> alfq.v1.ListBrokersRequest
-	0,  // 5: alfq.v1.BrokerService.UpdateBroker:input_type -> alfq.v1.Broker
-	5,  // 6: alfq.v1.BrokerService.DeleteBroker:input_type -> alfq.v1.DeleteBrokerRequest
-	8,  // 7: alfq.v1.AccountService.CreateAccount:input_type -> alfq.v1.CreateAccountRequest
-	9,  // 8: alfq.v1.AccountService.GetAccount:input_type -> alfq.v1.GetAccountRequest
-	10, // 9: alfq.v1.AccountService.ListAccounts:input_type -> alfq.v1.ListAccountsRequest
-	7,  // 10: alfq.v1.AccountService.UpdateAccount:input_type -> alfq.v1.Account
-	12, // 11: alfq.v1.AccountService.DeleteAccount:input_type -> alfq.v1.DeleteAccountRequest
-	0,  // 12: alfq.v1.BrokerService.CreateBroker:output_type -> alfq.v1.Broker
-	0,  // 13: alfq.v1.BrokerService.GetBroker:output_type -> alfq.v1.Broker
-	4,  // 14: alfq.v1.BrokerService.ListBrokers:output_type -> alfq.v1.ListBrokersResponse
-	0,  // 15: alfq.v1.BrokerService.UpdateBroker:output_type -> alfq.v1.Broker
-	6,  // 16: alfq.v1.BrokerService.DeleteBroker:output_type -> alfq.v1.DeleteBrokerResponse
-	7,  // 17: alfq.v1.AccountService.CreateAccount:output_type -> alfq.v1.Account
-	7,  // 18: alfq.v1.AccountService.GetAccount:output_type -> alfq.v1.Account
-	11, // 19: alfq.v1.AccountService.ListAccounts:output_type -> alfq.v1.ListAccountsResponse
-	7,  // 20: alfq.v1.AccountService.UpdateAccount:output_type -> alfq.v1.Account
-	13, // 21: alfq.v1.AccountService.DeleteAccount:output_type -> alfq.v1.DeleteAccountResponse
-	12, // [12:22] is the sub-list for method output_type
-	2,  // [2:12] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	9,  // 1: alfq.v1.SearchBrokerResponse.matches:type_name -> alfq.v1.BrokerMatch
+	21, // 2: alfq.v1.Account.connected_at:type_name -> google.protobuf.Timestamp
+	21, // 3: alfq.v1.Account.created_at:type_name -> google.protobuf.Timestamp
+	10, // 4: alfq.v1.ListAccountsResponse.accounts:type_name -> alfq.v1.Account
+	1,  // 5: alfq.v1.BrokerService.CreateBroker:input_type -> alfq.v1.CreateBrokerRequest
+	2,  // 6: alfq.v1.BrokerService.GetBroker:input_type -> alfq.v1.GetBrokerRequest
+	3,  // 7: alfq.v1.BrokerService.ListBrokers:input_type -> alfq.v1.ListBrokersRequest
+	0,  // 8: alfq.v1.BrokerService.UpdateBroker:input_type -> alfq.v1.Broker
+	5,  // 9: alfq.v1.BrokerService.DeleteBroker:input_type -> alfq.v1.DeleteBrokerRequest
+	7,  // 10: alfq.v1.BrokerService.SearchBroker:input_type -> alfq.v1.SearchBrokerRequest
+	11, // 11: alfq.v1.AccountService.CreateAccount:input_type -> alfq.v1.CreateAccountRequest
+	12, // 12: alfq.v1.AccountService.GetAccount:input_type -> alfq.v1.GetAccountRequest
+	13, // 13: alfq.v1.AccountService.ListAccounts:input_type -> alfq.v1.ListAccountsRequest
+	10, // 14: alfq.v1.AccountService.UpdateAccount:input_type -> alfq.v1.Account
+	15, // 15: alfq.v1.AccountService.DeleteAccount:input_type -> alfq.v1.DeleteAccountRequest
+	17, // 16: alfq.v1.AccountService.ConnectAccount:input_type -> alfq.v1.ConnectAccountRequest
+	19, // 17: alfq.v1.AccountService.DisconnectAccount:input_type -> alfq.v1.DisconnectAccountRequest
+	0,  // 18: alfq.v1.BrokerService.CreateBroker:output_type -> alfq.v1.Broker
+	0,  // 19: alfq.v1.BrokerService.GetBroker:output_type -> alfq.v1.Broker
+	4,  // 20: alfq.v1.BrokerService.ListBrokers:output_type -> alfq.v1.ListBrokersResponse
+	0,  // 21: alfq.v1.BrokerService.UpdateBroker:output_type -> alfq.v1.Broker
+	6,  // 22: alfq.v1.BrokerService.DeleteBroker:output_type -> alfq.v1.DeleteBrokerResponse
+	8,  // 23: alfq.v1.BrokerService.SearchBroker:output_type -> alfq.v1.SearchBrokerResponse
+	10, // 24: alfq.v1.AccountService.CreateAccount:output_type -> alfq.v1.Account
+	10, // 25: alfq.v1.AccountService.GetAccount:output_type -> alfq.v1.Account
+	14, // 26: alfq.v1.AccountService.ListAccounts:output_type -> alfq.v1.ListAccountsResponse
+	10, // 27: alfq.v1.AccountService.UpdateAccount:output_type -> alfq.v1.Account
+	16, // 28: alfq.v1.AccountService.DeleteAccount:output_type -> alfq.v1.DeleteAccountResponse
+	18, // 29: alfq.v1.AccountService.ConnectAccount:output_type -> alfq.v1.ConnectAccountResponse
+	20, // 30: alfq.v1.AccountService.DisconnectAccount:output_type -> alfq.v1.DisconnectAccountResponse
+	18, // [18:31] is the sub-list for method output_type
+	5,  // [5:18] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_alfq_v1_broker_proto_init() }
@@ -926,7 +1400,7 @@ func file_alfq_v1_broker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_alfq_v1_broker_proto_rawDesc), len(file_alfq_v1_broker_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

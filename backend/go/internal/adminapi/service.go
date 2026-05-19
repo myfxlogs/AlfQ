@@ -5,19 +5,35 @@ import (
 	"context"
 
 	"github.com/alfq/backend/go/internal/common/auth"
+	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"go.uber.org/zap"
 )
 
 // Service holds all RPC service implementations for trading-core API layer.
 type Service struct {
-	pool *pg.Pool
-	log  *zap.Logger
+	pool       *pg.Pool
+	log        *zap.Logger
+	mt4Gateway config.GatewayConfig
+	mt5Gateway config.GatewayConfig
 }
 
 // NewService creates a trading-core API service backed by a PG connection pool.
 func NewService(pool *pg.Pool) *Service {
 	return &Service{pool: pool, log: zap.NewNop()}
+}
+
+// WithGateways sets MT4/MT5 gateway configuration for online broker search.
+func (s *Service) WithGateways(mt4, mt5 config.GatewayConfig) *Service {
+	s.mt4Gateway = mt4
+	s.mt5Gateway = mt5
+	return s
+}
+
+// WithLog sets a logger (defaults to nop).
+func (s *Service) WithLog(log *zap.Logger) *Service {
+	s.log = log
+	return s
 }
 
 // defaultTenantID is used when no tenant is available from context.

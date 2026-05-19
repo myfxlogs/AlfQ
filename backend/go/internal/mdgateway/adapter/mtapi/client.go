@@ -3,13 +3,14 @@ package mtapi
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
-	"os"
 	"strings"
-	"time"
 
+	"github.com/alfq/backend/go/internal/common/config"
 	mt5pb "github.com/alfq/backend/go/gen/mt5"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -28,84 +29,127 @@ type AccountInfo struct {
 // BrokerMatch from online broker search.
 type BrokerMatch struct {
 	Company string
-	Servers []string // e.g. ["mt5-demo.roboforex.com:443"]
+	Servers []string
 }
 
-// MT5GatewayAddr returns the configured MT5 gRPC gateway address.
-func MT5GatewayAddr() string {
-	if addr := os.Getenv("MT5_GATEWAY_ADDR"); addr != "" {
-		return addr
-	}
-	return "mt5gateway:443" // default in docker compose
-}
+// ── Online broker search ──
 
-// SearchBrokersOnline queries the MT5 gRPC gateway for broker companies.
-func SearchBrokersOnline(ctx context.Context, gatewayAddr, company string) ([]BrokerMatch, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, gatewayAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
+// SearchBrokersOnline queries an MT gRPC gateway for broker companies.
+func SearchBrokersOnline(ctx context.Context, gw config.GatewayConfig, mtType, company string) ([]BrokerMatch, error) {
+	conn, err := dial(ctx, gw)
 	if err != nil {
-		return nil, fmt.Errorf("mtapi: dial gateway %s: %w", gatewayAddr, err)
+		return nil, fmt.Errorf("mtapi: dial %s gateway: %w", mtType, err)
 	}
 	defer conn.Close()
 
+	switch strings.ToUpper(mtType) {
+	case "MT5":
+		return searchMT5(ctx, conn, company)
+	case "MT4":
+		return searchMT4(ctx, conn, company)
+	default:
+		return nil, fmt.Errorf("mtapi: unsupported platform %q", mtType)
+	}
+}
+
+func searchMT5(ctx context.Context, conn *grpc.ClientConn, company string) ([]BrokerMatch, error) {
 	client := mt5pb.NewServiceClient(conn)
 	resp, err := client.Search(ctx, &mt5pb.SearchRequest{Company: company})
 	if err != nil {
-		return nil, fmt.Errorf("mtapi: search: %w", err)
+		return nil, fmt.Errorf("mtapi: mt5 search: %w", err)
 	}
-
 	var matches []BrokerMatch
 	for _, c := range resp.GetResult() {
 		var servers []string
 		for _, r := range c.GetResults() {
 			servers = append(servers, r.GetAccess()...)
 		}
-		matches = append(matches, BrokerMatch{
-			Company: c.GetCompanyName(),
-			Servers: servers,
-		})
+		matches = append(matches, BrokerMatch{Company: c.GetCompanyName(), Servers: servers})
 	}
 	return matches, nil
 }
 
-// TestConnectMT5 connects to an MT5 account via the gateway and returns account info.
-// gatewayAddr: the MT5 gRPC gateway address (e.g. "mt5gateway:443")
-// brokerHost/port: the actual broker server
-func TestConnectMT5(ctx context.Context, gatewayAddr, login, password, brokerHost string, brokerPort int32) (*AccountInfo, error) {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
+func searchMT4(ctx context.Context, conn *grpc.ClientConn, company string) ([]BrokerMatch, error) {
+	// MT4 gateway uses same Service/Search pattern
+	input := map[string]interface{}{"company": company}
+	output := make(map[string]interface{})
+	if err := conn.Invoke(ctx, "/mt4grpc.Service/Search", input, output); err != nil {
+		return nil, fmt.Errorf("mtapi: mt4 search: %w", err)
+	}
+	result, _ := output["result"].([]interface{})
+	var matches []BrokerMatch
+	for _, r := range result {
+		c, _ := r.(map[string]interface{})
+		companyName, _ := c["companyName"].(string)
+		results, _ := c["results"].([]interface{})
+		var servers []string
+		for _, rr := range results {
+			m, _ := rr.(map[string]interface{})
+			access, _ := m["access"].([]interface{})
+			for _, a := range access {
+				if s, ok := a.(string); ok {
+					servers = append(servers, s)
+				}
+			}
+		}
+		matches = append(matches, BrokerMatch{Company: companyName, Servers: servers})
+	}
+	return matches, nil
+}
 
-	conn, err := grpc.DialContext(ctx, gatewayAddr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
+// ── Account connection ──
+
+// TestConnect attempts to connect via gateway and returns account info.
+func TestConnect(ctx context.Context, gw config.GatewayConfig, mtType, login, password, brokerHostPort string) (*AccountInfo, error) {
+	conn, err := dial(ctx, gw)
 	if err != nil {
 		return nil, fmt.Errorf("mtapi: dial gateway: %w", err)
 	}
 	defer conn.Close()
 
+	host, port := splitHostPort(brokerHostPort, "443")
+
+	switch strings.ToUpper(mtType) {
+	case "MT5":
+		return connectMT5(ctx, conn, login, password, host, parsePort(port))
+	case "MT4":
+		return connectMT4(ctx, conn, login, password, host, port)
+	default:
+		return nil, fmt.Errorf("mtapi: unsupported platform %q", mtType)
+	}
+}
+
+func connectMT5(ctx context.Context, conn *grpc.ClientConn, login, password, host string, port int32) (*AccountInfo, error) {
 	connClient := mt5pb.NewConnectionClient(conn)
-	connectResp, err := connClient.Connect(ctx, &mt5pb.ConnectRequest{
+	resp, err := connClient.Connect(ctx, &mt5pb.ConnectRequest{
 		User:     parseUint(login),
 		Password: password,
-		Host:     brokerHost,
-		Port:     brokerPort,
+		Host:     host,
+		Port:     port,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("mtapi: connect: %w", err)
+		return nil, fmt.Errorf("mtapi: mt5 connect: %w", err)
 	}
-	if connectResp.GetError() != nil && connectResp.GetError().GetMessage() != "" {
-		return nil, fmt.Errorf("mtapi: mt5 error: %s", connectResp.GetError().GetMessage())
+	if resp.GetError() != nil && resp.GetError().GetMessage() != "" {
+		return nil, fmt.Errorf("mtapi: mt5 error: %s", resp.GetError().GetMessage())
 	}
+	return getAccountSummary(ctx, conn, "/mt5grpc.Connection/AccountSummary")
+}
 
-	// Get account summary via raw gRPC (generated client doesn't expose it)
+func connectMT4(ctx context.Context, conn *grpc.ClientConn, login, password, host, port string) (*AccountInfo, error) {
+	md := map[string]interface{}{
+		"user": login, "password": password, "host": host, "port": port,
+	}
+	output := make(map[string]interface{})
+	if err := conn.Invoke(ctx, "/mt4grpc.Connection/Connect", md, output); err != nil {
+		return nil, fmt.Errorf("mtapi: mt4 connect: %w", err)
+	}
+	return getAccountSummary(ctx, conn, "/mt4grpc.Connection/AccountSummary")
+}
+
+func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string) (*AccountInfo, error) {
 	summary := make(map[string]interface{})
-	conn.Invoke(ctx, "/mt5grpc.Connection/AccountSummary", map[string]interface{}{}, summary)
+	conn.Invoke(ctx, method, map[string]interface{}{}, summary)
 	result, _ := summary["result"].(map[string]interface{})
 	if result == nil {
 		return &AccountInfo{}, nil
@@ -122,18 +166,8 @@ func TestConnectMT5(ctx context.Context, gatewayAddr, login, password, brokerHos
 	}, nil
 }
 
-// TestConnect attempts MT5 connection via gateway, falls back to direct gRPC for MT4.
-func TestConnect(ctx context.Context, mtType, login, password, hostPort string) (*AccountInfo, error) {
-	gateway := MT5GatewayAddr()
-	if strings.ToUpper(mtType) == "MT5" {
-		host, port := splitHostPort(hostPort, "443")
-		return TestConnectMT5(ctx, gateway, login, password, host, parsePort(port))
-	}
-	// MT4: direct gRPC (fallback)
-	return testConnectDirect(ctx, login, password, hostPort)
-}
+// ── Builtin fallback ──
 
-// BuiltinBrokers returns a hardcoded list of well-known brokers as fallback.
 func BuiltinBrokers() []BrokerMatch {
 	return []BrokerMatch{
 		{Company: "RoboForex", Servers: []string{"mt4-demo.roboforex.com:443", "mt5-demo.roboforex.com:443"}},
@@ -147,7 +181,17 @@ func BuiltinBrokers() []BrokerMatch {
 	}
 }
 
-// ── helpers ──
+// ── internal ──
+
+func dial(ctx context.Context, gw config.GatewayConfig) (*grpc.ClientConn, error) {
+	dialOpts := []grpc.DialOption{grpc.WithBlock(), grpc.WithTimeout(gw.Timeout)}
+	if gw.UseTLS {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+	} else {
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+	return grpc.DialContext(ctx, gw.Addr, dialOpts...)
+}
 
 func splitHostPort(hostPort, defaultPort string) (string, string) {
 	parts := strings.Split(hostPort, ":")
@@ -167,60 +211,12 @@ func parseUint(s string) uint64 {
 	return n
 }
 
-func parsePort(s string) int32 {
-	n := parseUint(s)
-	if n == 0 {
-		return 443
-	}
-	return int32(n)
-}
-
-// ── low-level direct connect (MT4 / fallback) ──
-
-func testConnectDirect(ctx context.Context, login, password, hostPort string) (*AccountInfo, error) {
-	conn, err := grpc.DialContext(ctx, hostPort,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("mtapi: dial %s: %w", hostPort, err)
-	}
-	defer conn.Close()
-
-	host, port := splitHostPort(hostPort, "443")
-	md := map[string]interface{}{
-		"user": login, "password": password, "host": host, "port": port,
-	}
-	output := make(map[string]interface{})
-	if err := conn.Invoke(ctx, "/mt4grpc.Connection/Connect", md, output); err != nil {
-		return nil, fmt.Errorf("mtapi: connect: %w", err)
-	}
-
-	summary := make(map[string]interface{})
-	conn.Invoke(ctx, "/mt4grpc.Connection/AccountSummary", map[string]interface{}{}, summary)
-	return &AccountInfo{
-		Balance:     getFloat(summary, "balance"),
-		Equity:      getFloat(summary, "equity"),
-		Margin:      getFloat(summary, "margin"),
-		FreeMargin:  getFloat(summary, "freeMargin"),
-		MarginLevel: getFloat(summary, "marginLevel"),
-		Profit:      getFloat(summary, "profit"),
-		Currency:    getString(summary, "currency"),
-		Leverage:    int32(getFloat(summary, "leverage")),
-	}, nil
-}
+func parsePort(s string) int32 { n := parseUint(s); if n == 0 { return 443 }; return int32(n) }
 
 func getFloat(m map[string]interface{}, key string) float64 {
-	v, _ := m[key]
-	switch n := v.(type) {
-	case float64:
-		return n
-	case float32:
-		return float64(n)
-	}
+	if v, ok := m[key].(float64); ok { return v }
 	return 0
 }
-
 func getString(m map[string]interface{}, key string) string {
 	s, _ := m[key].(string)
 	return s

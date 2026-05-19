@@ -12,6 +12,7 @@ import (
 	"github.com/alfq/backend/go/internal/adminapi"
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/common/bus"
+	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/health"
 	"github.com/alfq/backend/go/internal/oms"
 	"github.com/alfq/backend/go/internal/oms/repo"
@@ -59,7 +60,12 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) error {
 	)
 
 	// Admin API handlers
-	svc := adminapi.NewService(d.PG)
+	cfg := config.Defaults()
+	if cfgPath := os.Getenv("ALFQ_CONFIG"); cfgPath != "" {
+		config.Load(cfgPath, cfg)
+	}
+	svc := adminapi.NewService(d.PG).WithGateways(cfg.MT4Gateway, cfg.MT5Gateway)
+	svc.WithLog(d.Log)
 	adp := adminapi.NewAdapter(svc)
 	mux.Handle(alfqv1connect.NewBrokerServiceHandler(adp))
 	mux.Handle(alfqv1connect.NewAccountServiceHandler(adp))

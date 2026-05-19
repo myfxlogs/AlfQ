@@ -4,6 +4,7 @@ package adminapi
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
@@ -55,7 +56,14 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 
 	// 3. Test MT connection if broker has mtapi_endpoint
 	if brokerHost != "" {
-		info, err := mtapi.TestConnect(ctx, "MT5", req.Login, req.Password, brokerHost)
+		// Determine platform from broker
+		var platform string
+		s.pool.QueryRow(ctx, `SELECT platform FROM brokers WHERE id = $1`, req.BrokerId).Scan(&platform)
+		gw := s.mt5Gateway
+		if strings.EqualFold(platform, "MT4") {
+			gw = s.mt4Gateway
+		}
+		info, err := mtapi.TestConnect(ctx, gw, platform, req.Login, req.Password, brokerHost)
 		if err != nil {
 			// Connection failed — mark as error but don't delete
 			s.pool.Exec(ctx,
