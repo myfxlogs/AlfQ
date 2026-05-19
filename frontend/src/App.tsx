@@ -12,9 +12,9 @@ import AIChat from "./pages/AIChat";
 import Audit from "./pages/Audit";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
-import Tenants from "./pages/Tenants";
 import Users from "./pages/Users";
 import AdminSettings from "./pages/AdminSettings";
+import ServiceManagement from "./pages/ServiceManagement";
 
 const userRoutes: Record<string, () => React.ReactNode> = {
   "#/": Dashboard,
@@ -31,9 +31,9 @@ const userRoutes: Record<string, () => React.ReactNode> = {
 };
 
 const adminRoutes: Record<string, () => React.ReactNode> = {
-  "#/admin/tenants": Tenants,
   "#/admin/users": Users,
   "#/admin/settings": AdminSettings,
+  "#/admin/services": ServiceManagement,
 };
 
 const userNavItems: [string, string][] = [
@@ -67,14 +67,14 @@ function Sidebar({ hash, isAdmin, onClose }: { hash: string; isAdmin: boolean; o
           <>
             <div className="sidebar-brand">ALFQ 管理</div>
             <div className="sidebar-nav">
-              <a href="#/admin/tenants" className={`sidebar-link${hash === "#/admin/tenants" ? " active" : ""}`} onClick={onClose}>
-                租户管理
-              </a>
               <a href="#/admin/users" className={`sidebar-link${hash === "#/admin/users" ? " active" : ""}`} onClick={onClose}>
                 用户管理
               </a>
               <a href="#/admin/settings" className={`sidebar-link${hash === "#/admin/settings" ? " active" : ""}`} onClick={onClose}>
                 系统配置
+              </a>
+              <a href="#/admin/services" className={`sidebar-link${hash === "#/admin/services" ? " active" : ""}`} onClick={onClose}>
+                服务管理
               </a>
             </div>
             <div className="sidebar-footer">
@@ -130,7 +130,7 @@ export default function App() {
     return <Login />;
   }
 
-  const Page = isAdmin ? adminRoutes[hash] || Tenants : userRoutes[hash] || Dashboard;
+  const Page = isAdmin ? adminRoutes[hash] || Users : userRoutes[hash] || Dashboard;
 
   return (
     <div className="app-layout">

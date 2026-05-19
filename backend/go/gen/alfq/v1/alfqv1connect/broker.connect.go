@@ -25,6 +25,10 @@ const (
 	BrokerServiceName = "alfq.v1.BrokerService"
 	// AccountServiceName is the fully-qualified name of the AccountService service.
 	AccountServiceName = "alfq.v1.AccountService"
+	// SystemSettingsServiceName is the fully-qualified name of the SystemSettingsService service.
+	SystemSettingsServiceName = "alfq.v1.SystemSettingsService"
+	// ServiceManagementServiceName is the fully-qualified name of the ServiceManagementService service.
+	ServiceManagementServiceName = "alfq.v1.ServiceManagementService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -73,6 +77,21 @@ const (
 	// AccountServiceDisconnectAccountProcedure is the fully-qualified name of the AccountService's
 	// DisconnectAccount RPC.
 	AccountServiceDisconnectAccountProcedure = "/alfq.v1.AccountService/DisconnectAccount"
+	// SystemSettingsServiceGetSystemSettingsProcedure is the fully-qualified name of the
+	// SystemSettingsService's GetSystemSettings RPC.
+	SystemSettingsServiceGetSystemSettingsProcedure = "/alfq.v1.SystemSettingsService/GetSystemSettings"
+	// SystemSettingsServiceUpdateSystemSettingProcedure is the fully-qualified name of the
+	// SystemSettingsService's UpdateSystemSetting RPC.
+	SystemSettingsServiceUpdateSystemSettingProcedure = "/alfq.v1.SystemSettingsService/UpdateSystemSetting"
+	// ServiceManagementServiceGetServiceStatusProcedure is the fully-qualified name of the
+	// ServiceManagementService's GetServiceStatus RPC.
+	ServiceManagementServiceGetServiceStatusProcedure = "/alfq.v1.ServiceManagementService/GetServiceStatus"
+	// ServiceManagementServiceRestartServiceProcedure is the fully-qualified name of the
+	// ServiceManagementService's RestartService RPC.
+	ServiceManagementServiceRestartServiceProcedure = "/alfq.v1.ServiceManagementService/RestartService"
+	// ServiceManagementServiceGetServiceLogsProcedure is the fully-qualified name of the
+	// ServiceManagementService's GetServiceLogs RPC.
+	ServiceManagementServiceGetServiceLogsProcedure = "/alfq.v1.ServiceManagementService/GetServiceLogs"
 )
 
 // BrokerServiceClient is a client for the alfq.v1.BrokerService service.
@@ -499,4 +518,223 @@ func (UnimplementedAccountServiceHandler) ConnectAccount(context.Context, *conne
 
 func (UnimplementedAccountServiceHandler) DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.DisconnectAccount is not implemented"))
+}
+
+// SystemSettingsServiceClient is a client for the alfq.v1.SystemSettingsService service.
+type SystemSettingsServiceClient interface {
+	GetSystemSettings(context.Context, *connect.Request[v1.GetSystemSettingsRequest]) (*connect.Response[v1.GetSystemSettingsResponse], error)
+	UpdateSystemSetting(context.Context, *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error)
+}
+
+// NewSystemSettingsServiceClient constructs a client for the alfq.v1.SystemSettingsService service.
+// By default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped
+// responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewSystemSettingsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) SystemSettingsServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	systemSettingsServiceMethods := v1.File_alfq_v1_broker_proto.Services().ByName("SystemSettingsService").Methods()
+	return &systemSettingsServiceClient{
+		getSystemSettings: connect.NewClient[v1.GetSystemSettingsRequest, v1.GetSystemSettingsResponse](
+			httpClient,
+			baseURL+SystemSettingsServiceGetSystemSettingsProcedure,
+			connect.WithSchema(systemSettingsServiceMethods.ByName("GetSystemSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		updateSystemSetting: connect.NewClient[v1.UpdateSystemSettingRequest, v1.UpdateSystemSettingResponse](
+			httpClient,
+			baseURL+SystemSettingsServiceUpdateSystemSettingProcedure,
+			connect.WithSchema(systemSettingsServiceMethods.ByName("UpdateSystemSetting")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// systemSettingsServiceClient implements SystemSettingsServiceClient.
+type systemSettingsServiceClient struct {
+	getSystemSettings   *connect.Client[v1.GetSystemSettingsRequest, v1.GetSystemSettingsResponse]
+	updateSystemSetting *connect.Client[v1.UpdateSystemSettingRequest, v1.UpdateSystemSettingResponse]
+}
+
+// GetSystemSettings calls alfq.v1.SystemSettingsService.GetSystemSettings.
+func (c *systemSettingsServiceClient) GetSystemSettings(ctx context.Context, req *connect.Request[v1.GetSystemSettingsRequest]) (*connect.Response[v1.GetSystemSettingsResponse], error) {
+	return c.getSystemSettings.CallUnary(ctx, req)
+}
+
+// UpdateSystemSetting calls alfq.v1.SystemSettingsService.UpdateSystemSetting.
+func (c *systemSettingsServiceClient) UpdateSystemSetting(ctx context.Context, req *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error) {
+	return c.updateSystemSetting.CallUnary(ctx, req)
+}
+
+// SystemSettingsServiceHandler is an implementation of the alfq.v1.SystemSettingsService service.
+type SystemSettingsServiceHandler interface {
+	GetSystemSettings(context.Context, *connect.Request[v1.GetSystemSettingsRequest]) (*connect.Response[v1.GetSystemSettingsResponse], error)
+	UpdateSystemSetting(context.Context, *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error)
+}
+
+// NewSystemSettingsServiceHandler builds an HTTP handler from the service implementation. It
+// returns the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewSystemSettingsServiceHandler(svc SystemSettingsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	systemSettingsServiceMethods := v1.File_alfq_v1_broker_proto.Services().ByName("SystemSettingsService").Methods()
+	systemSettingsServiceGetSystemSettingsHandler := connect.NewUnaryHandler(
+		SystemSettingsServiceGetSystemSettingsProcedure,
+		svc.GetSystemSettings,
+		connect.WithSchema(systemSettingsServiceMethods.ByName("GetSystemSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	systemSettingsServiceUpdateSystemSettingHandler := connect.NewUnaryHandler(
+		SystemSettingsServiceUpdateSystemSettingProcedure,
+		svc.UpdateSystemSetting,
+		connect.WithSchema(systemSettingsServiceMethods.ByName("UpdateSystemSetting")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/alfq.v1.SystemSettingsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case SystemSettingsServiceGetSystemSettingsProcedure:
+			systemSettingsServiceGetSystemSettingsHandler.ServeHTTP(w, r)
+		case SystemSettingsServiceUpdateSystemSettingProcedure:
+			systemSettingsServiceUpdateSystemSettingHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedSystemSettingsServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedSystemSettingsServiceHandler struct{}
+
+func (UnimplementedSystemSettingsServiceHandler) GetSystemSettings(context.Context, *connect.Request[v1.GetSystemSettingsRequest]) (*connect.Response[v1.GetSystemSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SystemSettingsService.GetSystemSettings is not implemented"))
+}
+
+func (UnimplementedSystemSettingsServiceHandler) UpdateSystemSetting(context.Context, *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SystemSettingsService.UpdateSystemSetting is not implemented"))
+}
+
+// ServiceManagementServiceClient is a client for the alfq.v1.ServiceManagementService service.
+type ServiceManagementServiceClient interface {
+	GetServiceStatus(context.Context, *connect.Request[v1.GetServiceStatusRequest]) (*connect.Response[v1.GetServiceStatusResponse], error)
+	RestartService(context.Context, *connect.Request[v1.RestartServiceRequest]) (*connect.Response[v1.RestartServiceResponse], error)
+	GetServiceLogs(context.Context, *connect.Request[v1.GetServiceLogsRequest]) (*connect.Response[v1.GetServiceLogsResponse], error)
+}
+
+// NewServiceManagementServiceClient constructs a client for the alfq.v1.ServiceManagementService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewServiceManagementServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ServiceManagementServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	serviceManagementServiceMethods := v1.File_alfq_v1_broker_proto.Services().ByName("ServiceManagementService").Methods()
+	return &serviceManagementServiceClient{
+		getServiceStatus: connect.NewClient[v1.GetServiceStatusRequest, v1.GetServiceStatusResponse](
+			httpClient,
+			baseURL+ServiceManagementServiceGetServiceStatusProcedure,
+			connect.WithSchema(serviceManagementServiceMethods.ByName("GetServiceStatus")),
+			connect.WithClientOptions(opts...),
+		),
+		restartService: connect.NewClient[v1.RestartServiceRequest, v1.RestartServiceResponse](
+			httpClient,
+			baseURL+ServiceManagementServiceRestartServiceProcedure,
+			connect.WithSchema(serviceManagementServiceMethods.ByName("RestartService")),
+			connect.WithClientOptions(opts...),
+		),
+		getServiceLogs: connect.NewClient[v1.GetServiceLogsRequest, v1.GetServiceLogsResponse](
+			httpClient,
+			baseURL+ServiceManagementServiceGetServiceLogsProcedure,
+			connect.WithSchema(serviceManagementServiceMethods.ByName("GetServiceLogs")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// serviceManagementServiceClient implements ServiceManagementServiceClient.
+type serviceManagementServiceClient struct {
+	getServiceStatus *connect.Client[v1.GetServiceStatusRequest, v1.GetServiceStatusResponse]
+	restartService   *connect.Client[v1.RestartServiceRequest, v1.RestartServiceResponse]
+	getServiceLogs   *connect.Client[v1.GetServiceLogsRequest, v1.GetServiceLogsResponse]
+}
+
+// GetServiceStatus calls alfq.v1.ServiceManagementService.GetServiceStatus.
+func (c *serviceManagementServiceClient) GetServiceStatus(ctx context.Context, req *connect.Request[v1.GetServiceStatusRequest]) (*connect.Response[v1.GetServiceStatusResponse], error) {
+	return c.getServiceStatus.CallUnary(ctx, req)
+}
+
+// RestartService calls alfq.v1.ServiceManagementService.RestartService.
+func (c *serviceManagementServiceClient) RestartService(ctx context.Context, req *connect.Request[v1.RestartServiceRequest]) (*connect.Response[v1.RestartServiceResponse], error) {
+	return c.restartService.CallUnary(ctx, req)
+}
+
+// GetServiceLogs calls alfq.v1.ServiceManagementService.GetServiceLogs.
+func (c *serviceManagementServiceClient) GetServiceLogs(ctx context.Context, req *connect.Request[v1.GetServiceLogsRequest]) (*connect.Response[v1.GetServiceLogsResponse], error) {
+	return c.getServiceLogs.CallUnary(ctx, req)
+}
+
+// ServiceManagementServiceHandler is an implementation of the alfq.v1.ServiceManagementService
+// service.
+type ServiceManagementServiceHandler interface {
+	GetServiceStatus(context.Context, *connect.Request[v1.GetServiceStatusRequest]) (*connect.Response[v1.GetServiceStatusResponse], error)
+	RestartService(context.Context, *connect.Request[v1.RestartServiceRequest]) (*connect.Response[v1.RestartServiceResponse], error)
+	GetServiceLogs(context.Context, *connect.Request[v1.GetServiceLogsRequest]) (*connect.Response[v1.GetServiceLogsResponse], error)
+}
+
+// NewServiceManagementServiceHandler builds an HTTP handler from the service implementation. It
+// returns the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewServiceManagementServiceHandler(svc ServiceManagementServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	serviceManagementServiceMethods := v1.File_alfq_v1_broker_proto.Services().ByName("ServiceManagementService").Methods()
+	serviceManagementServiceGetServiceStatusHandler := connect.NewUnaryHandler(
+		ServiceManagementServiceGetServiceStatusProcedure,
+		svc.GetServiceStatus,
+		connect.WithSchema(serviceManagementServiceMethods.ByName("GetServiceStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementServiceRestartServiceHandler := connect.NewUnaryHandler(
+		ServiceManagementServiceRestartServiceProcedure,
+		svc.RestartService,
+		connect.WithSchema(serviceManagementServiceMethods.ByName("RestartService")),
+		connect.WithHandlerOptions(opts...),
+	)
+	serviceManagementServiceGetServiceLogsHandler := connect.NewUnaryHandler(
+		ServiceManagementServiceGetServiceLogsProcedure,
+		svc.GetServiceLogs,
+		connect.WithSchema(serviceManagementServiceMethods.ByName("GetServiceLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/alfq.v1.ServiceManagementService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ServiceManagementServiceGetServiceStatusProcedure:
+			serviceManagementServiceGetServiceStatusHandler.ServeHTTP(w, r)
+		case ServiceManagementServiceRestartServiceProcedure:
+			serviceManagementServiceRestartServiceHandler.ServeHTTP(w, r)
+		case ServiceManagementServiceGetServiceLogsProcedure:
+			serviceManagementServiceGetServiceLogsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedServiceManagementServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedServiceManagementServiceHandler struct{}
+
+func (UnimplementedServiceManagementServiceHandler) GetServiceStatus(context.Context, *connect.Request[v1.GetServiceStatusRequest]) (*connect.Response[v1.GetServiceStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.ServiceManagementService.GetServiceStatus is not implemented"))
+}
+
+func (UnimplementedServiceManagementServiceHandler) RestartService(context.Context, *connect.Request[v1.RestartServiceRequest]) (*connect.Response[v1.RestartServiceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.ServiceManagementService.RestartService is not implemented"))
+}
+
+func (UnimplementedServiceManagementServiceHandler) GetServiceLogs(context.Context, *connect.Request[v1.GetServiceLogsRequest]) (*connect.Response[v1.GetServiceLogsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.ServiceManagementService.GetServiceLogs is not implemented"))
 }

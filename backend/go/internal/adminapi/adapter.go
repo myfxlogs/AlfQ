@@ -181,6 +181,24 @@ func (a *Adapter) UpdateSystemSetting(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(resp), nil
 }
 
+// -- ServiceManagementService --
+
+func (a *Adapter) GetServiceStatus(ctx context.Context, req *connect.Request[pb.GetServiceStatusRequest]) (*connect.Response[pb.GetServiceStatusResponse], error) {
+	resp, err := a.svc.GetServiceStatus(ctx, req.Msg)
+	if err != nil { return nil, err }
+	return connect.NewResponse(resp), nil
+}
+func (a *Adapter) RestartService(ctx context.Context, req *connect.Request[pb.RestartServiceRequest]) (*connect.Response[pb.RestartServiceResponse], error) {
+	resp, err := a.svc.RestartService(ctx, req.Msg)
+	if err != nil { return nil, err }
+	return connect.NewResponse(resp), nil
+}
+func (a *Adapter) GetServiceLogs(ctx context.Context, req *connect.Request[pb.GetServiceLogsRequest]) (*connect.Response[pb.GetServiceLogsResponse], error) {
+	resp, err := a.svc.GetServiceLogs(ctx, req.Msg)
+	if err != nil { return nil, err }
+	return connect.NewResponse(resp), nil
+}
+
 // -- AuditService --
 
 func (a *Adapter) ListAuditLogs(ctx context.Context, req *connect.Request[pb.ListAuditLogsRequest]) (*connect.Response[pb.ListAuditLogsResponse], error) {
