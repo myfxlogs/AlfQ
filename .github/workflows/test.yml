@@ -1,0 +1,65 @@
+name: test
+on: [push, pull_request]
+
+jobs:
+  go-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: alfq
+          POSTGRES_PASSWORD: alfq_dev
+          POSTGRES_DB: alfq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: Test
+        run: cd backend/go && go test -race -coverprofile=cover.out ./internal/...
+        env:
+          DATABASE_URL: "postgres://alfq:alfq_dev@localhost:5432/alfq?sslmode=disable"
+      - name: Coverage report
+        run: cd backend/go && go tool cover -func=cover.out | tail -1
+      - name: Coverage gate
+        run: |
+          cd backend/go
+          PCT=$(go tool cover -func=cover.out | tail -1 | awk '{print $NF}' | sed 's/%//')
+          echo "Coverage: $PCT%"
+          if [ "$(echo "$PCT >= 50" | bc)" -ne 1 ]; then
+            echo "Coverage $PCT% < 50%"
+            exit 1
+          fi
+
+  golangci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: backend/go
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - run: cd frontend && pnpm install --frozen-lockfile && pnpm lint && pnpm build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build all images
+        run: docker compose -f deploy/docker-compose.prod.yml build
