@@ -9,10 +9,8 @@ import RiskRules from "./pages/RiskRules";
 import Strategies from "./pages/Strategies";
 import Backtest from "./pages/Backtest";
 import AIChat from "./pages/AIChat";
-import AIAssistant from "./pages/AIAssistant";
 import Audit from "./pages/Audit";
 import Notifications from "./pages/Notifications";
-import Admin from "./pages/Admin";
 import Tenants from "./pages/Tenants";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -27,10 +25,8 @@ const routes: Record<string, () => React.ReactNode> = {
   "#/strategies": Strategies,
   "#/backtest": Backtest,
   "#/assistant": AIChat,
-  "#/ai-assistant": AIAssistant,
   "#/audit": Audit,
   "#/notifications": Notifications,
-  "#/admin": Admin,
   "#/tenants": Tenants,
   "#/users": Users,
   "#/settings": Settings,
