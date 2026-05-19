@@ -5,7 +5,8 @@ import type { BrokerMatch } from "../gen/alfq/v1/broker_pb";
 
 type MtType = "MT4" | "MT5";
 
-export default function BindAccount({ onDone }: { onDone: () => void }) {
+export default function BindAccount({ onDone }: { onDone?: () => void }) {
+  const done = onDone || (() => { window.location.hash = "#/"; });
   const [step, setStep] = useState(1);
   const [mtType, setMtType] = useState<MtType>("MT5");
   const [companySearch, setCompanySearch] = useState("");
@@ -209,11 +210,11 @@ export default function BindAccount({ onDone }: { onDone: () => void }) {
             </div>
             {error && <p style={{ color: "var(--color-danger)", fontSize: 14, marginBottom: "0.5rem" }}>{error}</p>}
             {result?.status === "connected" ? (
-              <button className="btn-primary" onClick={onDone} style={{ width: "100%" }}>完成</button>
+              <button className="btn-primary" onClick={done} style={{ width: "100%" }}>完成</button>
             ) : (
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <button className="btn-secondary" onClick={handleBack} style={{ flex: 1 }}>重试</button>
-                <button className="btn-primary" onClick={onDone} style={{ flex: 1 }}>返回列表</button>
+                <button className="btn-primary" onClick={done} style={{ flex: 1 }}>返回列表</button>
               </div>
             )}
           </div>

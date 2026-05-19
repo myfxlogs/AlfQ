@@ -45,8 +45,8 @@ export default function Dashboard() {
             {loading ? "加载中..." : `${accounts.length} 个账户 · ${connectedCount} 在线`}
           </p>
         </div>
-        <button className="btn-primary" onClick={() => window.location.hash = "#/accounts"}>
-          + 绑定账户
+        <button className="btn-primary" onClick={() => window.location.hash = "#/bind"}>
+          + 添加账号
         </button>
       </div>
 

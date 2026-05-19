@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import Accounts from "./pages/Accounts";
 import Orders from "./pages/Orders";
 import Positions from "./pages/Positions";
 import RiskRules from "./pages/RiskRules";
@@ -15,10 +14,11 @@ import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import AdminSettings from "./pages/AdminSettings";
 import ServiceManagement from "./pages/ServiceManagement";
+import BindAccount from "./pages/BindAccount";
 
 const userRoutes: Record<string, () => React.ReactNode> = {
   "#/": Dashboard,
-  "#/accounts": Accounts,
+  "#/bind": () => <BindAccount />,
   "#/orders": Orders,
   "#/positions": Positions,
   "#/risk": RiskRules,
@@ -38,7 +38,6 @@ const adminRoutes: Record<string, () => React.ReactNode> = {
 
 const userNavItems: [string, string][] = [
   ["#/", "仪表盘"],
-  ["#/accounts", "账户管理"],
   ["#/orders", "订单"],
   ["#/positions", "持仓"],
   ["#/risk", "风控规则"],
