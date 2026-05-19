@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file alfq/v1/broker.proto.
  */
 export const file_alfq_v1_broker: GenFile = /*@__PURE__*/
-  fileDesc("ChRhbGZxL3YxL2Jyb2tlci5wcm90bxIHYWxmcS52MSKFAQoGQnJva2VyEgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIMCgRjb2RlGAMgASgJEgwKBG5hbWUYBCABKAkSEAoIcGxhdGZvcm0YBSABKAkSFgoObXRhcGlfZW5kcG9pbnQYBiABKAkSFgoOZGVmYXVsdF9zZXJ2ZXIYByABKAkibgoTQ3JlYXRlQnJva2VyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEhAKCHBsYXRmb3JtGAQgASgJEhYKDm10YXBpX2VuZHBvaW50GAUgASgJIh4KEEdldEJyb2tlclJlcXVlc3QSCgoCaWQYASABKAkiJwoSTGlzdEJyb2tlcnNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI3ChNMaXN0QnJva2Vyc1Jlc3BvbnNlEiAKB2Jyb2tlcnMYASADKAsyDy5hbGZxLnYxLkJyb2tlciIhChNEZWxldGVCcm9rZXJSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZUJyb2tlclJlc3BvbnNlIpQBCgdBY2NvdW50EgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIRCglicm9rZXJfaWQYAyABKAkSDQoFbG9naW4YBCABKAkSDgoGc2VydmVyGAUgASgJEhQKDGFjY291bnRfdHlwZRgGIAEoCRIQCghjdXJyZW5jeRgHIAEoCRIQCghsZXZlcmFnZRgIIAEoBSJtChRDcmVhdGVBY2NvdW50UmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSEQoJYnJva2VyX2lkGAIgASgJEg0KBWxvZ2luGAMgASgJEhAKCHBhc3N3b3JkGAQgASgJEg4KBnNlcnZlchgFIAEoCSIfChFHZXRBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIoChNMaXN0QWNjb3VudHNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI6ChRMaXN0QWNjb3VudHNSZXNwb25zZRIiCghhY2NvdW50cxgBIAMoCzIQLmFsZnEudjEuQWNjb3VudCIiChREZWxldGVBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIXChVEZWxldGVBY2NvdW50UmVzcG9uc2Uy0AIKDUJyb2tlclNlcnZpY2USPQoMQ3JlYXRlQnJva2VyEhwuYWxmcS52MS5DcmVhdGVCcm9rZXJSZXF1ZXN0Gg8uYWxmcS52MS5Ccm9rZXISNwoJR2V0QnJva2VyEhkuYWxmcS52MS5HZXRCcm9rZXJSZXF1ZXN0Gg8uYWxmcS52MS5Ccm9rZXISSAoLTGlzdEJyb2tlcnMSGy5hbGZxLnYxLkxpc3RCcm9rZXJzUmVxdWVzdBocLmFsZnEudjEuTGlzdEJyb2tlcnNSZXNwb25zZRIwCgxVcGRhdGVCcm9rZXISDy5hbGZxLnYxLkJyb2tlchoPLmFsZnEudjEuQnJva2VyEksKDERlbGV0ZUJyb2tlchIcLmFsZnEudjEuRGVsZXRlQnJva2VyUmVxdWVzdBodLmFsZnEudjEuRGVsZXRlQnJva2VyUmVzcG9uc2Uy4AIKDkFjY291bnRTZXJ2aWNlEkAKDUNyZWF0ZUFjY291bnQSHS5hbGZxLnYxLkNyZWF0ZUFjY291bnRSZXF1ZXN0GhAuYWxmcS52MS5BY2NvdW50EjoKCkdldEFjY291bnQSGi5hbGZxLnYxLkdldEFjY291bnRSZXF1ZXN0GhAuYWxmcS52MS5BY2NvdW50EksKDExpc3RBY2NvdW50cxIcLmFsZnEudjEuTGlzdEFjY291bnRzUmVxdWVzdBodLmFsZnEudjEuTGlzdEFjY291bnRzUmVzcG9uc2USMwoNVXBkYXRlQWNjb3VudBIQLmFsZnEudjEuQWNjb3VudBoQLmFsZnEudjEuQWNjb3VudBJOCg1EZWxldGVBY2NvdW50Eh0uYWxmcS52MS5EZWxldGVBY2NvdW50UmVxdWVzdBoeLmFsZnEudjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlQi9aLWdpdGh1Yi5jb20vYWxmcS9iYWNrZW5kL2dvL2dlbi9hbGZxL3YxO2FsZnF2MWIGcHJvdG8z");
+  fileDesc("ChRhbGZxL3YxL2Jyb2tlci5wcm90bxIHYWxmcS52MSKFAQoGQnJva2VyEgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIMCgRjb2RlGAMgASgJEgwKBG5hbWUYBCABKAkSEAoIcGxhdGZvcm0YBSABKAkSFgoObXRhcGlfZW5kcG9pbnQYBiABKAkSFgoOZGVmYXVsdF9zZXJ2ZXIYByABKAkibgoTQ3JlYXRlQnJva2VyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEhAKCHBsYXRmb3JtGAQgASgJEhYKDm10YXBpX2VuZHBvaW50GAUgASgJIh4KEEdldEJyb2tlclJlcXVlc3QSCgoCaWQYASABKAkiJwoSTGlzdEJyb2tlcnNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI3ChNMaXN0QnJva2Vyc1Jlc3BvbnNlEiAKB2Jyb2tlcnMYASADKAsyDy5hbGZxLnYxLkJyb2tlciIhChNEZWxldGVCcm9rZXJSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZUJyb2tlclJlc3BvbnNlIjgKE1NlYXJjaEJyb2tlclJlcXVlc3QSEAoIcGxhdGZvcm0YASABKAkSDwoHa2V5d29yZBgCIAEoCSI9ChRTZWFyY2hCcm9rZXJSZXNwb25zZRIlCgdtYXRjaGVzGAEgAygLMhQuYWxmcS52MS5Ccm9rZXJNYXRjaCIvCgtCcm9rZXJNYXRjaBIPCgdjb21wYW55GAEgASgJEg8KB3NlcnZlcnMYAiADKAkiwgMKB0FjY291bnQSCgoCaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEhEKCWJyb2tlcl9pZBgDIAEoCRINCgVsb2dpbhgEIAEoCRIOCgZzZXJ2ZXIYBSABKAkSFAoMYWNjb3VudF90eXBlGAYgASgJEhAKCGN1cnJlbmN5GAcgASgJEhAKCGxldmVyYWdlGAggASgFEg4KBnN0YXR1cxgJIAEoCRIPCgdiYWxhbmNlGAogASgBEg4KBmVxdWl0eRgLIAEoARIOCgZtYXJnaW4YDCABKAESEwoLZnJlZV9tYXJnaW4YDSABKAESFAoMbWFyZ2luX2xldmVsGA4gASgBEg4KBnByb2ZpdBgPIAEoARIWCg5wcm9maXRfcGVyY2VudBgQIAEoARITCgtpc19kaXNhYmxlZBgRIAEoCBISCgpsYXN0X2Vycm9yGBIgASgJEg0KBWFsaWFzGBMgASgJEjAKDGNvbm5lY3RlZF9hdBgUIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgVIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAigwEKFENyZWF0ZUFjY291bnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIRCglicm9rZXJfaWQYAiABKAkSDQoFbG9naW4YAyABKAkSEAoIcGFzc3dvcmQYBCABKAkSDgoGc2VydmVyGAUgASgJEhQKDGFjY291bnRfdHlwZRgGIAEoCSIfChFHZXRBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIoChNMaXN0QWNjb3VudHNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI6ChRMaXN0QWNjb3VudHNSZXNwb25zZRIiCghhY2NvdW50cxgBIAMoCzIQLmFsZnEudjEuQWNjb3VudCIiChREZWxldGVBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIXChVEZWxldGVBY2NvdW50UmVzcG9uc2UiIwoVQ29ubmVjdEFjY291bnRSZXF1ZXN0EgoKAmlkGAEgASgJIhgKFkNvbm5lY3RBY2NvdW50UmVzcG9uc2UiJgoYRGlzY29ubmVjdEFjY291bnRSZXF1ZXN0EgoKAmlkGAEgASgJIhsKGURpc2Nvbm5lY3RBY2NvdW50UmVzcG9uc2UynQMKDUJyb2tlclNlcnZpY2USPQoMQ3JlYXRlQnJva2VyEhwuYWxmcS52MS5DcmVhdGVCcm9rZXJSZXF1ZXN0Gg8uYWxmcS52MS5Ccm9rZXISNwoJR2V0QnJva2VyEhkuYWxmcS52MS5HZXRCcm9rZXJSZXF1ZXN0Gg8uYWxmcS52MS5Ccm9rZXISSAoLTGlzdEJyb2tlcnMSGy5hbGZxLnYxLkxpc3RCcm9rZXJzUmVxdWVzdBocLmFsZnEudjEuTGlzdEJyb2tlcnNSZXNwb25zZRIwCgxVcGRhdGVCcm9rZXISDy5hbGZxLnYxLkJyb2tlchoPLmFsZnEudjEuQnJva2VyEksKDERlbGV0ZUJyb2tlchIcLmFsZnEudjEuRGVsZXRlQnJva2VyUmVxdWVzdBodLmFsZnEudjEuRGVsZXRlQnJva2VyUmVzcG9uc2USSwoMU2VhcmNoQnJva2VyEhwuYWxmcS52MS5TZWFyY2hCcm9rZXJSZXF1ZXN0Gh0uYWxmcS52MS5TZWFyY2hCcm9rZXJSZXNwb25zZTKPBAoOQWNjb3VudFNlcnZpY2USQAoNQ3JlYXRlQWNjb3VudBIdLmFsZnEudjEuQ3JlYXRlQWNjb3VudFJlcXVlc3QaEC5hbGZxLnYxLkFjY291bnQSOgoKR2V0QWNjb3VudBIaLmFsZnEudjEuR2V0QWNjb3VudFJlcXVlc3QaEC5hbGZxLnYxLkFjY291bnQSSwoMTGlzdEFjY291bnRzEhwuYWxmcS52MS5MaXN0QWNjb3VudHNSZXF1ZXN0Gh0uYWxmcS52MS5MaXN0QWNjb3VudHNSZXNwb25zZRIzCg1VcGRhdGVBY2NvdW50EhAuYWxmcS52MS5BY2NvdW50GhAuYWxmcS52MS5BY2NvdW50Ek4KDURlbGV0ZUFjY291bnQSHS5hbGZxLnYxLkRlbGV0ZUFjY291bnRSZXF1ZXN0Gh4uYWxmcS52MS5EZWxldGVBY2NvdW50UmVzcG9uc2USUQoOQ29ubmVjdEFjY291bnQSHi5hbGZxLnYxLkNvbm5lY3RBY2NvdW50UmVxdWVzdBofLmFsZnEudjEuQ29ubmVjdEFjY291bnRSZXNwb25zZRJaChFEaXNjb25uZWN0QWNjb3VudBIhLmFsZnEudjEuRGlzY29ubmVjdEFjY291bnRSZXF1ZXN0GiIuYWxmcS52MS5EaXNjb25uZWN0QWNjb3VudFJlc3BvbnNlQi9aLWdpdGh1Yi5jb20vYWxmcS9iYWNrZW5kL2dvL2dlbi9hbGZxL3YxO2FsZnF2MWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message alfq.v1.Broker
@@ -178,6 +180,73 @@ export const DeleteBrokerResponseSchema: GenMessage<DeleteBrokerResponse> = /*@_
   messageDesc(file_alfq_v1_broker, 6);
 
 /**
+ * @generated from message alfq.v1.SearchBrokerRequest
+ */
+export type SearchBrokerRequest = Message<"alfq.v1.SearchBrokerRequest"> & {
+  /**
+   * "MT4" or "MT5"
+   *
+   * @generated from field: string platform = 1;
+   */
+  platform: string;
+
+  /**
+   * partial company name
+   *
+   * @generated from field: string keyword = 2;
+   */
+  keyword: string;
+};
+
+/**
+ * Describes the message alfq.v1.SearchBrokerRequest.
+ * Use `create(SearchBrokerRequestSchema)` to create a new message.
+ */
+export const SearchBrokerRequestSchema: GenMessage<SearchBrokerRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 7);
+
+/**
+ * @generated from message alfq.v1.SearchBrokerResponse
+ */
+export type SearchBrokerResponse = Message<"alfq.v1.SearchBrokerResponse"> & {
+  /**
+   * @generated from field: repeated alfq.v1.BrokerMatch matches = 1;
+   */
+  matches: BrokerMatch[];
+};
+
+/**
+ * Describes the message alfq.v1.SearchBrokerResponse.
+ * Use `create(SearchBrokerResponseSchema)` to create a new message.
+ */
+export const SearchBrokerResponseSchema: GenMessage<SearchBrokerResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 8);
+
+/**
+ * @generated from message alfq.v1.BrokerMatch
+ */
+export type BrokerMatch = Message<"alfq.v1.BrokerMatch"> & {
+  /**
+   * @generated from field: string company = 1;
+   */
+  company: string;
+
+  /**
+   * e.g. ["mt4-demo.roboforex.com:443"]
+   *
+   * @generated from field: repeated string servers = 2;
+   */
+  servers: string[];
+};
+
+/**
+ * Describes the message alfq.v1.BrokerMatch.
+ * Use `create(BrokerMatchSchema)` to create a new message.
+ */
+export const BrokerMatchSchema: GenMessage<BrokerMatch> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 9);
+
+/**
  * @generated from message alfq.v1.Account
  */
 export type Account = Message<"alfq.v1.Account"> & {
@@ -220,6 +289,73 @@ export type Account = Message<"alfq.v1.Account"> & {
    * @generated from field: int32 leverage = 8;
    */
   leverage: number;
+
+  /**
+   * "connecting" | "connected" | "disconnected" | "error"
+   *
+   * @generated from field: string status = 9;
+   */
+  status: string;
+
+  /**
+   * @generated from field: double balance = 10;
+   */
+  balance: number;
+
+  /**
+   * @generated from field: double equity = 11;
+   */
+  equity: number;
+
+  /**
+   * @generated from field: double margin = 12;
+   */
+  margin: number;
+
+  /**
+   * @generated from field: double free_margin = 13;
+   */
+  freeMargin: number;
+
+  /**
+   * @generated from field: double margin_level = 14;
+   */
+  marginLevel: number;
+
+  /**
+   * @generated from field: double profit = 15;
+   */
+  profit: number;
+
+  /**
+   * @generated from field: double profit_percent = 16;
+   */
+  profitPercent: number;
+
+  /**
+   * @generated from field: bool is_disabled = 17;
+   */
+  isDisabled: boolean;
+
+  /**
+   * @generated from field: string last_error = 18;
+   */
+  lastError: string;
+
+  /**
+   * @generated from field: string alias = 19;
+   */
+  alias: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp connected_at = 20;
+   */
+  connectedAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 21;
+   */
+  createdAt?: Timestamp | undefined;
 };
 
 /**
@@ -227,7 +363,7 @@ export type Account = Message<"alfq.v1.Account"> & {
  * Use `create(AccountSchema)` to create a new message.
  */
 export const AccountSchema: GenMessage<Account> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 7);
+  messageDesc(file_alfq_v1_broker, 10);
 
 /**
  * @generated from message alfq.v1.CreateAccountRequest
@@ -257,6 +393,11 @@ export type CreateAccountRequest = Message<"alfq.v1.CreateAccountRequest"> & {
    * @generated from field: string server = 5;
    */
   server: string;
+
+  /**
+   * @generated from field: string account_type = 6;
+   */
+  accountType: string;
 };
 
 /**
@@ -264,7 +405,7 @@ export type CreateAccountRequest = Message<"alfq.v1.CreateAccountRequest"> & {
  * Use `create(CreateAccountRequestSchema)` to create a new message.
  */
 export const CreateAccountRequestSchema: GenMessage<CreateAccountRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 8);
+  messageDesc(file_alfq_v1_broker, 11);
 
 /**
  * @generated from message alfq.v1.GetAccountRequest
@@ -281,7 +422,7 @@ export type GetAccountRequest = Message<"alfq.v1.GetAccountRequest"> & {
  * Use `create(GetAccountRequestSchema)` to create a new message.
  */
 export const GetAccountRequestSchema: GenMessage<GetAccountRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 9);
+  messageDesc(file_alfq_v1_broker, 12);
 
 /**
  * @generated from message alfq.v1.ListAccountsRequest
@@ -298,7 +439,7 @@ export type ListAccountsRequest = Message<"alfq.v1.ListAccountsRequest"> & {
  * Use `create(ListAccountsRequestSchema)` to create a new message.
  */
 export const ListAccountsRequestSchema: GenMessage<ListAccountsRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 10);
+  messageDesc(file_alfq_v1_broker, 13);
 
 /**
  * @generated from message alfq.v1.ListAccountsResponse
@@ -315,7 +456,7 @@ export type ListAccountsResponse = Message<"alfq.v1.ListAccountsResponse"> & {
  * Use `create(ListAccountsResponseSchema)` to create a new message.
  */
 export const ListAccountsResponseSchema: GenMessage<ListAccountsResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 11);
+  messageDesc(file_alfq_v1_broker, 14);
 
 /**
  * @generated from message alfq.v1.DeleteAccountRequest
@@ -332,7 +473,7 @@ export type DeleteAccountRequest = Message<"alfq.v1.DeleteAccountRequest"> & {
  * Use `create(DeleteAccountRequestSchema)` to create a new message.
  */
 export const DeleteAccountRequestSchema: GenMessage<DeleteAccountRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 12);
+  messageDesc(file_alfq_v1_broker, 15);
 
 /**
  * @generated from message alfq.v1.DeleteAccountResponse
@@ -345,7 +486,67 @@ export type DeleteAccountResponse = Message<"alfq.v1.DeleteAccountResponse"> & {
  * Use `create(DeleteAccountResponseSchema)` to create a new message.
  */
 export const DeleteAccountResponseSchema: GenMessage<DeleteAccountResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 13);
+  messageDesc(file_alfq_v1_broker, 16);
+
+/**
+ * @generated from message alfq.v1.ConnectAccountRequest
+ */
+export type ConnectAccountRequest = Message<"alfq.v1.ConnectAccountRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message alfq.v1.ConnectAccountRequest.
+ * Use `create(ConnectAccountRequestSchema)` to create a new message.
+ */
+export const ConnectAccountRequestSchema: GenMessage<ConnectAccountRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 17);
+
+/**
+ * @generated from message alfq.v1.ConnectAccountResponse
+ */
+export type ConnectAccountResponse = Message<"alfq.v1.ConnectAccountResponse"> & {
+};
+
+/**
+ * Describes the message alfq.v1.ConnectAccountResponse.
+ * Use `create(ConnectAccountResponseSchema)` to create a new message.
+ */
+export const ConnectAccountResponseSchema: GenMessage<ConnectAccountResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 18);
+
+/**
+ * @generated from message alfq.v1.DisconnectAccountRequest
+ */
+export type DisconnectAccountRequest = Message<"alfq.v1.DisconnectAccountRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message alfq.v1.DisconnectAccountRequest.
+ * Use `create(DisconnectAccountRequestSchema)` to create a new message.
+ */
+export const DisconnectAccountRequestSchema: GenMessage<DisconnectAccountRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 19);
+
+/**
+ * @generated from message alfq.v1.DisconnectAccountResponse
+ */
+export type DisconnectAccountResponse = Message<"alfq.v1.DisconnectAccountResponse"> & {
+};
+
+/**
+ * Describes the message alfq.v1.DisconnectAccountResponse.
+ * Use `create(DisconnectAccountResponseSchema)` to create a new message.
+ */
+export const DisconnectAccountResponseSchema: GenMessage<DisconnectAccountResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 20);
 
 /**
  * @generated from service alfq.v1.BrokerService
@@ -390,6 +591,14 @@ export const BrokerService: GenService<{
     methodKind: "unary";
     input: typeof DeleteBrokerRequestSchema;
     output: typeof DeleteBrokerResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.BrokerService.SearchBroker
+   */
+  searchBroker: {
+    methodKind: "unary";
+    input: typeof SearchBrokerRequestSchema;
+    output: typeof SearchBrokerResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_alfq_v1_broker, 0);
@@ -437,6 +646,22 @@ export const AccountService: GenService<{
     methodKind: "unary";
     input: typeof DeleteAccountRequestSchema;
     output: typeof DeleteAccountResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.AccountService.ConnectAccount
+   */
+  connectAccount: {
+    methodKind: "unary";
+    input: typeof ConnectAccountRequestSchema;
+    output: typeof ConnectAccountResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.AccountService.DisconnectAccount
+   */
+  disconnectAccount: {
+    methodKind: "unary";
+    input: typeof DisconnectAccountRequestSchema;
+    output: typeof DisconnectAccountResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_alfq_v1_broker, 1);

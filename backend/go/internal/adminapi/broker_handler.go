@@ -84,6 +84,33 @@ func (s *Service) UpdateBroker(ctx context.Context, req *pb.Broker) (*pb.Broker,
 	return b, nil
 }
 
+func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest) (*pb.SearchBrokerResponse, error) {
+	// Return brokers from DB filtered by platform
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, tenant_id, code, name, platform, mtapi_endpoint, COALESCE(default_server,'')
+		 FROM brokers WHERE platform = $1 AND (name ILIKE '%' || $2 || '%' OR code ILIKE '%' || $2 || '%')
+		 ORDER BY name LIMIT 20`,
+		req.Platform, req.Keyword,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("search broker: %w", err)
+	}
+	defer rows.Close()
+
+	var matches []*pb.BrokerMatch
+	for rows.Next() {
+		b := &pb.Broker{}
+		if err := rows.Scan(&b.Id, &b.TenantId, &b.Code, &b.Name, &b.Platform, &b.MtapiEndpoint, &b.DefaultServer); err != nil {
+			return nil, fmt.Errorf("scan broker: %w", err)
+		}
+		matches = append(matches, &pb.BrokerMatch{
+			Company: b.Name,
+			Servers: []string{b.MtapiEndpoint},
+		})
+	}
+	return &pb.SearchBrokerResponse{Matches: matches}, nil
+}
+
 func (s *Service) DeleteBroker(ctx context.Context, req *pb.DeleteBrokerRequest) (*pb.DeleteBrokerResponse, error) {
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)

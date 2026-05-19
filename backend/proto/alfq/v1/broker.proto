@@ -2,12 +2,15 @@ syntax = "proto3";
 package alfq.v1;
 option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
 
+import "google/protobuf/timestamp.proto";
+
 service BrokerService {
   rpc CreateBroker(CreateBrokerRequest) returns (Broker);
   rpc GetBroker(GetBrokerRequest) returns (Broker);
   rpc ListBrokers(ListBrokersRequest) returns (ListBrokersResponse);
   rpc UpdateBroker(Broker) returns (Broker);
   rpc DeleteBroker(DeleteBrokerRequest) returns (DeleteBrokerResponse);
+  rpc SearchBroker(SearchBrokerRequest) returns (SearchBrokerResponse);
 }
 
 message Broker {
@@ -21,21 +24,55 @@ message ListBrokersResponse { repeated Broker brokers = 1; }
 message DeleteBrokerRequest { string id = 1; }
 message DeleteBrokerResponse {}
 
+message SearchBrokerRequest {
+  string platform = 1;     // "MT4" or "MT5"
+  string keyword = 2;      // partial company name
+}
+message SearchBrokerResponse {
+  repeated BrokerMatch matches = 1;
+}
+message BrokerMatch {
+  string company = 1;
+  repeated string servers = 2; // e.g. ["mt4-demo.roboforex.com:443"]
+}
+
 service AccountService {
   rpc CreateAccount(CreateAccountRequest) returns (Account);
   rpc GetAccount(GetAccountRequest) returns (Account);
   rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
   rpc UpdateAccount(Account) returns (Account);
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc ConnectAccount(ConnectAccountRequest) returns (ConnectAccountResponse);
+  rpc DisconnectAccount(DisconnectAccountRequest) returns (DisconnectAccountResponse);
 }
 
 message Account {
   string id = 1; string tenant_id = 2; string broker_id = 3; string login = 4;
   string server = 5; string account_type = 6; string currency = 7; int32 leverage = 8;
+  string status = 9;           // "connecting" | "connected" | "disconnected" | "error"
+  double balance = 10;
+  double equity = 11;
+  double margin = 12;
+  double free_margin = 13;
+  double margin_level = 14;
+  double profit = 15;
+  double profit_percent = 16;
+  bool is_disabled = 17;
+  string last_error = 18;
+  string alias = 19;
+  google.protobuf.Timestamp connected_at = 20;
+  google.protobuf.Timestamp created_at = 21;
 }
-message CreateAccountRequest { string tenant_id = 1; string broker_id = 2; string login = 3; string password = 4; string server = 5; }
+message CreateAccountRequest {
+  string tenant_id = 1; string broker_id = 2; string login = 3;
+  string password = 4; string server = 5; string account_type = 6;
+}
 message GetAccountRequest { string id = 1; }
 message ListAccountsRequest { string tenant_id = 1; }
 message ListAccountsResponse { repeated Account accounts = 1; }
 message DeleteAccountRequest { string id = 1; }
 message DeleteAccountResponse {}
+message ConnectAccountRequest { string id = 1; }
+message ConnectAccountResponse {}
+message DisconnectAccountRequest { string id = 1; }
+message DisconnectAccountResponse {}

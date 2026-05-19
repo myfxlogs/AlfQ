@@ -51,6 +51,13 @@ func (a *Adapter) DeleteBroker(ctx context.Context, req *connect.Request[pb.Dele
 	}
 	return connect.NewResponse(resp), nil
 }
+func (a *Adapter) SearchBroker(ctx context.Context, req *connect.Request[pb.SearchBrokerRequest]) (*connect.Response[pb.SearchBrokerResponse], error) {
+	resp, err := a.svc.SearchBroker(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
 
 // -- AccountService --
 
@@ -84,6 +91,21 @@ func (a *Adapter) UpdateAccount(ctx context.Context, req *connect.Request[pb.Acc
 }
 func (a *Adapter) DeleteAccount(ctx context.Context, req *connect.Request[pb.DeleteAccountRequest]) (*connect.Response[pb.DeleteAccountResponse], error) {
 	resp, err := a.svc.DeleteAccount(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (a *Adapter) ConnectAccount(ctx context.Context, req *connect.Request[pb.ConnectAccountRequest]) (*connect.Response[pb.ConnectAccountResponse], error) {
+	resp, err := a.svc.ConnectAccount(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+func (a *Adapter) DisconnectAccount(ctx context.Context, req *connect.Request[pb.DisconnectAccountRequest]) (*connect.Response[pb.DisconnectAccountResponse], error) {
+	resp, err := a.svc.DisconnectAccount(ctx, req.Msg)
 	if err != nil {
 		return nil, err
 	}

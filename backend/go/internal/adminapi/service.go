@@ -6,16 +6,18 @@ import (
 
 	"github.com/alfq/backend/go/internal/common/auth"
 	"github.com/alfq/backend/go/internal/common/db/pg"
+	"go.uber.org/zap"
 )
 
 // Service holds all RPC service implementations for trading-core API layer.
 type Service struct {
 	pool *pg.Pool
+	log  *zap.Logger
 }
 
 // NewService creates a trading-core API service backed by a PG connection pool.
 func NewService(pool *pg.Pool) *Service {
-	return &Service{pool: pool}
+	return &Service{pool: pool, log: zap.NewNop()}
 }
 
 // defaultTenantID is used when no tenant is available from context.
