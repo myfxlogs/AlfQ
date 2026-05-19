@@ -3,10 +3,10 @@
 package adminapi
 
 import (
+	"connectrpc.com/connect"
 	"context"
 	"os"
 	"testing"
-	"connectrpc.com/connect"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
 	"github.com/alfq/backend/go/internal/common/db/pg"

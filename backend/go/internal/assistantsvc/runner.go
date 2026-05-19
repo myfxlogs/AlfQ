@@ -47,7 +47,7 @@ func RunAssistant(mux *http.ServeMux, d *bootstrap.Deps) error {
 	mux.HandleFunc("/chat", chatHandler(router))
 	mux.HandleFunc("/tools", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"tools": %d}`, len(registry.List()))
+		_, _ = fmt.Fprintf(w, `{"tools": %d}`, len(registry.List())) //nolint:errcheck
 	})
 
 	return nil
@@ -66,6 +66,6 @@ func chatHandler(router *Router) http.HandlerFunc {
 		}
 		resp, _ := router.Chat(r.Context(), "You are a trading assistant.", msg)
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"response": %q}`, resp)
+		_, _ = fmt.Fprintf(w, `{"response": %q}`, resp) //nolint:errcheck
 	}
 }

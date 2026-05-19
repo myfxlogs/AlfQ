@@ -63,7 +63,7 @@ func TestInvalidTransitions(t *testing.T) {
 	tests := []struct {
 		from, to pb.OrderState
 	}{
-		{pb.OrderState_ORDER_STATE_NEW, pb.OrderState_ORDER_STATE_SUBMITTED},      // skip validated
+		{pb.OrderState_ORDER_STATE_NEW, pb.OrderState_ORDER_STATE_SUBMITTED},       // skip validated
 		{pb.OrderState_ORDER_STATE_FILLED, pb.OrderState_ORDER_STATE_WORKING},      // terminal → non-terminal
 		{pb.OrderState_ORDER_STATE_CANCELLED, pb.OrderState_ORDER_STATE_SUBMITTED}, // terminal → non-terminal
 		{pb.OrderState_ORDER_STATE_NEW, pb.OrderState_ORDER_STATE_FILLED},          // skip all

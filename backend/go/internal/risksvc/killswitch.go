@@ -7,11 +7,11 @@ import (
 
 // KillSwitch provides emergency stop functionality.
 type KillSwitch struct {
-	mu      sync.RWMutex
-	active  bool
-	scope   string
-	byUser  string
-	reason  string
+	mu     sync.RWMutex
+	active bool
+	scope  string
+	byUser string
+	reason string
 }
 
 // Activate triggers the kill switch. All new orders will be rejected.

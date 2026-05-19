@@ -21,12 +21,12 @@ type BrokerAdapter interface {
 
 // BrokerResp is the broker's response to an order submission.
 type BrokerResp struct {
-	Ticket     string
-	State      pb.OrderState
-	FilledQty  float64
-	FillPrice  float64
-	ErrorCode  int32
-	ErrorMsg   string
+	Ticket    string
+	State     pb.OrderState
+	FilledQty float64
+	FillPrice float64
+	ErrorCode int32
+	ErrorMsg  string
 }
 
 // MT4Adapter implements BrokerAdapter for MetaTrader 4.

@@ -81,7 +81,6 @@ func TestCompileAndEval(t *testing.T) {
 	}
 }
 
-
 func TestValidation_Safety(t *testing.T) {
 	err := ValidateExpression(`exec("ls")`, nil, nil)
 	if err == nil {

@@ -12,11 +12,11 @@ type Normalizer struct{}
 // Tick creates a Tick with common fields filled.
 func (n *Normalizer) Tick(tenantID, broker, symbol string, tsMs int64, bid, ask string) *pb.Tick {
 	return &pb.Tick{
-		TenantId:      tenantID,
-		Broker:        broker,
-		Symbol:        symbol,
-		TsUnixMs:      tsMs,
-		Bid:           &pb.Money{Value: bid},
-		Ask:           &pb.Money{Value: ask},
+		TenantId: tenantID,
+		Broker:   broker,
+		Symbol:   symbol,
+		TsUnixMs: tsMs,
+		Bid:      &pb.Money{Value: bid},
+		Ask:      &pb.Money{Value: ask},
 	}
 }

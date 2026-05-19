@@ -51,7 +51,7 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 	})
 
 	chWriter.Start(ctx)
-	defer chWriter.Close()
+	defer func() { _ = chWriter.Close() }() //nolint:errcheck
 
 	go func() {
 		if err := sub.Start(ctx); err != nil {

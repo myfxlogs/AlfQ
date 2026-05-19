@@ -60,9 +60,9 @@ func (l *Loader) Count() int {
 
 // Status returns deployment status for monitoring.
 type DeploymentStatus struct {
-	ID         string
-	Active     bool
-	Positions  map[string]float64
+	ID        string
+	Active    bool
+	Positions map[string]float64
 }
 
 // GetStatus returns the status of a deployment.

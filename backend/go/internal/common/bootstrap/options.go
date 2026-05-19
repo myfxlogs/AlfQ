@@ -4,10 +4,10 @@ package bootstrap
 type Option func(*runCfg)
 
 type runCfg struct {
-	skipPG  bool
-	skipRDB bool
+	skipPG   bool
+	skipRDB  bool
 	skipNATS bool
-	skipCH  bool
+	skipCH   bool
 }
 
 // WithoutPG disables PostgreSQL connection.

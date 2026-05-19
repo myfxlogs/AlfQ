@@ -45,7 +45,7 @@ func VerifyTOTP(secret, code string) (bool, error) {
 // computeTOTP generates a TOTP code for the given secret and time step.
 func computeTOTP(key []byte, step int64) string {
 	mac := hmac.New(sha1.New, key)
-	binary.Write(mac, binary.BigEndian, step)
+	_ = binary.Write(mac, binary.BigEndian, step) //nolint:errcheck
 	hash := mac.Sum(nil)
 	offset := hash[len(hash)-1] & 0x0f
 	binary := binary.BigEndian.Uint32(hash[offset:offset+4]) & 0x7fffffff

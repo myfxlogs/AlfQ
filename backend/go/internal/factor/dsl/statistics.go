@@ -118,7 +118,7 @@ func (m *Min) Reset() {
 
 type Max struct{ m *Min }
 
-func NewMax(n int) *Max  { return &Max{m: NewMin(n)} }
+func NewMax(n int) *Max    { return &Max{m: NewMin(n)} }
 func (m *Max) Warmup() int { return m.m.Warmup() }
 func (m *Max) Eval(v float64) float64 {
 	n := m.m.n

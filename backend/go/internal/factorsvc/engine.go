@@ -48,7 +48,7 @@ func NewEngine(cfg Config) *Engine {
 		compiler: dsl.NewCompiler(fields, nil),
 	}
 	for _, f := range cfg.Factors {
-		e.Register(f)
+		_ = e.Register(f) //nolint:errcheck
 	}
 	return e
 }

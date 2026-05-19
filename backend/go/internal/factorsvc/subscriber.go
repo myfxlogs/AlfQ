@@ -52,7 +52,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("subscribe md.bar: %w", err)
 	}
-	defer sub.Unsubscribe()
+	defer func() { _ = sub.Unsubscribe() }() //nolint:errcheck
 
 	s.log.Info("quant-engine factor subscribed to md.bar.>")
 	<-ctx.Done()

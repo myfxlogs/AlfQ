@@ -49,7 +49,7 @@ func (s *SMA) Reset() {
 }
 
 type EMA struct {
-	n    int
+	n     int
 	alpha float64
 	value float64
 	count int

@@ -24,7 +24,7 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, cfg Config, natsURL, redi
 		redisClient, err := redis.Connect(ctx, redisAddr, "")
 		if err == nil {
 			d.RDB = redisClient
-			defer redisClient.Close()
+			defer func() { _ = redisClient.Close() }() //nolint:errcheck
 		}
 	}
 
@@ -40,7 +40,7 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, cfg Config, natsURL, redi
 		return fmt.Errorf("chwriter: %w", err)
 	}
 	chWriter.Start(ctx)
-	defer chWriter.Close()
+	defer func() { _ = chWriter.Close() }() //nolint:errcheck
 
 	tickTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "md_tick_total", Help: "Total normalized ticks received",

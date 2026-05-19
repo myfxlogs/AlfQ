@@ -66,5 +66,5 @@ type CrossDown struct {
 	init         bool
 }
 
-func NewCrossDown() *CrossDown { return &CrossDown{} }
+func NewCrossDown() *CrossDown   { return &CrossDown{} }
 func (c *CrossDown) Warmup() int { return 1 }

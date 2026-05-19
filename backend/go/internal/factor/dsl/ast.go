@@ -48,9 +48,9 @@ type FactorRef struct{ Name string }
 func (*NumberLit) node()   {}
 func (*BoolLit) node()     {}
 func (*StringLit) node()   {}
-func (*FieldRef) node()     {}
-func (*UnaryExpr) node()    {}
-func (*BinaryExpr) node()   {}
-func (*TernaryExpr) node()  {}
-func (*CallExpr) node()     {}
-func (*FactorRef) node()    {}
+func (*FieldRef) node()    {}
+func (*UnaryExpr) node()   {}
+func (*BinaryExpr) node()  {}
+func (*TernaryExpr) node() {}
+func (*CallExpr) node()    {}
+func (*FactorRef) node()   {}

@@ -1,0 +1,44 @@
+version: "2"
+
+linters:
+  default: standard
+
+  settings:
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+      exclude-functions:
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (net/http.ResponseWriter).Write
+        - (*go.uber.org/zap.Logger).Sync
+        - (*github.com/redis/go-redis/v9.Client).Close
+        - (*github.com/redis/go-redis/v9.ClusterClient).Close
+        - (*net/http.Server).Shutdown
+        - (fmt.Fprintf)
+        - (encoding/binary.Write)
+        - (*github.com/alfq/backend/go/internal/mdgateway.ClickHouseWriter).Close
+        - (*os.File).Close
+        - (github.com/nats-io/nats.go.Subscription).Unsubscribe
+        - (*github.com/alfq/backend/go/internal/common/db/pg.Pool).Close
+        - (github.com/alfq/backend/go/internal/factorsvc.Engine).Register
+        - (github.com/alfq/backend/go/internal/factorsvc.Subscriber).Unsubscribe
+
+  exclusions:
+    paths:
+      - ".*_test\\.go$"
+    rules:
+      - linters:
+          - errcheck
+        path: ".*_test\\.go$"
+      - linters:
+          - unused
+        path: "internal/factor/dsl/bb_cross\\.go$"
+      - linters:
+          - unused
+        path: "internal/factor/dsl/compile\\.go$"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

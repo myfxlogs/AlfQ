@@ -40,18 +40,18 @@ func DefaultFactorCHWriterConfig() FactorCHWriterConfig {
 // FactorCHWriter buffers factor values and flushes them to alfq.factor_values.
 // Async batch insert per docs/08 §3.3.
 type FactorCHWriter struct {
-	cfg   FactorCHWriterConfig
-	log   *zap.Logger
-	ch    chan factorRow
-	done  chan struct{}
-	wg    sync.WaitGroup
+	cfg  FactorCHWriterConfig
+	log  *zap.Logger
+	ch   chan factorRow
+	done chan struct{}
+	wg   sync.WaitGroup
 }
 
 type factorRow struct {
 	TenantID string
 	Factor   string
 	Symbol   string
-	TS       int64  // unix_ms
+	TS       int64 // unix_ms
 	Value    float64
 }
 

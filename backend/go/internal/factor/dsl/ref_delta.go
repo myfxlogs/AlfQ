@@ -4,10 +4,10 @@ import "math"
 
 // Ref returns value from n periods ago.
 type Ref struct {
-	n      int
-	buf    []float64
-	idx    int
-	count  int
+	n     int
+	buf   []float64
+	idx   int
+	count int
 }
 
 func NewRef(n int) *Ref { return &Ref{n: n, buf: make([]float64, n+1)} }
@@ -40,7 +40,7 @@ type Delta struct {
 	n   int
 }
 
-func NewDelta(n int) *Delta { return &Delta{ref: NewRef(n), n: n} }
+func NewDelta(n int) *Delta  { return &Delta{ref: NewRef(n), n: n} }
 func (d *Delta) Warmup() int { return d.n }
 func (d *Delta) Eval(v float64) float64 {
 	past := d.ref.Eval(v)
@@ -58,7 +58,7 @@ type PctChange struct {
 }
 
 func NewPctChange(n int) *PctChange { return &PctChange{ref: NewRef(n), n: n} }
-func (p *PctChange) Warmup() int     { return p.n }
+func (p *PctChange) Warmup() int    { return p.n }
 func (p *PctChange) Eval(v float64) float64 {
 	past := p.ref.Eval(v)
 	if math.IsNaN(past) || past == 0 {
@@ -124,4 +124,3 @@ func (r *Rank) Reset() {
 		r.buf[i] = 0
 	}
 }
-

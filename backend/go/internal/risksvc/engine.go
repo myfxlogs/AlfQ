@@ -19,14 +19,14 @@ type Rule interface {
 
 // AccountState holds real-time risk metrics for an account.
 type AccountState struct {
-	Equity          float64
-	Margin          float64
-	FreeMargin      float64
-	DailyPnL        float64
-	MaxDrawdown     float64
-	Positions       map[string]*pb.Position // symbol → position
-	TotalPositions  int32
-	OpenOrders      int32
+	Equity         float64
+	Margin         float64
+	FreeMargin     float64
+	DailyPnL       float64
+	MaxDrawdown    float64
+	Positions      map[string]*pb.Position // symbol → position
+	TotalPositions int32
+	OpenOrders     int32
 }
 
 // Engine evaluates risk rules in sequence.

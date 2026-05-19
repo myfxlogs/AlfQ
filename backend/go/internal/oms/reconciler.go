@@ -11,7 +11,7 @@ import (
 
 // Reconciler compares local orders with broker state every 60s.
 type Reconciler struct {
-	orders *repo.OrderRepo
+	orders  *repo.OrderRepo
 	adapter BrokerAdapter
 }
 

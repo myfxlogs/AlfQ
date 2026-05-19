@@ -11,7 +11,7 @@ type mockClient struct {
 	chatErr error
 }
 
-func (m *mockClient) Name() string                                     { return m.name }
+func (m *mockClient) Name() string { return m.name }
 func (m *mockClient) Chat(ctx context.Context, sys, msg string) (string, error) {
 	if m.chatErr != nil {
 		return "", m.chatErr

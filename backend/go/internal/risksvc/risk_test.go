@@ -32,9 +32,11 @@ func TestKillSwitchActivateDeactivate(t *testing.T) {
 
 func TestBreakerAllowAndOpen(t *testing.T) {
 	b := NewBreaker(3)
-	for i := 0; i < 3; i++ { b.RecordFailure() }
+	for i := 0; i < 3; i++ {
+		b.RecordFailure()
+	}
 	// Allow should still return true until Allow() is called after failures >= maxFailures
-	if b.Allow() {  // open was set by 3rd RecordFailure → failures=3 >= max=3 → open=true
+	if b.Allow() { // open was set by 3rd RecordFailure → failures=3 >= max=3 → open=true
 		t.Fatal("should be open")
 	}
 }

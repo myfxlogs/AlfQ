@@ -24,5 +24,5 @@ func newServer(addr string, mux *http.ServeMux) *http.Server {
 func shutdownWithTimeout(srv *http.Server, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	srv.Shutdown(ctx)
+	_ = srv.Shutdown(ctx) //nolint:errcheck
 }

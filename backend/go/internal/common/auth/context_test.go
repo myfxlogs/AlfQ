@@ -2,8 +2,8 @@ package auth_test
 
 import (
 	"context"
-	"time"
 	"testing"
+	"time"
 
 	"github.com/alfq/backend/go/internal/common/auth"
 )

@@ -22,11 +22,11 @@ type AccountAllocation struct {
 
 // StrategyAllocation represents a single strategy's capital allocation.
 type StrategyAllocation struct {
-	StrategyID string
-	AllocPct   float64         // percentage of total equity (0.0 - 1.0)
-	MaxQty     float64         // maximum position size
-	MaxDrawdown float64        // max allowed drawdown for this strategy
-	Enabled    bool
+	StrategyID  string
+	AllocPct    float64 // percentage of total equity (0.0 - 1.0)
+	MaxQty      float64 // maximum position size
+	MaxDrawdown float64 // max allowed drawdown for this strategy
+	Enabled     bool
 }
 
 // NewAllocator creates a capital allocator.

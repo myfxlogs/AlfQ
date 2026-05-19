@@ -4,11 +4,11 @@ import "math"
 
 // RSI: Relative Strength Index (Wilder's smoothing).
 type RSI struct {
-	n     int
+	n       int
 	avgGain float64
 	avgLoss float64
-	prev   float64
-	count  int
+	prev    float64
+	count   int
 }
 
 func NewRSI(n int) *RSI { return &RSI{n: n} }
@@ -80,10 +80,10 @@ func (m *MACD) Reset() { m.fastEMA.Reset(); m.slowEMA.Reset() }
 
 // ATR: Average True Range (Wilder's smoothing).
 type ATR struct {
-	n      int
-	tr     *EMA
-	prev   float64
-	count  int
+	n       int
+	tr      *EMA
+	prev    float64
+	count   int
 	hasPrev bool
 }
 

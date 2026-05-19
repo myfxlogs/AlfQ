@@ -5,7 +5,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-
 )
 
 // Compiler compiles a DSL expression AST into an evaluable Op.
@@ -203,13 +202,13 @@ func (c *Compiler) compileCall(n *CallExpr) (Op, error) {
 type constOp struct{ val float64 }
 
 func (c *constOp) Eval(v float64) float64 { return c.val }
-func (c *constOp) Reset()                {}
+func (c *constOp) Reset()                 {}
 func (c *constOp) Warmup() int            { return 0 }
 
 type fieldOp struct{ idx int }
 
 func (f *fieldOp) Eval(v float64) float64 { return v }
-func (f *fieldOp) Reset()                {}
+func (f *fieldOp) Reset()                 {}
 func (f *fieldOp) Warmup() int            { return 0 }
 
 type binaryOp struct {
@@ -303,7 +302,7 @@ func (u *unaryOp) Eval(v float64) float64 {
 	}
 	return math.NaN()
 }
-func (u *unaryOp) Reset()    { u.inner.Reset() }
+func (u *unaryOp) Reset()      { u.inner.Reset() }
 func (u *unaryOp) Warmup() int { return u.inner.Warmup() }
 
 type ternaryOp struct {
@@ -316,7 +315,7 @@ func (t *ternaryOp) Eval(v float64) float64 {
 	}
 	return t.f.Eval(v)
 }
-func (t *ternaryOp) Reset()    { t.cond.Reset(); t.t.Reset(); t.f.Reset() }
+func (t *ternaryOp) Reset() { t.cond.Reset(); t.t.Reset(); t.f.Reset() }
 func (t *ternaryOp) Warmup() int {
 	return nMax(t.cond.Warmup(), nMax(t.t.Warmup(), t.f.Warmup()))
 }
@@ -342,7 +341,7 @@ func (s *scalarOp) Eval(v float64) float64 {
 	}
 	return math.NaN()
 }
-func (s *scalarOp) Reset()    { s.inner.Reset() }
+func (s *scalarOp) Reset()      { s.inner.Reset() }
 func (s *scalarOp) Warmup() int { return s.inner.Warmup() }
 
 type powOp struct {
@@ -351,7 +350,7 @@ type powOp struct {
 }
 
 func (p *powOp) Eval(v float64) float64 { return Pow(p.inner.Eval(v), p.exp) }
-func (p *powOp) Reset()                { p.inner.Reset() }
+func (p *powOp) Reset()                 { p.inner.Reset() }
 func (p *powOp) Warmup() int            { return p.inner.Warmup() }
 
 type wrapOp struct {
@@ -365,7 +364,7 @@ func (w *wrapOp) Eval(v float64) float64 {
 	}
 	return w.outer.Eval(x)
 }
-func (w *wrapOp) Reset()    { w.inner.Reset(); w.outer.Reset() }
+func (w *wrapOp) Reset()      { w.inner.Reset(); w.outer.Reset() }
 func (w *wrapOp) Warmup() int { return nMax(w.inner.Warmup(), w.outer.Warmup()) }
 
 func (c *Compiler) newWindowOp(args []Node, factory func(int) Op) (Op, error) {

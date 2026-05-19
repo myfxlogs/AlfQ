@@ -42,14 +42,14 @@ func DefaultCHWriterConfig() CHWriterConfig {
 // Until clickhouse-go is available in the module cache, this implementation
 // writes JSON Lines to disk as a backpressure-safe fallback.
 type CHWriter struct {
-	cfg    CHWriterConfig
-	log    *zap.Logger
-	ticks  chan *pb.Tick
-	done   chan struct{}
-	wg     sync.WaitGroup
-	file   *os.File
-	mu     sync.Mutex
-	seq    int64
+	cfg   CHWriterConfig
+	log   *zap.Logger
+	ticks chan *pb.Tick
+	done  chan struct{}
+	wg    sync.WaitGroup
+	file  *os.File
+	mu    sync.Mutex
+	seq   int64
 }
 
 // NewCHWriter creates a CHWriter.

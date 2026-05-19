@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/redis/go-redis/v9"
@@ -26,7 +26,7 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 	if err != nil {
 		return fmt.Errorf("bootstrap: logger: %w", err)
 	}
-	defer log.Sync()
+	defer func() { _ = log.Sync() }() //nolint:errcheck
 
 	// ── Infrastructure connections ──
 	d := &Deps{Log: log}
@@ -55,7 +55,7 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 			log.Warn("redis unavailable, auth disabled", zap.Error(err))
 		} else {
 			d.RDB = rdb
-			defer rdb.Close()
+			defer func() { _ = rdb.Close() }() //nolint:errcheck
 		}
 	}
 

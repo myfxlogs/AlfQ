@@ -9,8 +9,8 @@ import (
 
 // KillCommand is published to NATS risk.cmd when kill switch is activated.
 type KillCommand struct {
-	Action    string `json:"action"`    // HALT, CANCEL_ALL, CLOSE_ALL, DISCONNECT
-	Scope     string `json:"scope"`     // tenant_id or "global"
+	Action    string `json:"action"` // HALT, CANCEL_ALL, CLOSE_ALL, DISCONNECT
+	Scope     string `json:"scope"`  // tenant_id or "global"
 	ByUser    string `json:"by_user"`
 	Reason    string `json:"reason"`
 	Timestamp int64  `json:"ts_unix_ms"`

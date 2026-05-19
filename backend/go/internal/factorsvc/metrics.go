@@ -1,10 +1,11 @@
 // Package factorsvc — Prometheus metrics registry.
 //
 // Metrics per docs/15-可观测性详细规范.md §5.1:
-//   alfq_factor_eval_total{factor, symbol, result}
-//   alfq_factor_eval_duration_seconds_bucket{factor}
-//   alfq_factor_loaded_count{tenant_bucket}
-//   alfq_factor_dependency_depth
+//
+//	alfq_factor_eval_total{factor, symbol, result}
+//	alfq_factor_eval_duration_seconds_bucket{factor}
+//	alfq_factor_loaded_count{tenant_bucket}
+//	alfq_factor_dependency_depth
 package factorsvc
 
 import (
