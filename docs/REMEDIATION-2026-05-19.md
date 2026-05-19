@@ -404,7 +404,7 @@ grep -rlE 'kubectl|Helm chart|ArgoCD|StatefulSet|Kubernetes' docs/*.md \
 
 - [x] §6 全部 6 步执行命令退出码均为 0
 - [x] 无 lint warning（除已 ADR 豁免）
-- [ ] PR 全部合并到 main（待提交）
+- [x] PR 全部合并到 main（6 commits on main: da98f36..7cdfcd6）
 - [x] `docs/26 §4` 与现状一致
 - [x] 本文档 §7 表全部 ✅
 
