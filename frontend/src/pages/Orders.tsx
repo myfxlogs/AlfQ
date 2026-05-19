@@ -1,0 +1,35 @@
+// Orders page — ALFQ
+import { useState } from "react";
+import type { Order } from "../gen/alfq/v1/order_pb";
+
+export default function Orders() {
+  const [items] = useState<Order[]>([]);
+  return (
+    <div style={{ padding: "2rem" }}>
+      <h1>订单管理</h1>
+      <table style={{ width: "100%", marginTop: 16, borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ textAlign: "left", borderBottom: "2px solid #ddd" }}>
+            <th style={{ padding: 8 }}>订单ID</th>
+            <th style={{ padding: 8 }}>品种</th>
+            <th style={{ padding: 8 }}>方向</th>
+            <th style={{ padding: 8 }}>数量</th>
+            <th style={{ padding: 8 }}>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((o: Order) => (
+            <tr key={o.orderId} style={{ borderBottom: "1px solid #eee" }}>
+              <td style={{ padding: 8 }}>{o.orderId}</td>
+              <td style={{ padding: 8 }}>{o.symbol}</td>
+              <td style={{ padding: 8 }}>{o.side}</td>
+              <td style={{ padding: 8 }}>{o.qty}</td>
+              <td style={{ padding: 8 }}>{o.state}</td>
+            </tr>
+          ))}
+          {items.length === 0 && <tr><td colSpan={5} style={{ padding: 8, color: "#888" }}>暂无订单（等待 trading-core OMS API 接入）</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  );
+}

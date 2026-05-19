@@ -4,7 +4,7 @@ import react from "eslint-plugin-react";
 import globals from "globals";
 
 export default [
-  { ignores: ["dist/**", "node_modules/**", "vite.config.ts"] },
+  { ignores: ["dist/**", "node_modules/**", "src/gen/**", "vite.config.ts"] },
   js.configs.recommended,
   ...ts.configs.recommended,
   {
