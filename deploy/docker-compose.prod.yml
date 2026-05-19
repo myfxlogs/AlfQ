@@ -3,7 +3,7 @@ version: "3.9"
 services:
   # ── Infrastructure ──
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: alfq
       POSTGRES_PASSWORD: alfq_dev
@@ -18,7 +18,7 @@ services:
     networks: [alfq-net]
 
   clickhouse:
-    image: clickhouse/clickhouse-server:25-alpine
+    image: clickhouse/clickhouse-server:26.1-alpine
     environment:
       CLICKHOUSE_USER: alfq
       CLICKHOUSE_PASSWORD: alfq_dev
@@ -51,7 +51,7 @@ services:
     networks: [alfq-net]
 
   vault:
-    image: hashicorp/vault:1.18
+    image: hashicorp/vault:2.0
     cap_add: [IPC_LOCK]
     environment:
       VAULT_ADDR: "http://0.0.0.0:8200"
@@ -64,7 +64,7 @@ services:
     networks: [alfq-net]
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.11.3
     volumes:
       - ./prometheus:/etc/prometheus:ro
       - prom_data:/prometheus
@@ -74,7 +74,7 @@ services:
     networks: [alfq-net]
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.0.1
     volumes:
       - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - grafana_data:/var/lib/grafana
@@ -86,7 +86,7 @@ services:
     networks: [alfq-net]
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.7.2
     volumes:
       - ./loki/loki.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
@@ -95,7 +95,7 @@ services:
     networks: [alfq-net]
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.10.5
     volumes:
       - ./tempo/tempo.yaml:/etc/tempo/config.yaml:ro
       - tempo_data:/var/tempo

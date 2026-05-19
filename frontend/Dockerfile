@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+
+# Stage 1: Build
+FROM node:24-alpine AS builder
+RUN apk add --no-cache ca-certificates curl
+
+WORKDIR /app
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Serve with Nginx
+FROM nginx:1.30-alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

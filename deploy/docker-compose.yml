@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: alfq
       POSTGRES_PASSWORD: alfq_dev
@@ -20,7 +20,7 @@ services:
       - alfq-net
 
   clickhouse:
-    image: clickhouse/clickhouse-server:24-alpine
+    image: clickhouse/clickhouse-server:26.1-alpine
     environment:
       CLICKHOUSE_USER: alfq
       CLICKHOUSE_PASSWORD: alfq_dev
@@ -39,7 +39,7 @@ services:
       - alfq-net
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     ports:
       - "6379:6379"
     volumes:

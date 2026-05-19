@@ -19,7 +19,7 @@ RUN go mod download
 COPY backend/go/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/svc ./cmd/trading-core
 
-FROM alpine:3.21
+FROM alpine:3.23
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /bin/svc /usr/local/bin/svc
 EXPOSE 8080
