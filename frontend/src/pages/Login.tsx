@@ -27,16 +27,16 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:"#f0f2f5" }}>
-      <div style={{ background:"#fff", padding:"3rem", borderRadius:12, boxShadow:"0 4px 12px rgba(0,0,0,0.1)", width:360 }}>
-        <h1 style={{ textAlign:"center", marginBottom:"2rem" }}>ALFQ</h1>
-        {error && <div style={{ color:"red", marginBottom:12, fontSize:14 }}>{error}</div>}
-        <input placeholder="邮箱" type="email" value={email} onChange={e=>setEmail(e.target.value)}
-          style={{ width:"100%", padding:12, marginBottom:12, border:"1px solid #ddd", borderRadius:6 }} />
-        <input placeholder="密码" type="text" value={password} onChange={e=>setPassword(e.target.value)}
-          style={{ width:"100%", padding:12, marginBottom:20, border:"1px solid #ddd", borderRadius:6 }} />
-        <button onClick={handleLogin} disabled={loading}
-          style={{ width:"100%", padding:12, background:"#1677ff", color:"#fff", border:"none", borderRadius:6, fontSize:16, cursor:"pointer", opacity: loading ? 0.7 : 1 }}>
+    <div style={{ display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:"var(--color-bg-secondary)" }}>
+      <div className="glass-card" style={{ padding:"3rem", width:360 }}>
+        <h1 className="text-gradient" style={{ textAlign:"center", marginBottom:"2rem", fontSize:28 }}>ALFQ</h1>
+        {error && <div style={{ color:"var(--color-danger)", marginBottom:12, fontSize:14 }}>{error}</div>}
+        <input className="input" placeholder="邮箱" type="email" value={email} onChange={e=>setEmail(e.target.value)}
+          style={{ width:"100%", marginBottom:12 }} />
+        <input className="input" placeholder="密码" type="password" value={password} onChange={e=>setPassword(e.target.value)}
+          style={{ width:"100%", marginBottom:20 }} />
+        <button className="btn-primary" onClick={handleLogin} disabled={loading}
+          style={{ width:"100%", padding:12, fontSize:16, opacity: loading ? 0.7 : 1 }}>
           {loading ? "登录中..." : "登录"}
         </button>
       </div>

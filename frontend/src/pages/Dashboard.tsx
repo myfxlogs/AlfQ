@@ -30,26 +30,26 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>ALFQ 仪表盘</h1>
-      {error && <div style={{ color: "red", marginTop: 12 }}>{error}</div>}
+    <div className="page">
+      <h1 className="page-title">仪表盘</h1>
+      {error && <div style={{ color: "var(--color-danger)", marginTop: 12 }}>{error}</div>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1rem", marginTop: "2rem" }}>
         <StatCard title="账户数" value={loading ? "..." : String(accounts)} />
         <StatCard title="经纪商数" value={loading ? "..." : String(brokers)} />
         <StatCard title="策略数" value={loading ? "..." : String(strategies)} />
         <StatCard title="今日成交" value="—" />
       </div>
-      <div style={{ marginTop: "2rem", padding: "1rem", background: "#f5f5f5", borderRadius: 8 }}>
-        <h3>最近订单</h3>
-        <p style={{ color: "#888" }}>暂无数据</p>
+      <div className="glass-card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
+        <h3 style={{ margin: "0 0 1rem", color: "var(--color-text)" }}>最近订单</h3>
+        <p style={{ color: "var(--color-text-muted)" }}>暂无数据</p>
       </div>
     </div>
   );
 }
 
 function StatCard({title, value, color}:{title:string;value:string;color?:string}) {
-  return <div style={{background:"#fff",padding:"1.5rem",borderRadius:8,boxShadow:"0 1px 3px rgba(0,0,0,0.1)"}}>
-    <div style={{color:"#888",fontSize:14}}>{title}</div>
-    <div style={{fontSize:24,fontWeight:700,color:color||"#333",marginTop:8}}>{value}</div>
+  return <div className="stat-card">
+    <div style={{color:"var(--color-text-muted)",fontSize:14}}>{title}</div>
+    <div style={{fontSize:24,fontWeight:700,color:color||"var(--color-text)",marginTop:8}}>{value}</div>
   </div>;
 }

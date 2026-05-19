@@ -61,12 +61,12 @@ export default function App() {
 
   return (
     <div>
-      <nav style={{ background: "#001529", color: "#fff", padding: "0 2rem", display: "flex", gap: "1.5rem", height: 48, alignItems: "center", fontSize: 14 }}>
-        <b style={{ fontSize: 16 }}><a href="#/" style={{ color: "#fff", textDecoration: "none" }}>ALFQ</a></b>
+      <nav className="navbar">
+        <a href="#/" className="navbar-brand">ALFQ</a>
         {navItems.map(([path, label]) => (
-          <a key={path} href={path} style={{ color: "#fff", textDecoration: "none" }}>{label}</a>
+          <a key={path} href={path} className={`nav-link${hash === path ? " active" : ""}`}>{label}</a>
         ))}
-        <a href="#/login" style={{ color: "#fff", marginLeft: "auto", textDecoration: "none" }}>登录</a>
+        <a href="#/login" className="nav-login">登录</a>
       </nav>
       <Page />
     </div>
