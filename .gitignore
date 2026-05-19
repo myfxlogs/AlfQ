@@ -12,3 +12,8 @@ frontend/src/gen/
 research/alfq_research/_gen/
 gprc/mt4goExample/
 gprc/mt5goExample/
+
+# Go build artifacts (prevent binary recommit)
+backend/go/trading-core
+backend/go/quant-engine
+backend/go/cover.out
