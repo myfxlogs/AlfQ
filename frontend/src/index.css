@@ -326,6 +326,19 @@ a:hover { color: var(--color-primary); }
   margin-bottom: 1.5rem;
 }
 
+/* Stats grid (dashboard) */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .glow-primary {
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
 }

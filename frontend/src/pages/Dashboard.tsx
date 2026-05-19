@@ -1,9 +1,10 @@
-// Dashboard page — ALFQ main overview.
+// Dashboard page — account overview with stats + recent accounts
 import { useEffect, useState } from "react";
 import { brokerClient, accountClient, strategyClient } from "../api/client";
+import type { Account } from "../gen/alfq/v1/broker_pb";
 
 export default function Dashboard() {
-  const [accounts, setAccounts] = useState(0);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [brokers, setBrokers] = useState(0);
   const [strategies, setStrategies] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -13,11 +14,11 @@ export default function Dashboard() {
     async function load() {
       try {
         const [accRes, brkRes, stratRes] = await Promise.all([
-          accountClient.listAccounts({}),
-          brokerClient.listBrokers({}),
-          strategyClient.listStrategies({}),
+          accountClient.listAccounts({ tenantId: "" }),
+          brokerClient.listBrokers({ tenantId: "" }),
+          strategyClient.listStrategies({ tenantId: "" }),
         ]);
-        setAccounts(accRes.accounts?.length ?? 0);
+        setAccounts(accRes.accounts ?? []);
         setBrokers(brkRes.brokers?.length ?? 0);
         setStrategies(stratRes.strategies?.length ?? 0);
       } catch (e: unknown) {
@@ -29,27 +30,108 @@ export default function Dashboard() {
     load();
   }, []);
 
+  const connectedCount = accounts.filter((a) => a.status === "connected").length;
+  const totalEquity = accounts.reduce((s, a) => s + (a.equity ?? 0), 0);
+  const totalBalance = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
+  const totalProfit = accounts.reduce((s, a) => s + (a.profit ?? 0), 0);
+
   return (
     <div className="page">
-      <h1 className="page-title">仪表盘</h1>
-      {error && <div style={{ color: "var(--color-danger)", marginTop: 12 }}>{error}</div>}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1rem", marginTop: "2rem" }}>
-        <StatCard title="账户数" value={loading ? "..." : String(accounts)} />
-        <StatCard title="经纪商数" value={loading ? "..." : String(brokers)} />
-        <StatCard title="策略数" value={loading ? "..." : String(strategies)} />
-        <StatCard title="今日成交" value="—" />
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+        <div>
+          <h1 className="page-title" style={{ marginBottom: "0.25rem" }}>仪表盘</h1>
+          <p style={{ color: "var(--color-text-muted)", margin: 0, fontSize: 14 }}>
+            {loading ? "加载中..." : `${accounts.length} 个账户 · ${connectedCount} 在线`}
+          </p>
+        </div>
+        <button className="btn-primary" onClick={() => window.location.hash = "#/accounts"}>
+          + 绑定账户
+        </button>
       </div>
-      <div className="glass-card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
-        <h3 style={{ margin: "0 0 1rem", color: "var(--color-text)" }}>最近订单</h3>
-        <p style={{ color: "var(--color-text-muted)" }}>暂无数据</p>
+
+      {error && <div style={{ color: "var(--color-danger)", marginBottom: 12 }}>{error}</div>}
+
+      {/* Stats Grid */}
+      <div className="stats-grid" style={{ marginBottom: "1.5rem" }}>
+        <StatCard icon="💰" label="总净值" value={`$${totalEquity.toFixed(2)}`} color="var(--color-text)" />
+        <StatCard icon="🏦" label="总余额" value={`$${totalBalance.toFixed(2)}`} color="var(--color-text)" />
+        <StatCard icon="📈" label="浮动盈亏" value={`$${totalProfit.toFixed(2)}`}
+          color={totalProfit >= 0 ? "var(--color-success)" : "var(--color-danger)"} />
+        <StatCard icon="🔌" label="在线账户" value={loading ? "..." : String(connectedCount)} color="var(--color-success)" />
+      </div>
+
+      {/* Account list */}
+      <div className="glass-card" style={{ overflow: "auto" }}>
+        <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--color-border)", fontWeight: 600 }}>
+          交易账户
+        </div>
+        {loading ? (
+          <p style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>加载中...</p>
+        ) : accounts.length === 0 ? (
+          <p style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+            暂无账户，点击右上角「+ 绑定账户」开始
+          </p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>登录号</th>
+                <th>服务器</th>
+                <th>状态</th>
+                <th>余额</th>
+                <th>净值</th>
+                <th>浮动盈亏</th>
+                <th>杠杆</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accounts.map((a) => (
+                <tr key={a.id}>
+                  <td style={{ fontWeight: 600 }}>{a.login || "—"}</td>
+                  <td style={{ fontSize: 12, color: "var(--color-text-secondary)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {a.server || "—"}
+                  </td>
+                  <td>
+                    <span style={{
+                      display: "inline-block", padding: "2px 8px", borderRadius: 12, fontSize: 12, fontWeight: 600,
+                      background: a.status === "connected" ? "rgba(0,166,81,0.1)" :
+                        a.status === "error" ? "rgba(229,57,53,0.1)" : "rgba(0,0,0,0.05)",
+                      color: a.status === "connected" ? "var(--color-success)" :
+                        a.status === "error" ? "var(--color-danger)" : "var(--color-text-muted)",
+                    }}>
+                      {a.status === "connected" ? "在线" : a.status === "error" ? "错误" : "离线"}
+                    </span>
+                  </td>
+                  <td className={a.balance && a.balance > 0 ? "price-up" : ""}>
+                    {a.balance != null ? `$${a.balance.toFixed(2)}` : "—"}
+                  </td>
+                  <td>{a.equity != null ? `$${a.equity.toFixed(2)}` : "—"}</td>
+                  <td className={(a.profit ?? 0) >= 0 ? "price-up" : "price-down"}>
+                    {a.profit != null ? `$${a.profit.toFixed(2)}` : "—"}
+                  </td>
+                  <td>{a.leverage ? `1:${a.leverage}` : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
 }
 
-function StatCard({title, value, color}:{title:string;value:string;color?:string}) {
-  return <div className="stat-card">
-    <div style={{color:"var(--color-text-muted)",fontSize:14}}>{title}</div>
-    <div style={{fontSize:24,fontWeight:700,color:color||"var(--color-text)",marginTop:8}}>{value}</div>
-  </div>;
+function StatCard({ icon, label, value, color }: { icon: string; label: string; value: string; color: string }) {
+  return (
+    <div className="stat-card">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+          background: "var(--color-bg-secondary)", fontSize: 18,
+        }}>{icon}</div>
+      </div>
+      <div style={{ color: "var(--color-text-muted)", fontSize: 13, marginBottom: "0.25rem" }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
+    </div>
+  );
 }
