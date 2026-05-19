@@ -86,7 +86,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
             <label style={{ display: "block", marginBottom: "0.75rem", fontWeight: 600, color: "var(--color-text)", fontSize: 14 }}>交易平台</label>
             <div style={{ display: "flex", gap: "1rem" }}>
               {(["MT4","MT5"] as MtType[]).map((p) => (
-                <div key={p} onClick={() => { setMtType(p); setSearchResults([]); setSelectedCompany(null); }}
+                <div key={p} onClick={() => { setMtType(p); setSearchResults([]); setSelectedCompany(null); setSelectedServer(null); setMsg(""); }}
                   style={{
                     flex: 1, padding: "1rem", borderRadius: 12, cursor: "pointer", textAlign: "center", transition: "all 0.2s",
                     background: mtType === p ? "rgba(212,175,55,0.1)" : "var(--color-bg-secondary)",
@@ -126,7 +126,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
                 }}>
                 <option value="">选择经纪商</option>
                 {searchResults.map((m) => (
-                  <option key={m.company} value={m.company}>{m.company} ({m.servers.length} 服务器)</option>
+                  <option key={m.company} value={m.company}>{m.company}</option>
                 ))}
               </select>
             </div>
@@ -143,9 +143,11 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
                   setSelectedServer(s || null);
                 }}>
                 <option value="">选择服务器</option>
-                {selectedCompany.servers.map((s) => (
-                  <option key={`${s.name}-${s.access}`} value={s.name}>{s.name}</option>
-                ))}
+                {[...new Map(selectedCompany.servers.map((s) => [s.name, s] as const)).values()]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((s) => (
+                    <option key={s.name} value={s.name}>{s.name}</option>
+                  ))}
               </select>
             </div>
           )}
