@@ -118,7 +118,11 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 	if strings.EqualFold(req.Platform, "MT4") {
 		gw = s.mt4Gateway
 	}
-	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gw, req.Platform, req.Keyword); err == nil && len(onlineMatches) > 0 {
+	kw := req.Keyword
+	if kw == "" {
+		kw = "tr" // gateway requires ≥2 chars; "tr" yields broad coverage (~450 brokers)
+	}
+	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gw, req.Platform, kw); err == nil && len(onlineMatches) > 0 {
 		var matches []*pb.BrokerMatch
 		for _, m := range onlineMatches {
 			matches = append(matches, &pb.BrokerMatch{
