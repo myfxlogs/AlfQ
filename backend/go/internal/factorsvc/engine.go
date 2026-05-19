@@ -1,6 +1,6 @@
-// Package factorsvc implements the factor computation service.
+// Package factorsvc is the factor computation sub-component of quant-engine.
 // It subscribes to bar streams, evaluates factor DSL expressions,
-// and publishes factor values to NATS.
+// and publishes factor values in-process to the strategy layer.
 package factorsvc
 
 import (
@@ -20,7 +20,7 @@ type FactorDef struct {
 	Symbols    []string
 }
 
-// Config holds the factor-svc configuration.
+// Config holds the quant-engine factor sub-component configuration.
 type Config struct {
 	Factors []FactorDef
 	NatsURL string

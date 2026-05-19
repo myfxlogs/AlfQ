@@ -1,4 +1,4 @@
-// Package factorsvc — NATS bar subscriber + factor publisher.
+// Package factorsvc — quant-engine factor sub-component: NATS bar subscriber + factor publisher.
 package factorsvc
 
 import (
@@ -54,7 +54,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	}
 	defer sub.Unsubscribe()
 
-	s.log.Info("factor-svc subscribed to md.bar.>")
+	s.log.Info("quant-engine factor subscribed to md.bar.>")
 	<-ctx.Done()
 	s.nc.Close()
 	return nil
