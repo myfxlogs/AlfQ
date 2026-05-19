@@ -30,7 +30,12 @@ type AccountInfo struct {
 // BrokerMatch from online broker search.
 type BrokerMatch struct {
 	Company string
-	Servers []string
+	Servers []ServerEntry
+}
+
+type ServerEntry struct {
+	Name   string // e.g. "Exness-Real2"
+	Access string // e.g. "63.179.160.248:443"
 }
 
 // ── Online broker search ──
@@ -61,9 +66,11 @@ func searchMT5(ctx context.Context, conn *grpc.ClientConn, company string) ([]Br
 	}
 	var matches []BrokerMatch
 	for _, c := range resp.GetResult() {
-		var servers []string
+		var servers []ServerEntry
 		for _, r := range c.GetResults() {
-			servers = append(servers, r.GetAccess()...)
+			for _, acc := range r.GetAccess() {
+				servers = append(servers, ServerEntry{Name: r.GetName(), Access: acc})
+			}
 		}
 		matches = append(matches, BrokerMatch{Company: c.GetCompanyName(), Servers: servers})
 	}
@@ -78,9 +85,11 @@ func searchMT4(ctx context.Context, conn *grpc.ClientConn, company string) ([]Br
 	}
 	var matches []BrokerMatch
 	for _, c := range resp.GetResult() {
-		var servers []string
+		var servers []ServerEntry
 		for _, r := range c.GetResults() {
-			servers = append(servers, r.GetAccess()...)
+			for _, acc := range r.GetAccess() {
+				servers = append(servers, ServerEntry{Name: r.GetName(), Access: acc})
+			}
 		}
 		matches = append(matches, BrokerMatch{Company: c.GetCompanyName(), Servers: servers})
 	}
@@ -160,14 +169,10 @@ func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string
 
 func BuiltinBrokers() []BrokerMatch {
 	return []BrokerMatch{
-		{Company: "RoboForex", Servers: []string{"mt4-demo.roboforex.com:443", "mt5-demo.roboforex.com:443"}},
-		{Company: "IC Markets", Servers: []string{"mt4-demo.icmarkets.com:443", "mt5-demo.icmarkets.com:443"}},
-		{Company: "XM", Servers: []string{"mt4-demo.xm.com:443", "mt5-demo.xm.com:443"}},
-		{Company: "Exness", Servers: []string{"mt4-demo.exness.com:443", "mt5-demo.exness.com:443"}},
-		{Company: "Pepperstone", Servers: []string{"mt4-demo.pepperstone.com:443", "mt5-demo.pepperstone.com:443"}},
-		{Company: "Tickmill", Servers: []string{"mt4-demo.tickmill.com:443", "mt5-demo.tickmill.com:443"}},
-		{Company: "FP Markets", Servers: []string{"mt4-demo.fpmarkets.com:443", "mt5-demo.fpmarkets.com:443"}},
-		{Company: "FBS", Servers: []string{"mt4-demo.fbs.com:443", "mt5-demo.fbs.com:443"}},
+		{Company: "RoboForex", Servers: []ServerEntry{{Name: "Demo", Access: "mt4-demo.roboforex.com:443"}}},
+		{Company: "IC Markets", Servers: []ServerEntry{{Name: "Demo", Access: "mt4-demo.icmarkets.com:443"}}},
+		{Company: "XM", Servers: []ServerEntry{{Name: "Demo", Access: "mt4-demo.xm.com:443"}}},
+		{Company: "Exness", Servers: []ServerEntry{{Name: "Demo", Access: "mt5-demo.exness.com:443"}}},
 	}
 }
 

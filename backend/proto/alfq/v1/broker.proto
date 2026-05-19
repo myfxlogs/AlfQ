@@ -33,7 +33,11 @@ message SearchBrokerResponse {
 }
 message BrokerMatch {
   string company = 1;
-  repeated string servers = 2; // e.g. ["mt4-demo.roboforex.com:443"]
+  repeated BrokerServer servers = 2;
+}
+message BrokerServer {
+  string name = 1;    // e.g. "Exness-Real2"
+  string access = 2;  // e.g. "63.179.160.248:443" — actual connection endpoint
 }
 
 service AccountService {

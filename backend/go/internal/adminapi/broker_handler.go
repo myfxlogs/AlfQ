@@ -105,7 +105,7 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 			}
 			matches = append(matches, &pb.BrokerMatch{
 				Company: b.Name,
-				Servers: []string{b.MtapiEndpoint},
+				Servers: []*pb.BrokerServer{{Name: b.DefaultServer, Access: b.MtapiEndpoint}},
 			})
 		}
 		if len(matches) > 0 {
@@ -125,9 +125,13 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gw, req.Platform, kw); err == nil && len(onlineMatches) > 0 {
 		var matches []*pb.BrokerMatch
 		for _, m := range onlineMatches {
+			var servers []*pb.BrokerServer
+			for _, s := range m.Servers {
+				servers = append(servers, &pb.BrokerServer{Name: s.Name, Access: s.Access})
+			}
 			matches = append(matches, &pb.BrokerMatch{
 				Company: m.Company,
-				Servers: m.Servers,
+				Servers: servers,
 			})
 		}
 		return &pb.SearchBrokerResponse{Matches: matches}, nil
