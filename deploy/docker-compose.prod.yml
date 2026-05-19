@@ -1,8 +1,9 @@
 version: "3.9"
 
 services:
+  # ── Infrastructure ──
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: alfq
       POSTGRES_PASSWORD: alfq_dev
@@ -17,7 +18,7 @@ services:
     networks: [alfq-net]
 
   clickhouse:
-    image: clickhouse/clickhouse-server:24-alpine
+    image: clickhouse/clickhouse-server:25-alpine
     environment:
       CLICKHOUSE_USER: alfq
       CLICKHOUSE_PASSWORD: alfq_dev
@@ -27,9 +28,14 @@ services:
     networks: [alfq-net]
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     ports: ["6379:6379"]
     volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks: [alfq-net]
 
   nats:
@@ -37,16 +43,91 @@ services:
     command: ["-js", "-m", "8222"]
     ports: ["4222:4222", "8222:8222"]
     volumes: [nats_data:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8222 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks: [alfq-net]
 
-  admin-api:
+  vault:
+    image: hashicorp/vault:1.18
+    cap_add: [IPC_LOCK]
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_DEV_ROOT_TOKEN_ID: alfq_dev_root
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    ports: ["8200:8200"]
+    volumes: [vault_data:/vault/file]
+    command: server -dev
+    restart: unless-stopped
+    networks: [alfq-net]
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prom_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: unless-stopped
+    networks: [alfq-net]
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports: ["3000:3000"]
+    restart: unless-stopped
+    networks: [alfq-net]
+
+  loki:
+    image: grafana/loki:latest
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    command: "-config.file=/etc/loki/local-config.yaml"
+    restart: unless-stopped
+    networks: [alfq-net]
+
+  tempo:
+    image: grafana/tempo:latest
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/var/tempo
+    command: "-config.file=/etc/tempo/config.yaml"
+    restart: unless-stopped
+    networks: [alfq-net]
+
+  # ── Application (5 services) ──
+  trading-core:
     build:
       context: ..
-      dockerfile: backend/go/cmd/admin-api/Dockerfile
+      dockerfile: backend/go/cmd/trading-core/Dockerfile
     ports: ["8080:8080"]
     environment:
-      ADMIN_API_LISTEN: ":8080"
-      ADMIN_API_LOG_LEVEL: info
+      DATABASE_URL: "postgres://alfq:alfq_dev@postgres:5432/alfq?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      NATS_URL: "nats://nats:4222"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+      nats:     { condition: service_healthy }
+    networks: [alfq-net]
+
+  quant-engine:
+    build:
+      context: ..
+      dockerfile: backend/go/cmd/quant-engine/Dockerfile
+    ports: ["9002:9002"]
+    environment:
+      NATS_URL: "nats://nats:4222"
+    depends_on:
+      nats: { condition: service_healthy }
     networks: [alfq-net]
 
   md-gateway:
@@ -56,46 +137,12 @@ services:
     ports: ["9001:9001"]
     environment:
       NATS_URL: "nats://nats:4222"
-      CH_ADDR: "clickhouse:9000"
-    networks: [alfq-net]
-
-  factor-svc:
-    build:
-      context: ..
-      dockerfile: backend/go/cmd/factor-svc/Dockerfile
-    ports: ["9002:9002"]
-    environment:
-      NATS_URL: "nats://nats:4222"
-    networks: [alfq-net]
-
-  strategy-svc:
-    build:
-      context: ..
-      dockerfile: backend/go/cmd/strategy-svc/Dockerfile
-    ports: ["9003:9003"]
-    environment:
-      NATS_URL: "nats://nats:4222"
-      PG_DSN: "postgres://alfq:alfq_dev@postgres:5432/alfq"
-    networks: [alfq-net]
-
-  risk-svc:
-    build:
-      context: ..
-      dockerfile: backend/go/cmd/risk-svc/Dockerfile
-    ports: ["9004:9004"]
-    environment:
-      NATS_URL: "nats://nats:4222"
-    networks: [alfq-net]
-
-  oms:
-    build:
-      context: ..
-      dockerfile: backend/go/cmd/oms/Dockerfile
-    ports: ["9005:9005"]
-    environment:
-      PG_DSN: "postgres://alfq:alfq_dev@postgres:5432/alfq"
       REDIS_ADDR: "redis:6379"
-      NATS_URL: "nats://nats:4222"
+      CH_ADDR: "clickhouse:9000"
+    depends_on:
+      nats:       { condition: service_healthy }
+      redis:      { condition: service_healthy }
+      clickhouse: { condition: service_started }
     networks: [alfq-net]
 
   assistant-svc:
@@ -106,11 +153,25 @@ services:
     environment: {}
     networks: [alfq-net]
 
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    ports: ["80:80"]
+    depends_on:
+      trading-core: { condition: service_started }
+    networks: [alfq-net]
+
 volumes:
   pg_data:
   ch_data:
   redis_data:
   nats_data:
+  vault_data:
+  prom_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
 
 networks:
   alfq-net:
