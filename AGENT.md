@@ -12,7 +12,7 @@
 
 - Go 1.25 / Python 3.12 / TS 6+ / Node 22 LTS（版本基线见 `docs/26 §2`）
 - Proto 单一源 `backend/proto/alfq/v1/` → `buf generate` 出 Go/TS/Python stub
-- 4 后端服务：trading-core:8080（admin-api+oms+risk）, md-gateway:9001, quant-engine:9002（factor+strategy）, assistant-svc:9006
+- 4 后端服务：trading-core:9000（admin-api+oms+risk）, md-gateway:9001, quant-engine:9002（factor+strategy）, assistant-svc:9003
 - 1 前端服务：frontend:80（Nginx 静态托管 + `/api/` 反代到 trading-core）
 
 ## 硬性规则

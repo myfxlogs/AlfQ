@@ -10,7 +10,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U alfq"]
       interval: 5s
@@ -27,7 +27,7 @@ services:
       CLICKHOUSE_DB: alfq
     ports:
       - "8123:8123"
-      - "9000:9000"
+      # native 9000 仅内网（避免与 trading-core 9000 冲突）
     volumes:
       - ch_data:/var/lib/clickhouse
     healthcheck:

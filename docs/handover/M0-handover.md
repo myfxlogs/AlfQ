@@ -45,7 +45,7 @@ $ make proto-gen
 $ make go-build
   → admin-api 二进制 17M，编译通过
 
-$ curl -X POST http://localhost:8080/alfq.v1.HealthService/Check \
+$ curl -X POST http://localhost:9000/alfq.v1.HealthService/Check \
     -H "Content-Type:application/json" -d '{}'
   → {"status":"SERVING_STATUS_SERVING"}
 

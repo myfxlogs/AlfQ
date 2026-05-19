@@ -1,0 +1,10 @@
+{
+  "title": "ALFQ Risk",
+  "panels": [
+    {"title": "Risk Checks/sec", "type": "graph", "targets": [{"expr": "rate(alfq_risk_check_total[1m])"}]},
+    {"title": "Reject Rate", "type": "gauge", "targets": [{"expr": "alfq_risk_reject_rate"}]},
+    {"title": "Margin Level %", "type": "gauge", "targets": [{"expr": "alfq_margin_level"}]},
+    {"title": "Kill Switch Status", "type": "stat", "targets": [{"expr": "alfq_killswitch_active"}]},
+    {"title": "Daily PnL", "type": "graph", "targets": [{"expr": "alfq_daily_pnl"}]}
+  ]
+}

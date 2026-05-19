@@ -25,7 +25,7 @@ type LogConfig struct {
 // Defaults returns a Config with sensible defaults.
 func Defaults() *Config {
 	return &Config{
-		Server: ServerConfig{Listen: ":8080"},
+		Server: ServerConfig{Listen: ":9000"},
 		Log:    LogConfig{Level: "info"},
 	}
 }

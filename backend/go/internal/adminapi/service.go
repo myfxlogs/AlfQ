@@ -21,11 +21,26 @@ func NewService(pool *pg.Pool) *Service {
 	return &Service{pool: pool}
 }
 
+// defaultTenantID is used when no tenant is available from context.
+const defaultTenantID = "00000000-0000-0000-0000-000000000000"
+
+// effectiveTenantID returns reqTenantID if non-empty, otherwise falls back to
+// the context tenant ID, and finally to the default tenant.
+func effectiveTenantID(ctx context.Context, reqTenantID string) string {
+	if reqTenantID != "" {
+		return reqTenantID
+	}
+	if tid := auth.TenantFromContext(ctx); tid != "" {
+		return tid
+	}
+	return defaultTenantID
+}
+
 // setRLS sets the tenant_id session variable for RLS, extracted from context.
 func (s *Service) setRLS(ctx context.Context) error {
 	tenantID := auth.TenantFromContext(ctx)
 	if tenantID == "" {
-		tenantID = "00000000-0000-0000-0000-000000000000" // default tenant for unauthenticated
+		tenantID = defaultTenantID
 	}
 	return s.pool.SetTenant(ctx, tenantID)
 }
@@ -69,10 +84,11 @@ func (s *Service) ListBrokers(ctx context.Context, req *pb.ListBrokersRequest) (
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
+	tenantID := effectiveTenantID(ctx, req.TenantId)
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, tenant_id, code, name, platform, mtapi_endpoint, COALESCE(default_server,'')
 		FROM brokers WHERE tenant_id = $1 ORDER BY code
-	`, req.TenantId)
+	`, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("list brokers: %w", err)
 	}
@@ -157,10 +173,11 @@ func (s *Service) ListAccounts(ctx context.Context, req *pb.ListAccountsRequest)
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
+	tenantID := effectiveTenantID(ctx, req.TenantId)
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, tenant_id, broker_id, login, server, account_type, currency, leverage
 		FROM accounts WHERE tenant_id = $1 ORDER BY login
-	`, req.TenantId)
+	`, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("list accounts: %w", err)
 	}
@@ -245,10 +262,11 @@ func (s *Service) ListStrategies(ctx context.Context, req *pb.ListStrategiesRequ
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
+	tenantID := effectiveTenantID(ctx, req.TenantId)
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, tenant_id, name, COALESCE(description,''), spec::text, status
 		FROM strategies WHERE tenant_id = $1 ORDER BY name
-	`, req.TenantId)
+	`, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("list strategies: %w", err)
 	}
@@ -295,4 +313,18 @@ func (s *Service) StopStrategy(ctx context.Context, req *pb.StopStrategyRequest)
 		return nil, fmt.Errorf("stop strategy: %w", err)
 	}
 	return st, nil
+}
+
+// -- BacktestService (stub) --
+
+func (s *Service) ListBacktests(ctx context.Context, req *pb.ListBacktestsRequest) (*pb.ListBacktestsResponse, error) {
+	_ = req // placeholder
+	return &pb.ListBacktestsResponse{}, nil
+}
+
+// -- AuditService (stub) --
+
+func (s *Service) ListAuditLogs(ctx context.Context, req *pb.ListAuditLogsRequest) (*pb.ListAuditLogsResponse, error) {
+	_ = req // placeholder
+	return &pb.ListAuditLogsResponse{}, nil
 }

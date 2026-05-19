@@ -1,0 +1,9 @@
+{
+  "title": "ALFQ AI Assistant",
+  "panels": [
+    {"title": "LLM Calls/sec", "type": "graph", "targets": [{"expr": "rate(ai_chat_total[1m])"}]},
+    {"title": "LLM Latency p99", "type": "graph", "targets": [{"expr": "histogram_quantile(0.99, ai_chat_latency_bucket)"}]},
+    {"title": "Provider Failover", "type": "stat", "targets": [{"expr": "ai_provider_failover_total"}]},
+    {"title": "Token Usage", "type": "graph", "targets": [{"expr": "rate(ai_token_usage[1h])"}]}
+  ]
+}

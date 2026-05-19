@@ -77,7 +77,7 @@ func (c *Client) Register(def FlagDefinition) {
 
 // Bool evaluates a boolean flag. Returns defaultVal if flag not found.
 func (c *Client) Bool(ctx context.Context, key string, defaultVal bool) bool {
-	return c.eval(key, defaultVal, func(v any) bool {
+	return eval(c, key, defaultVal, func(v any) bool {
 		b, ok := v.(bool)
 		return ok && b
 	})
@@ -85,7 +85,7 @@ func (c *Client) Bool(ctx context.Context, key string, defaultVal bool) bool {
 
 // Int evaluates an integer flag.
 func (c *Client) Int(ctx context.Context, key string, defaultVal int) int {
-	return c.eval(key, defaultVal, func(v any) int {
+	return eval(c, key, defaultVal, func(v any) int {
 		switch x := v.(type) {
 		case float64:
 			return int(x)
@@ -98,7 +98,7 @@ func (c *Client) Int(ctx context.Context, key string, defaultVal int) int {
 
 // String evaluates a string flag.
 func (c *Client) String(ctx context.Context, key string, defaultVal string) string {
-	return c.eval(key, defaultVal, func(v any) string {
+	return eval(c, key, defaultVal, func(v any) string {
 		s, ok := v.(string)
 		if ok {
 			return s
@@ -108,7 +108,7 @@ func (c *Client) String(ctx context.Context, key string, defaultVal string) stri
 }
 
 // eval runs the rollout rules against context and returns the matched value.
-func (c *Client) eval[T any](key string, defaultVal T, convert func(any) T) T {
+func eval[T any](c *Client, key string, defaultVal T, convert func(any) T) T {
 	c.mu.RLock()
 	def, ok := c.flags[key]
 	c.mu.RUnlock()

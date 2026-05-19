@@ -28,7 +28,7 @@ export default function AIChat() {
     setInput("");
     setLoading(true);
     try {
-      const base = window.__ENV__?.VITE_REST_BASE_URL || "http://localhost:9006";
+      const base = window.__ENV__?.VITE_REST_BASE_URL || "http://localhost:9003";
       const res = await fetch(`${base}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },

@@ -18,7 +18,7 @@
 | **M0 基建** | Monorepo / proto 编译 / CI / docker-compose | README, 01, 02, 03, 11, 12, 13, 15, 16, 17, **19, 20, 21, 22, 23** |
 | **M1 行情** | md-gateway + CH 落盘 + Grafana 看板 | 01, 02, 03, 08, 11, 14, 15, **20, 21, 22, 23** |
 | **M2 因子+研究** | DSL（Go+Py）+ Python SDK + 回测 | 02, 06, 09, 10, 14, 16, **20** |
-| **M3 策略+OMS** | strategy-svc + risk-svc + oms + mtapi Adapter | 03, 05, 07, 08, 14, 15, 16, 17, **20, 21, 22, 23** |
+| **M3 策略+OMS** | quant-engine + trading-core + oms + mtapi Adapter | 03, 05, 07, 08, 14, 15, 16, 17, **20, 21, 22, 23** |
 | **M3.5 AI 助手 MVP** | assistant-svc + 工具集 + 基础对话 | 18, **20, 22, 23** |
 | **M4 风控完善** | 完整规则 + Kill Switch + 告警 | 05, 07, 08, 11, 14, 15, 17, **20, 22** |
 | **M4.5 AI 助手 RAG** | docs/知识库向量检索 | 18 |

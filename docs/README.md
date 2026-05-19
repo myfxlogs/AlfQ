@@ -67,4 +67,4 @@
 | 多租户 | **逻辑隔离 + PG RLS**，broker 账号物理隔离 |
 | 权限 | **RBAC + 资源 ACL**，JWT 短期 + Refresh，敏感操作 TOTP |
 | 秘钥管理 | **HashiCorp Vault** |
-| 部署 | **Docker Compose（dev）/ Kubernetes + Helm（prod）** |
+| 部署 | **Docker Compose（单机，dev/staging/prod）** — 详见 ADR 0011 |

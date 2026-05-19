@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: alfq_dev
       POSTGRES_DB: alfq
     ports: ["5432:5432"]
-    volumes: [pg_data:/var/lib/postgresql/data]
+    volumes: [pg_data:/var/lib/postgresql]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U alfq"]
       interval: 5s
@@ -23,7 +23,7 @@ services:
       CLICKHOUSE_USER: alfq
       CLICKHOUSE_PASSWORD: alfq_dev
       CLICKHOUSE_DB: alfq
-    ports: ["8123:8123", "9000:9000"]
+    ports: ["8123:8123"]  # native 9000 仅内网，避免与 trading-core 9000 冲突
     volumes: [ch_data:/var/lib/clickhouse]
     networks: [alfq-net]
 
@@ -51,7 +51,8 @@ services:
     networks: [alfq-net]
 
   vault:
-    image: hashicorp/vault:2.0
+    # 注：锁定 1.18，详见 docs/26 §4.4 豁免（WSL2 不支持 CAP_SETFCAP，无法运行 Vault 2.0）
+    image: hashicorp/vault:1.18
     cap_add: [IPC_LOCK]
     environment:
       VAULT_ADDR: "http://0.0.0.0:8200"
@@ -108,7 +109,9 @@ services:
     build:
       context: ..
       dockerfile: backend/go/cmd/trading-core/Dockerfile
-    ports: ["8080:8080"]
+    ports: ["9000:9000"]
+    volumes:
+      - ../configs:/app/configs:ro
     environment:
       DATABASE_URL: "postgres://alfq:alfq_dev@postgres:5432/alfq?sslmode=disable"
       REDIS_ADDR: "redis:6379"
@@ -149,7 +152,7 @@ services:
     build:
       context: ..
       dockerfile: backend/go/cmd/assistant-svc/Dockerfile
-    ports: ["9006:9006"]
+    ports: ["9003:9003"]
     environment: {}
     networks: [alfq-net]
 

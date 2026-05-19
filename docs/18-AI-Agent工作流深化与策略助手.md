@@ -37,7 +37,7 @@
 
 ```yaml
 id: T-2026-0123
-title: 实现 risk-svc max_lot 规则
+title: 实现 trading-core max_lot 规则
 parent_story: S-RISK-V1
 milestone: M4
 docs:
@@ -48,11 +48,11 @@ references:
   - nautilus_trader/.../risk/engine.pyx:80-160
 acceptance:
   - 单测覆盖所有边界（0 / 上限 / 上限+1）
-  - 集成测试：testcontainers 跑 OMS → risk-svc → fake broker
+  - 集成测试：testcontainers 跑 OMS → trading-core → fake broker
   - 指标 alfq_risk_check_total 上线
   - 日志含 trace_id/tenant_id
 inputs:
-  - 已有：risk-svc 骨架
+  - 已有：trading-core 骨架
 out_of_scope:
   - daily_loss 规则（另卡）
   - KillSwitch（另卡）
@@ -185,7 +185,7 @@ Refs: docs/14-领域模型与交易规则.md#6
 
 ```markdown
 ## Task
-T-2026-0123 实现 risk-svc max_lot
+T-2026-0123 实现 trading-core max_lot
 
 ## 关联文档
 - docs/14 §6
@@ -246,7 +246,7 @@ T-2026-0123 实现 risk-svc max_lot
         ┌───────────────────────┼──────────────────────────┐
         ▼                       ▼                          ▼
    [Cloud LLM API]     [Tool Layer]                  [Audit / Quota]
-   OpenAI / Claude /   - DSL 校验 (factor-svc)
+   OpenAI / Claude /   - DSL 校验 (quant-engine)
    Gemini / 国内厂商   - 因子预览 (PreviewFactor)
    （仅云端 API，见 ADR 0009；不自建本地大模型）
                        - 数据查询 (CH)
@@ -256,7 +256,7 @@ T-2026-0123 实现 risk-svc max_lot
 
 ### B2.1 新增服务：`assistant-svc`
 
-Go 服务，端口 9006，职责：
+Go 服务，端口 9003，职责：
 - 调度 LLM（多 provider 切换 / fallback）
 - 工具调用编排（function calling / MCP）
 - 安全防护（输入/输出过滤）

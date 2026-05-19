@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"github.com/alfq/backend/go/internal/assistantsvc"
@@ -38,38 +39,82 @@ func main() {
 	}
 
 	// M6.5: Cloud LLM provider abstraction (ADR 0009)
+	// API keys from environment variables (fallback to empty for local dev)
+	openaiKey := os.Getenv("OPENAI_API_KEY")
+	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
+
 	router := assistantsvc.NewRouter()
-	router.Register(
-		&assistantsvc.Provider{Name: "openai", Endpoint: "https://api.openai.com", Model: "gpt-4o", Priority: 1, Timeout: 30 * time.Second},
-		assistantsvc.NewHTTPClient("openai", "https://api.openai.com", "gpt-4o", "{{vault:openai_key}}"),
-	)
-	router.Register(
-		&assistantsvc.Provider{Name: "anthropic", Endpoint: "https://api.anthropic.com", Model: "claude-sonnet-4-20250514", Priority: 2, Timeout: 30 * time.Second},
-		assistantsvc.NewHTTPClient("anthropic", "https://api.anthropic.com", "claude-sonnet-4-20250514", "{{vault:anthropic_key}}"),
-	)
+	if openaiKey != "" {
+		router.Register(
+			&assistantsvc.Provider{Name: "openai", Endpoint: "https://api.openai.com", Model: "gpt-4o", Priority: 1, Timeout: 30 * time.Second},
+			assistantsvc.NewHTTPClient("openai", "https://api.openai.com", "gpt-4o", openaiKey),
+		)
+	}
+	if anthropicKey != "" {
+		router.Register(
+			&assistantsvc.Provider{Name: "anthropic", Endpoint: "https://api.anthropic.com", Model: "claude-sonnet-4-20250514", Priority: 2, Timeout: 30 * time.Second},
+			assistantsvc.NewHTTPClient("anthropic", "https://api.anthropic.com", "claude-sonnet-4-20250514", anthropicKey),
+		)
+	}
 
 	tools := registry.List()
 	log.Info("assistant-svc starting",
 		zap.Int("tools", len(tools)),
 	)
 
-	// Tool list endpoint
-	http.HandleFunc("/tools", func(w http.ResponseWriter, r *http.Request) {
+	// Chat endpoint: accept user message and route to LLM.
+	http.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		msg := r.PostFormValue("message")
+		if msg == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		// Route to the highest-priority provider.
+		resp, _ := router.Chat(r.Context(), "You are a trading assistant.", msg)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"response": %q}`, resp)
+	})
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	})
+	mux.Handle("/metrics", promhttp.Handler())
+	// Also mount legacy endpoints on the same mux.
+	mux.HandleFunc("/tools", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"tools": %d}`, len(tools))
 	})
-
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+	mux.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		msg := r.PostFormValue("message")
+		if msg == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		resp, _ := router.Chat(r.Context(), "You are a trading assistant.", msg)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"response": %q}`, resp)
 	})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	server := &http.Server{Addr: ":9006"}
+	server := &http.Server{Addr: ":9003", Handler: mux}
 	go func() {
-		log.Info("assistant-svc starting", zap.String("addr", ":9006"))
+		log.Info("assistant-svc starting", zap.String("addr", ":9003"))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error("server error", zap.Error(err))
 		}
@@ -81,7 +126,4 @@ func main() {
 	defer sdCancel()
 	server.Shutdown(shutdownCtx)
 	log.Info("assistant-svc stopped")
-
-	_ = router
-	_ = fmt.Sprintf
 }

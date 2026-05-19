@@ -31,7 +31,7 @@ go-test:
 	cd backend/go && GOTOOLCHAIN=local go test -race -count=1 ./...
 
 go-build: proto-gen
-	cd backend/go && GOTOOLCHAIN=local go build ./cmd/admin-api ./cmd/md-gateway ./cmd/factor-svc ./cmd/oms ./cmd/risk-svc ./cmd/strategy-svc
+	cd backend/go && GOTOOLCHAIN=local go build ./cmd/trading-core ./cmd/md-gateway ./cmd/quant-engine ./cmd/assistant-svc
 
 # ============================================================
 # Python (Research)
@@ -71,6 +71,21 @@ dev-down:
 
 dev-logs:
 	docker compose -f deploy/docker-compose.yml logs -f
+
+# ============================================================
+# Database
+# ============================================================
+db-migrate:
+	@echo "Running migrations..."
+	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d alfq -f backend/go/migrations/001_initial_schema.sql
+	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d alfq -f backend/go/migrations/002_operational_tables.sql
+	@echo "Migrations complete."
+
+db-reset:
+	@echo "Resetting database..."
+	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d postgres -c "DROP DATABASE IF EXISTS alfq"
+	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d postgres -c "CREATE DATABASE alfq"
+	$(MAKE) db-migrate
 
 # ============================================================
 # Security

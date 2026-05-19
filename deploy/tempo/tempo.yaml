@@ -1,14 +1,13 @@
 server:
   http_listen_port: 3200
-
-distributor:
-  receivers:
-    otlp:
-      protocols:
-        grpc:
-
 storage:
   trace:
     backend: local
     local:
       path: /var/tempo/traces
+distributor:
+  receivers:
+    jaeger:
+      protocols:
+        thrift_http:
+          endpoint: 0.0.0.0:14268

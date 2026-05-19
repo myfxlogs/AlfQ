@@ -32,7 +32,7 @@ func Connect(ctx context.Context, dsn string) (*Pool, error) {
 // SetTenant sets the tenant_id for RLS context.
 // Must be called at the beginning of each session/transaction.
 func (p *Pool) SetTenant(ctx context.Context, tenantID string) error {
-	_, err := p.Exec(ctx, "SET app.tenant_id = $1", tenantID)
+	_, err := p.Exec(ctx, "SELECT set_config('app.tenant_id', $1, false)", tenantID)
 	return err
 }
 

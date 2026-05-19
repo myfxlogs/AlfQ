@@ -15,7 +15,7 @@
 │      ↓ 走审批/CI                                              │
 ├─────────────────────────────────────────────────────────────┤
 │  生产层（Go 服务，无 Python）                                  │
-│   strategy-svc：                                              │
+│   quant-engine：                                              │
 │   - 解析 DSL → 增量算子树                                      │
 │   - 加载 ONNX → onnxruntime-go 推理                            │
 │   - 调用风控/OMS                                              │
@@ -41,7 +41,7 @@ network:
     - clickhouse:9000
     - postgres:5432
     - minio:9000
-    - admin-api:8080
+    - trading-core:9000
   ingress: []                                # 仅 JupyterHub 可访问
 filesystem:
   read_only_root: true
@@ -67,7 +67,7 @@ timeouts:
 | PG 只读账号 | RLS = 当前 tenant，且仅可读用户被授权的表 | 环境变量 |
 | CH 只读账号 | row policy = 当前 tenant | 环境变量 |
 | MinIO STS Token | 前缀 `tenants/{tid}/notebooks/{uid}/` | 环境变量，1h 过期，自动续 |
-| admin-api JWT | 用户自身 | 环境变量 |
+| trading-core JWT | 用户自身 | 环境变量 |
 
 ### 2.4 SDK：`alfq_research`
 
@@ -105,7 +105,7 @@ spec = StrategySpec(
                  "long_th":0.6, "short_th":-0.6},
     bar_period="1m",
 )
-spec.submit()  # 调 admin-api 创建 strategy（草稿态）
+spec.submit()  # 调 trading-core 创建 strategy（草稿态）
 ```
 
 ### 2.5 Notebook 安全限制
@@ -158,9 +158,9 @@ spec.submit()  # 调 admin-api 创建 strategy（草稿态）
 }
 ```
 
-`strategy-svc` 启动时按 Spec：
+`quant-engine` 启动时按 Spec：
 
-1. 注册需要的因子到 `factor-svc`
+1. 注册需要的因子到 `quant-engine`
 2. 从对象存储下载 ONNX 模型，加载到 onnxruntime-go
 3. 订阅 NATS 上对应 factor 主题
 4. 每根 bar 关闭时拉取因子 → 推理 → 信号
@@ -183,7 +183,7 @@ spec.submit()  # 调 admin-api 创建 strategy（草稿态）
 | 引擎 | 实现 | 用途 |
 |---|---|---|
 | 向量化 | Python（Polars + numpy） | 参数搜索，秒级出结果，不精确撮合 |
-| 事件驱动 | Python（**与生产 strategy-svc 共用 DSL 解释器**） | 接近实盘的撮合，验证 spec |
+| 事件驱动 | Python（**与生产 quant-engine 共用 DSL 解释器**） | 接近实盘的撮合，验证 spec |
 
 事件驱动撮合细节：滑点 / 点差 / 手续费 / swap / 拒单概率，参考 `nkaz001/hftbacktest` 简化版。
 
@@ -203,7 +203,7 @@ spec.submit()  # 调 admin-api 创建 strategy（草稿态）
 
 ```
 [1] 研究员在 Notebook 写 DSL + 训练 ONNX
-[2] StrategySpec.submit() → admin-api → strategies(draft)
+[2] StrategySpec.submit() → trading-core → strategies(draft)
 [3] 后台运行 Backtest，向量化 + 事件驱动 + 一致性校验
 [4] 提交审批 → Quant Lead 在前端审批
 [5] approved → 可 Deploy 到 paper 账户

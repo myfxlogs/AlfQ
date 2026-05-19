@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/alfq.v1": "http://localhost:8080",
+      "/alfq.v1": "http://localhost:9000",
     },
   },
 });

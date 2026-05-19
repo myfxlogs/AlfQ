@@ -1,6 +1,6 @@
 # Frontend — ALFQ Web SPA
 
-React 前端，通过 Connect RPC 与 admin-api 通信。
+React 前端，通过 Connect RPC 与 trading-core 通信。
 
 ## 目录
 

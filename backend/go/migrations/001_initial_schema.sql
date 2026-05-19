@@ -124,3 +124,12 @@ CREATE POLICY tenant_isolation ON orders
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON accounts
   USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+
+-- Seed: demo admin user (a@1.com / 12345678)
+INSERT INTO users (id, tenant_id, email, password_hash, roles) VALUES (
+  '00000000-0000-0000-0000-000000000001',
+  '00000000-0000-0000-0000-000000000001',
+  'a@1.com',
+  '$argon2id$v=19$m=65536,t=3,p=4$Ssl7GTFwuuWAMk07VJFseA$BEbTU0MRUbRTnLesUU3jJs6XdCGbRODlG7droYgJ6vM',
+  ARRAY['admin']
+) ON CONFLICT (id) DO NOTHING;

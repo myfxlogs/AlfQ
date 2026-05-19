@@ -1,0 +1,9 @@
+{
+  "title": "ALFQ Strategies",
+  "panels": [
+    {"title": "Signal Rate", "type": "graph", "targets": [{"expr": "rate(alfq_signal_total[5m])"}]},
+    {"title": "Active Deployments", "type": "stat", "targets": [{"expr": "alfq_deployment_count"}]},
+    {"title": "Strategy PnL", "type": "graph", "targets": [{"expr": "alfq_strategy_pnl"}]},
+    {"title": "Inference Latency", "type": "graph", "targets": [{"expr": "alfq_inference_duration_seconds"}]}
+  ]
+}

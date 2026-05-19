@@ -1,0 +1,12 @@
+server:
+  listen: ":9002"
+log:
+  level: info
+nats:
+  url: "nats://localhost:4222"
+clickhouse:
+  addr: "localhost:9000"
+  database: "alfq"
+postgres:
+  dsn: "postgres://alfq:alfq_dev@localhost:5432/alfq"
+factors: []

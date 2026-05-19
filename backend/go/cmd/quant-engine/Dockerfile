@@ -2,8 +2,8 @@
 FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates curl bash
-ARG BUF_VERSION=v1.69.0
-RUN curl -sSL "https://github.com/bufbuild/buf/releases/download/${BUF_VERSION}/buf-$(uname -s)-$(uname -m)" -o /usr/local/bin/buf && chmod +x /usr/local/bin/buf
+COPY references/buf-Linux-x86_64 /usr/local/bin/buf
+RUN chmod +x /usr/local/bin/buf
 ENV GOPROXY=https://goproxy.cn,direct
 
 WORKDIR /app

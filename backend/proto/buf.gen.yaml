@@ -15,12 +15,5 @@ plugins:
     out: ../go/gen
     opt:
       - paths=source_relative
-  # 前端 TypeScript (V2: @bufbuild/protobuf + @connectrpc/connect-web)
-  - plugin: buf.build/bufbuild/es
-    out: ../../frontend/src/gen
-    opt:
-      - target=ts
-  - plugin: buf.build/connectrpc/es
-    out: ../../frontend/src/gen
-    opt:
-      - target=ts
+  # 前端 TypeScript (V2) 改由 buf.gen.frontend.yaml 生成
+  # 因为 V2 不再生成 *_connect.ts，服务描述符由 protoc-gen-es v2 直接产出。

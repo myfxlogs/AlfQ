@@ -1,0 +1,53 @@
+syntax = "proto3";
+package alfq.v1;
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+  rpc VerifyTOTP(VerifyTOTPRequest) returns (LoginResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+message LoginRequest { string email = 1; string password = 2; string totp_code = 3; }
+message LoginResponse { string access_token = 1; string refresh_token = 2; int64 expires_in = 3; }
+message RefreshTokenRequest { string refresh_token = 1; }
+message VerifyTOTPRequest { string user_id = 1; string totp_code = 2; }
+message LogoutRequest { string access_token = 1; }
+message LogoutResponse {}
+
+service TenantService {
+  rpc CreateTenant(CreateTenantRequest) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+  rpc ListTenants(ListTenantsRequest) returns (ListTenantsResponse);
+}
+
+message Tenant { string id = 1; string name = 2; string plan = 3; }
+message CreateTenantRequest { string name = 1; string plan = 2; }
+message GetTenantRequest { string id = 1; }
+message ListTenantsRequest {}
+message ListTenantsResponse { repeated Tenant tenants = 1; }
+
+service UserService {
+  rpc CreateUser(CreateUserRequest) returns (User);
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (User);
+}
+
+message User { string id = 1; string tenant_id = 2; string email = 3; repeated string roles = 4; }
+message CreateUserRequest { string tenant_id = 1; string email = 2; string password = 3; }
+message GetUserRequest { string id = 1; }
+message ListUsersRequest { string tenant_id = 1; }
+message ListUsersResponse { repeated User users = 1; }
+message UpdateRoleRequest { string id = 1; repeated string roles = 2; }
+
+service AuditService {
+  rpc ListAuditLogs(ListAuditLogsRequest) returns (ListAuditLogsResponse);
+  rpc StreamAuditLogs(StreamAuditLogsRequest) returns (stream AuditLog);
+}
+
+message AuditLog { string id = 1; string tenant_id = 2; string user_id = 3; string action = 4; string resource = 5; int64 ts_unix_ms = 6; }
+message ListAuditLogsRequest { string tenant_id = 1; int32 limit = 2; }
+message ListAuditLogsResponse { repeated AuditLog logs = 1; }
+message StreamAuditLogsRequest { string tenant_id = 1; }

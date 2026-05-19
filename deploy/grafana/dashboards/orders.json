@@ -1,0 +1,9 @@
+{
+  "title": "ALFQ Orders",
+  "panels": [
+    {"title": "Order Rate", "type": "graph", "targets": [{"expr": "rate(oms_order_total[1m])"}]},
+    {"title": "Order States", "type": "piechart", "targets": [{"expr": "oms_order_state"}]},
+    {"title": "Fill Rate %", "type": "stat", "targets": [{"expr": "oms_fill_rate"}]},
+    {"title": "Reconciliation Diff", "type": "table", "targets": [{"expr": "oms_recon_diff"}]}
+  ]
+}

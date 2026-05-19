@@ -1,0 +1,9 @@
+{
+  "title": "ALFQ Market Data",
+  "panels": [
+    {"title": "Tick Rate", "type": "graph", "targets": [{"expr": "rate(md_tick_total[1m])"}]},
+    {"title": "Tick Latency p99", "type": "graph", "targets": [{"expr": "histogram_quantile(0.99, md_tick_latency_seconds_bucket)"}]},
+    {"title": "Connection State", "type": "stat", "targets": [{"expr": "md_connection_state"}]},
+    {"title": "Reconnect Count", "type": "graph", "targets": [{"expr": "rate(md_reconnect_total[5m])"}]}
+  ]
+}

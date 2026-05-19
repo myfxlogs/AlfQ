@@ -19,11 +19,11 @@ backend/
 
 | 服务 | 端口 | 职责 |
 |---|---|---|
-| admin-api | 8080 | 对前端唯一入口（Connect+SSE） |
+| trading-core | 8080 | 对前端唯一入口（Connect+SSE） |
 | md-gateway | 9001 | mtapi 行情接入 |
-| factor-svc | 9002 | 增量因子计算 |
-| strategy-svc | 9003 | 策略执行（DSL+ONNX） |
-| risk-svc | 9004 | 风控网关 |
+| quant-engine | 9002 | 增量因子计算 |
+| quant-engine | 9003 | 策略执行（DSL+ONNX） |
+| trading-core | 9004 | 风控网关 |
 | oms | 9005 | 订单管理 |
 | assistant-svc | 9006 | AI 策略助手（M3.5+） |
 

@@ -41,7 +41,7 @@ research/
 │   │   ├── html.py               # quantstats 风格
 │   │   └── pdf.py                # 可选
 │   ├── spec/
-│   │   └── strategy_spec.py      # 提交 spec 到 admin-api
+│   │   └── strategy_spec.py      # 提交 spec 到 trading-core
 │   ├── client/
 │   │   ├── connect_client.py     # 调 Connect RPC
 │   │   └── auth.py
@@ -95,7 +95,7 @@ dev-dependencies = ["ruff", "pytest", "pytest-asyncio", "mypy"]
 ALFQ_CH_HOST, ALFQ_CH_USER, ALFQ_CH_PASSWORD, ALFQ_CH_DB
 ALFQ_PG_DSN
 ALFQ_MINIO_ENDPOINT, ALFQ_MINIO_AK, ALFQ_MINIO_SK, ALFQ_MINIO_BUCKET
-ALFQ_API_BASE       # admin-api Connect 端点
+ALFQ_API_BASE       # trading-core Connect 端点
 ALFQ_API_TOKEN      # 用户 JWT
 ALFQ_TENANT_ID
 ```
@@ -228,7 +228,7 @@ trade_count, avg_trade, avg_holding, turnover
 
 输出 HTML 自包含（base64 图）或外链对象存储。
 
-## 7. 与 admin-api 的交互
+## 7. 与 trading-core 的交互
 
 `client/connect_client.py`：
 
@@ -255,7 +255,7 @@ client.backtest.start(strategy_id, params)
 `tests/test_dsl_parity.py` 流程：
 
 1. 加载 `tests/fixtures/golden_bars.parquet`
-2. 对 30 个表达式分别用 Python 流式 + Python 批量 + Go（通过 admin-api `ValidateExpression` + `PreviewFactor` 的服务接口或单独的 test 端点）跑
+2. 对 30 个表达式分别用 Python 流式 + Python 批量 + Go（通过 trading-core `ValidateExpression` + `PreviewFactor` 的服务接口或单独的 test 端点）跑
 3. 逐点对比，max abs diff < 1e-9
 4. CI 步骤：`pytest tests/test_dsl_parity.py`
 

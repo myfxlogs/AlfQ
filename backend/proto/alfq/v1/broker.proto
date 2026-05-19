@@ -1,0 +1,41 @@
+syntax = "proto3";
+package alfq.v1;
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+service BrokerService {
+  rpc CreateBroker(CreateBrokerRequest) returns (Broker);
+  rpc GetBroker(GetBrokerRequest) returns (Broker);
+  rpc ListBrokers(ListBrokersRequest) returns (ListBrokersResponse);
+  rpc UpdateBroker(Broker) returns (Broker);
+  rpc DeleteBroker(DeleteBrokerRequest) returns (DeleteBrokerResponse);
+}
+
+message Broker {
+  string id = 1; string tenant_id = 2; string code = 3; string name = 4;
+  string platform = 5; string mtapi_endpoint = 6; string default_server = 7;
+}
+message CreateBrokerRequest { string tenant_id = 1; string code = 2; string name = 3; string platform = 4; string mtapi_endpoint = 5; }
+message GetBrokerRequest { string id = 1; }
+message ListBrokersRequest { string tenant_id = 1; }
+message ListBrokersResponse { repeated Broker brokers = 1; }
+message DeleteBrokerRequest { string id = 1; }
+message DeleteBrokerResponse {}
+
+service AccountService {
+  rpc CreateAccount(CreateAccountRequest) returns (Account);
+  rpc GetAccount(GetAccountRequest) returns (Account);
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+  rpc UpdateAccount(Account) returns (Account);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
+
+message Account {
+  string id = 1; string tenant_id = 2; string broker_id = 3; string login = 4;
+  string server = 5; string account_type = 6; string currency = 7; int32 leverage = 8;
+}
+message CreateAccountRequest { string tenant_id = 1; string broker_id = 2; string login = 3; string password = 4; string server = 5; }
+message GetAccountRequest { string id = 1; }
+message ListAccountsRequest { string tenant_id = 1; }
+message ListAccountsResponse { repeated Account accounts = 1; }
+message DeleteAccountRequest { string id = 1; }
+message DeleteAccountResponse {}

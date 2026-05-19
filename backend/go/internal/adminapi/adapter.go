@@ -131,3 +131,31 @@ func (a *Adapter) StreamSignals(ctx context.Context, req *connect.Request[pb.Str
 	// Placeholder: no real signal stream yet.
 	return nil
 }
+
+// -- BacktestService --
+
+func (a *Adapter) RunBacktest(ctx context.Context, req *connect.Request[pb.RunBacktestRequest], stream *connect.ServerStream[pb.BacktestProgress]) error {
+	return nil // stub
+}
+
+func (a *Adapter) ListBacktests(ctx context.Context, req *connect.Request[pb.ListBacktestsRequest]) (*connect.Response[pb.ListBacktestsResponse], error) {
+	resp, err := a.svc.ListBacktests(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// -- AuditService --
+
+func (a *Adapter) ListAuditLogs(ctx context.Context, req *connect.Request[pb.ListAuditLogsRequest]) (*connect.Response[pb.ListAuditLogsResponse], error) {
+	resp, err := a.svc.ListAuditLogs(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (a *Adapter) StreamAuditLogs(ctx context.Context, req *connect.Request[pb.StreamAuditLogsRequest], stream *connect.ServerStream[pb.AuditLog]) error {
+	return nil // stub
+}

@@ -33,7 +33,7 @@ export default function Login() {
         {error && <div style={{ color:"red", marginBottom:12, fontSize:14 }}>{error}</div>}
         <input placeholder="邮箱" type="email" value={email} onChange={e=>setEmail(e.target.value)}
           style={{ width:"100%", padding:12, marginBottom:12, border:"1px solid #ddd", borderRadius:6 }} />
-        <input placeholder="密码" type="password" value={password} onChange={e=>setPassword(e.target.value)}
+        <input placeholder="密码" type="text" value={password} onChange={e=>setPassword(e.target.value)}
           style={{ width:"100%", padding:12, marginBottom:20, border:"1px solid #ddd", borderRadius:6 }} />
         <button onClick={handleLogin} disabled={loading}
           style={{ width:"100%", padding:12, background:"#1677ff", color:"#fff", border:"none", borderRadius:6, fontSize:16, cursor:"pointer", opacity: loading ? 0.7 : 1 }}>

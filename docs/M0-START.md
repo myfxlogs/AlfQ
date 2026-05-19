@@ -1,6 +1,15 @@
-# M0 启动指令（AI Agent 入口）
+# M0 启动指令（AI Agent 入口）—— **历史文档**
 
-> **本文是 AI Agent 的第一份指令**。其他任何文档都不要先动手实现。先读完本文，再读必读 docs，再开始第一个 PR。
+> 🗄️ **本文已归档**（2026-05-19）。M0 基建阶段于 2026-04 完成，项目当前阶段为 **M6.5+（架构合并后）**。
+>
+> **新加入的 Agent 请勿按本文顺序操作**：仓库已有完整代码（4 后端 + 1 前端服务）。直接看：
+> 1. `AGENT.md` —— 项目身份与硬性规则
+> 2. `docs/01-总体架构与技术决策.md` —— 当前架构
+> 3. `docs/adr/0010-consolidate-services.md` —— 5 服务合并方案
+> 4. `docs/adr/0011-single-host-production.md` —— 单机部署
+> 5. `docs/handover/M6.5-handover.md` —— 最新交接状态
+>
+> 本文以下内容仅用于**理解项目演进史**，不再作为操作指令。
 
 ## 0. 本文你必须做的事
 
@@ -24,7 +33,7 @@
 - Monorepo 三域目录骨架（`backend/` `research/` `frontend/` `deploy/` `configs/` `scripts/` `docs/`）
 - `backend/proto/` buf 工程、`alfq/v1/common.proto` `errors.proto` 两份基础 proto
 - `backend/go/` go.work、`internal/common/` 几个最基础包（errs、logger、config 占位）
-- 一个**最小可启动**的 `admin-api` 服务（仅 health 端点 + Connect handler 装载）
+- 一个**最小可启动**的 `trading-core` 服务（仅 health 端点 + Connect handler 装载）
 - `research/` pyproject.toml + uv.lock + 空 `alfq_research` 包
 - `frontend/` Vite + React + TS 空壳
 - `deploy/docker-compose.yml`：PG / CH / Redis / NATS / Vault 五件套
@@ -42,7 +51,7 @@
 - mtapi 集成
 - 前端业务页面（仅 hello world）
 - AI 助手
-- 部署到 K8s
+- 部署到生产单机（详见 ADR 0011）
 - 性能/混沌测试
 
 ## 3. 必读文档（严格按顺序）
@@ -157,7 +166,7 @@ backend/proto/alfq/v1/health.proto      (HealthService.Check)
 - `make proto-gen` 在 `backend/go/gen/` 与 `frontend/src/gen/` 产出文件
 - 生成代码已 gitignore，不入仓库
 
-### PR-3：Backend Go 工作区与最小 admin-api
+### PR-3：Backend Go 工作区与最小 trading-core
 
 **新增**：
 ```
@@ -167,8 +176,8 @@ backend/go/internal/common/errs/         (按 docs/20 §3.1 雏形)
 backend/go/internal/common/logger/       (zap + 结构化字段)
 backend/go/internal/common/config/       (Viper + fsnotify)
 backend/go/internal/common/health/       (HealthService impl)
-backend/go/cmd/admin-api/main.go         (启动 Connect handler，仅注册 HealthService)
-backend/go/cmd/admin-api/Dockerfile
+backend/go/cmd/trading-core/main.go         (启动 Connect handler，仅注册 HealthService)
+backend/go/cmd/trading-core/Dockerfile
 .golangci.yml                            (按 docs/12 §3.5 配置)
 ```
 
@@ -178,7 +187,7 @@ backend/go/cmd/admin-api/Dockerfile
 **验收**：
 - `make go-lint` 通过
 - `make go-build` 产物可执行
-- 启动 admin-api，`curl localhost:8080/alfq.v1.HealthService/Check -H "Content-Type:application/json" -d '{}'` 返回 OK
+- 启动 trading-core，`curl localhost:9000/alfq.v1.HealthService/Check -H "Content-Type:application/json" -d '{}'` 返回 OK
 - 单测覆盖率配置就位（即使无业务测试）
 
 ### PR-4：Research 与 Frontend 空壳

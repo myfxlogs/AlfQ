@@ -13,9 +13,9 @@ export default function Dashboard() {
     async function load() {
       try {
         const [accRes, brkRes, stratRes] = await Promise.all([
-          accountClient.listAccounts({ tenantId: "" }),
-          brokerClient.listBrokers({ tenantId: "" }),
-          strategyClient.listStrategies({ tenantId: "" }),
+          accountClient.listAccounts({}),
+          brokerClient.listBrokers({}),
+          strategyClient.listStrategies({}),
         ]);
         setAccounts(accRes.accounts?.length ?? 0);
         setBrokers(brkRes.brokers?.length ?? 0);

@@ -267,7 +267,7 @@ service FactorService {
 
 ## 5. 内部服务间 RPC（gRPC）
 
-### 5.1 RiskCheck（OMS → risk-svc）
+### 5.1 RiskCheck（OMS → trading-core）
 
 ```proto
 service RiskCheckService {
@@ -328,7 +328,7 @@ func (s *Server) StreamOrders(ctx context.Context, req *connect.Request[...], st
 
 ## 7. 鉴权 / 租户 Interceptor
 
-`admin-api` 必须装载以下 Connect Interceptor（顺序）：
+`trading-core` 必须装载以下 Connect Interceptor（顺序）：
 
 1. **OTel**：注入 trace
 2. **Logger**：访问日志

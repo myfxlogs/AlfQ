@@ -1,0 +1,41 @@
+syntax = "proto3";
+package alfq.v1;
+option go_package = "github.com/alfq/backend/go/gen/alfq/v1;alfqv1";
+
+service StrategyService {
+  rpc CreateStrategy(CreateStrategyRequest) returns (Strategy);
+  rpc GetStrategy(GetStrategyRequest) returns (Strategy);
+  rpc ListStrategies(ListStrategiesRequest) returns (ListStrategiesResponse);
+  rpc DeployStrategy(DeployStrategyRequest) returns (Strategy);
+  rpc StopStrategy(StopStrategyRequest) returns (Strategy);
+  rpc StreamSignals(StreamSignalsRequest) returns (stream Signal);
+}
+
+message Strategy { string id = 1; string tenant_id = 2; string name = 3; string description = 4; string spec_json = 5; string status = 6; }
+message CreateStrategyRequest { string tenant_id = 1; string name = 2; string description = 3; string spec_json = 4; }
+message GetStrategyRequest { string id = 1; }
+message ListStrategiesRequest { string tenant_id = 1; }
+message ListStrategiesResponse { repeated Strategy strategies = 1; }
+message DeployStrategyRequest { string id = 1; string account_id = 2; }
+message StopStrategyRequest { string id = 1; }
+message StreamSignalsRequest { string strategy_id = 1; }
+message Signal { string strategy_id = 1; string symbol = 2; string side = 3; double qty = 4; double confidence = 5; int64 ts_unix_ms = 6; }
+
+service BacktestService {
+  rpc RunBacktest(RunBacktestRequest) returns (stream BacktestProgress);
+  rpc ListBacktests(ListBacktestsRequest) returns (ListBacktestsResponse);
+}
+
+message BacktestTask { string id = 1; string strategy_id = 2; string status = 3; string result_json = 4; }
+message RunBacktestRequest { string strategy_id = 1; int64 start_ts_ms = 2; int64 end_ts_ms = 3; }
+message BacktestProgress { string task_id = 1; double progress = 2; string status = 3; string result_json = 4; }
+message ListBacktestsRequest { string strategy_id = 1; }
+message ListBacktestsResponse { repeated BacktestTask tasks = 1; }
+
+service SymbolService {
+  rpc ListSymbols(ListSymbolsRequest) returns (ListSymbolsResponse);
+}
+
+message Symbol { string name = 1; string description = 2; int32 digits = 3; double contract_size = 4; string currency = 5; }
+message ListSymbolsRequest { string broker_id = 1; }
+message ListSymbolsResponse { repeated Symbol symbols = 1; }

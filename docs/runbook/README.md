@@ -6,10 +6,10 @@
 
 | 服务 | 端口 | 部署方式 |
 |---|---|---|
-| trading-core | 8080 | Docker compose（单机） |
+| trading-core | 9000 | Docker compose（单机） |
 | md-gateway | 9001 | Docker compose（单机） |
 | quant-engine | 9002 | Docker compose（单机） |
-| assistant-svc | 9006 | Docker compose（单机） |
+| assistant-svc | 9003 | Docker compose（单机） |
 | frontend | 80 | Docker compose（单机） |
 
 ## Paper → Live 灰度流程
@@ -26,7 +26,7 @@
 ### Kill Switch
 ```bash
 # 全局止损
-curl -X POST http://trading-core:8080/killswitch -d '{"scope":"global","reason":"manual"}'
+curl -X POST http://trading-core:9000/killswitch -d '{"scope":"global","reason":"manual"}'
 ```
 
 ### 回滚服务
