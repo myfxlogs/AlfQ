@@ -5,9 +5,10 @@
 FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates curl bash
-COPY references/buf-Linux-x86_64 /usr/local/bin/buf
-RUN chmod +x /usr/local/bin/buf
 ENV GOPROXY=https://goproxy.cn,direct
+RUN go install github.com/bufbuild/buf/cmd/buf@latest && \
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 WORKDIR /app
 COPY gprc/ gprc/
