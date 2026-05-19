@@ -12,9 +12,6 @@ func registerHealthEndpoints(mux *http.ServeMux) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
-	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ready"))
-	})
+	// /readyz is service-specific — each register() may override.
 	mux.Handle("/metrics", promhttp.Handler())
 }

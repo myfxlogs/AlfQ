@@ -55,6 +55,10 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 
 	d.Log.Info("assistant-svc starting", zap.Int("tools", len(registry.List())))
 
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	})
 	mux.HandleFunc("/chat", chatHandler(router))
 	mux.HandleFunc("/tools", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

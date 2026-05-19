@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -24,6 +25,7 @@ func main() {
 }
 
 func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
+	mux := adapter.Mux
 	ctx := context.Background()
 
 	fCfg := factorsvc.Config{
@@ -53,6 +55,11 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 		zap.Int("runners", loader.Count()),
 		zap.Int("factors", len(fCfg.Factors)),
 	)
+
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	})
 
 	chWriter.Start(ctx)
 	defer chWriter.Close()

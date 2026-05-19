@@ -39,7 +39,6 @@ func TestHealthEndpoints(t *testing.T) {
 		wantBody   string
 	}{
 		{"/healthz", 200, "ok"},
-		{"/readyz", 200, "ready"},
 		{"/metrics", 200, ""}, // promhttp returns metrics text, just check 200
 	}
 
