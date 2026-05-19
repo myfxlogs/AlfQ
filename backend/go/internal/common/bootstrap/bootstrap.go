@@ -81,17 +81,18 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	// Start server in background
+	// Shutdown handler in background
 	go func() {
-		log.Info(svcName+" starting", zap.String("addr", addr))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error("server error", zap.Error(err))
-		}
+		<-ctx.Done()
+		log.Info("shutting down...")
+		shutdownWithTimeout(srv, 5*time.Second)
 	}()
 
-	<-ctx.Done()
-	log.Info("shutting down...")
-	shutdownWithTimeout(srv, 5*time.Second)
+	// Start server (blocking)
+	log.Info(svcName+" starting", zap.String("addr", addr))
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("server: %w", err)
+	}
 	log.Info(svcName + " stopped")
 	return nil
 }

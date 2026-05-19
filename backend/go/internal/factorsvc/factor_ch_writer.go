@@ -99,15 +99,11 @@ func (w *FactorCHWriter) loop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			for {
-				select {
-				case r := <-w.ch:
-					batch = append(batch, r)
-				default:
-					flush()
-					return
-				}
-			}
+			flush()
+			return
+		case <-w.done:
+			flush()
+			return
 		case r := <-w.ch:
 			batch = append(batch, r)
 			if len(batch) >= w.cfg.MaxBatchSize {

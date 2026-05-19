@@ -101,17 +101,11 @@ func (w *CHWriter) loop(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			// Drain remaining ticks before exit.
-			for {
-				select {
-				case t := <-w.ticks:
-					batch = append(batch, t)
-				default:
-					flush()
-					return
-				}
-			}
-
+			flush()
+			return
+		case <-w.done:
+			flush()
+			return
 		case t := <-w.ticks:
 			batch = append(batch, t)
 			if len(batch) >= w.cfg.MaxBatchSize {
