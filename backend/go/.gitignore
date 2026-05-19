@@ -6,3 +6,6 @@
 /risk-svc
 /oms
 /assistant-svc
+
+# Coverage output
+*.out
