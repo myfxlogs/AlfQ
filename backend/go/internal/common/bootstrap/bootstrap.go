@@ -22,7 +22,7 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 		o(&cfg)
 	}
 
-	log, err := zap.NewProduction()
+	log, err := zap.NewDevelopment() // console-friendly, immediate flush for docker logs
 	if err != nil {
 		return fmt.Errorf("bootstrap: logger: %w", err)
 	}

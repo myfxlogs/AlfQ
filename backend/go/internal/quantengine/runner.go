@@ -10,6 +10,7 @@ import (
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/factorsvc"
 	"github.com/alfq/backend/go/internal/strategysvc"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,10 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 	}
 
 	engine := factorsvc.NewEngine(fCfg)
+
+	// Ensure NATS JetStream stream exists for md.bar.>
+	ensureBarStream(fCfg.NatsURL, d.Log)
+
 	sub := factorsvc.NewSubscriber(engine, fCfg.NatsURL, d.Log)
 
 	chWCfg := factorsvc.DefaultFactorCHWriterConfig()
@@ -77,4 +82,33 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 	}()
 
 	return nil
+}
+
+func ensureBarStream(natsURL string, log *zap.Logger) {
+	nc, err := nats.Connect(natsURL)
+	if err != nil {
+		log.Warn("nats connect for stream setup failed", zap.Error(err))
+		return
+	}
+	defer nc.Close()
+
+	js, err := nc.JetStream()
+	if err != nil {
+		log.Warn("nats jetstream for stream setup failed", zap.Error(err))
+		return
+	}
+
+	// Try to add stream; ignore if already exists
+	_, err = js.AddStream(&nats.StreamConfig{
+		Name:     "MD_BARS",
+		Subjects: []string{"md.bar.>"},
+		MaxMsgs:  1_000_000,
+		MaxBytes: 512 * 1024 * 1024,
+		Storage:  nats.FileStorage,
+	})
+	if err != nil {
+		log.Warn("nats add stream MD_BARS", zap.Error(err))
+	} else {
+		log.Info("nats stream MD_BARS created")
+	}
 }
