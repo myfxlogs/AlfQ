@@ -1,5 +1,5 @@
-// ALFQ App — hash-based routing with user/admin split
-import { useState, useEffect } from "react";
+// ALFQ App — sidebar layout + responsive mobile
+import { useState, useEffect, useCallback } from "react";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Accounts from "./pages/Accounts";
@@ -36,14 +36,14 @@ const adminRoutes: Record<string, () => React.ReactNode> = {
 
 const userNavItems: [string, string][] = [
   ["#/", "仪表盘"],
-  ["#/accounts", "账户"],
+  ["#/accounts", "账户管理"],
   ["#/orders", "订单"],
   ["#/positions", "持仓"],
-  ["#/risk", "风控"],
+  ["#/risk", "风控规则"],
   ["#/strategies", "策略"],
   ["#/backtest", "回测"],
-  ["#/assistant", "AI助手"],
-  ["#/audit", "审计"],
+  ["#/assistant", "AI 助手"],
+  ["#/audit", "审计日志"],
   ["#/notifications", "通知"],
 ];
 
@@ -57,40 +57,91 @@ function useHash(): string {
   return hash;
 }
 
+function Sidebar({ hash, isAdmin, onClose }: { hash: string; isAdmin: boolean; onClose: () => void }) {
+  return (
+    <>
+      <div className={`sidebar${isAdmin ? "" : ""}`} id="sidebar">
+        {isAdmin ? (
+          <>
+            <div className="sidebar-brand">ALFQ 管理</div>
+            <div className="sidebar-nav">
+              <a href="#/admin/tenants" className={`sidebar-link${hash === "#/admin/tenants" ? " active" : ""}`} onClick={onClose}>
+                租户管理
+              </a>
+              <a href="#/admin/users" className={`sidebar-link${hash === "#/admin/users" ? " active" : ""}`} onClick={onClose}>
+                用户管理
+              </a>
+            </div>
+            <div className="sidebar-footer">
+              <a href="#/" className="sidebar-footer-link">← 返回交易端</a>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="sidebar-brand">ALFQ</div>
+            <div className="sidebar-nav">
+              {userNavItems.map(([path, label]) => (
+                <a key={path} href={path} className={`sidebar-link${hash === path ? " active" : ""}`} onClick={onClose}>
+                  {label}
+                </a>
+              ))}
+            </div>
+            <div className="sidebar-footer">
+              <a href="#/settings" className="sidebar-footer-link">设置</a>
+              <a href="#/admin/tenants" className="sidebar-footer-link">管理端</a>
+              <a href="#/login" className="sidebar-footer-link">登录</a>
+            </div>
+          </>
+        )}
+      </div>
+      <div className={`sidebar-overlay${isAdmin ? "" : ""}`} id="sidebar-overlay" onClick={onClose} />
+    </>
+  );
+}
+
 export default function App() {
   const hash = useHash();
   const isAdmin = hash.startsWith("#/admin/");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Admin layout
-  if (isAdmin) {
-    const Page = adminRoutes[hash];
-    return (
-      <div>
-        <nav className="navbar">
-          <a href="#/" className="navbar-brand">ALFQ</a>
-          <span style={{ color: "var(--color-text-secondary)", fontSize: 14, marginLeft: 8 }}>管理端</span>
-          <a href="#/admin/tenants" className={`nav-link${hash === "#/admin/tenants" ? " active" : ""}`}>租户</a>
-          <a href="#/admin/users" className={`nav-link${hash === "#/admin/users" ? " active" : ""}`}>用户</a>
-          <a href="#/" className="nav-login">返回用户端</a>
-        </nav>
-        {Page ? <Page /> : <div className="page-placeholder">页面不存在</div>}
-      </div>
-    );
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const toggleSidebar = useCallback(() => setSidebarOpen((v) => !v), []);
+
+  // Sync sidebar state with overlay
+  useEffect(() => {
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    if (sidebarOpen) {
+      sidebar?.classList.add("open");
+      overlay?.classList.add("open");
+    } else {
+      sidebar?.classList.remove("open");
+      overlay?.classList.remove("open");
+    }
+  }, [sidebarOpen]);
+
+  // Login page is fullscreen, no layout
+  if (hash === "#/login") {
+    return <Login />;
   }
 
-  // User layout
-  const Page = userRoutes[hash] || Dashboard;
+  const Page = isAdmin ? adminRoutes[hash] || Tenants : userRoutes[hash] || Dashboard;
+
   return (
-    <div>
-      <nav className="navbar">
-        <a href="#/" className="navbar-brand">ALFQ</a>
-        {userNavItems.map(([path, label]) => (
-          <a key={path} href={path} className={`nav-link${hash === path ? " active" : ""}`}>{label}</a>
-        ))}
-        <a href="#/admin/tenants" className="nav-login">管理</a>
-        <a href="#/login" className="nav-login">登录</a>
-      </nav>
-      <Page />
+    <div className="app-layout">
+      <Sidebar hash={hash} isAdmin={isAdmin} onClose={closeSidebar} />
+
+      <div className="main-content">
+        {/* Mobile top bar */}
+        <div className="topbar">
+          <button className="hamburger" onClick={toggleSidebar} aria-label="菜单">
+            ☰
+          </button>
+          <span className="topbar-brand">{isAdmin ? "ALFQ 管理" : "ALFQ"}</span>
+        </div>
+
+        <Page />
+      </div>
     </div>
   );
 }
