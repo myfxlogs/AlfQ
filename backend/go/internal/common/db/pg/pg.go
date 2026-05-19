@@ -37,4 +37,8 @@ func (p *Pool) SetTenant(ctx context.Context, tenantID string) error {
 }
 
 // Close releases the pool.
-func (p *Pool) Close() { p.Pool.Close() }
+func (p *Pool) Close() {
+	if p != nil && p.Pool != nil {
+		p.Pool.Close()
+	}
+}
