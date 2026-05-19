@@ -165,17 +165,6 @@ func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string
 	}, nil
 }
 
-// ── Builtin fallback ──
-
-func BuiltinBrokers() []BrokerMatch {
-	return []BrokerMatch{
-		{Company: "RoboForex", Servers: []ServerEntry{{Name: "Demo", Access: "mt4-demo.roboforex.com:443"}}},
-		{Company: "IC Markets", Servers: []ServerEntry{{Name: "Demo", Access: "mt4-demo.icmarkets.com:443"}}},
-		{Company: "XM", Servers: []ServerEntry{{Name: "Demo", Access: "mt4-demo.xm.com:443"}}},
-		{Company: "Exness", Servers: []ServerEntry{{Name: "Demo", Access: "mt5-demo.exness.com:443"}}},
-	}
-}
-
 // ── internal ──
 
 func dial(ctx context.Context, gw config.GatewayConfig) (*grpc.ClientConn, error) {
