@@ -129,19 +129,8 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 		return &pb.SearchBrokerResponse{Matches: matches}, nil
 	}
 
-	// 3. Fallback: builtin broker list
-	builtin := mtapi.BuiltinBrokers()
-	var matches []*pb.BrokerMatch
-	kw := strings.ToLower(req.Keyword)
-	for _, m := range builtin {
-		if kw == "" || strings.Contains(strings.ToLower(m.Company), kw) {
-			matches = append(matches, &pb.BrokerMatch{
-				Company: m.Company,
-				Servers: m.Servers,
-			})
-		}
-	}
-	return &pb.SearchBrokerResponse{Matches: matches}, nil
+	// 3. No results
+	return &pb.SearchBrokerResponse{}, nil
 }
 
 func (s *Service) DeleteBroker(ctx context.Context, req *pb.DeleteBrokerRequest) (*pb.DeleteBrokerResponse, error) {
