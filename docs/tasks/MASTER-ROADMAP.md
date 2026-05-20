@@ -637,7 +637,7 @@ make e2e
 
 | ID | 标题 | 状态 | Commit | 完成时间 |
 |---|---|---|---|---|
-| EP-1 | trainer + ONNX exporter + spec submitter | ☐ | — | — |
+| EP-1 | trainer + ONNX exporter + spec submitter | ☑ | — | 2026-05-20 |
 | EP-2 | strategy spec loader + ONNX runtime | ☐ | — | — |
 | EP-3 | signal → OMS wiring + risk gates | ☐ | — | — |
 
@@ -666,6 +666,7 @@ make e2e
 | 2026-05-20 | DeepSeek | RP-1 | DataClient 实现真实 CH/PG 连接；DSL 补齐 12 个算子；parity test 358 tests / ~6200 assertions |
 | 2026-05-20 | DeepSeek | RP-2 | vectorized backtest 引擎 + broker_sim + metrics 扩展 + pg.py broker 元数据；backtest 集成测试 18 tests |
 | 2026-05-20 | DeepSeek | RP-3 | event-driven backtest + consistency gate (corr≥0.95, 日PnL MAD<1%)；6 consistency tests |
+| 2026-05-20 | DeepSeek | EP-1 | trainer (LGBM/RF/Linear) + ONNX exporter (skl2onnx/onnxmltools) + StrategySpec + ConnectClient；7 ONNX roundtrip tests |
 
 ---
 

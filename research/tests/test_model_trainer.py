@@ -25,5 +25,5 @@ def test_trainer_lightgbm_basic():
 
 def test_trainer_unknown_type():
     trainer = ModelTrainer(model_type="unknown")
-    model = trainer.train([], [])
-    assert model is None
+    with pytest.raises(ValueError, match="unknown model_type"):
+        trainer.train([], [])
