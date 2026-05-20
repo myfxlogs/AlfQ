@@ -1,9 +1,6 @@
 """Tests for ALFQ vectorized backtest engine."""
 
-import math
-
 import polars as pl
-import pytest
 
 from alfq_research.backtest import (
     BacktestConfig,
