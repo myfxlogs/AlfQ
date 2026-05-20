@@ -630,7 +630,7 @@ make e2e
 | ID | 标题 | 状态 | Commit | 完成时间 |
 |---|---|---|---|---|
 | RP-1 | DataClient + DSL parity | ☑ | — | 2026-05-20 |
-| RP-2 | vectorized backtest | ☐ | — | — |
+| RP-2 | vectorized backtest | ☑ | — | 2026-05-20 |
 | RP-3 | event-driven backtest + consistency | ☐ | — | — |
 
 ### Phase D 实盘引擎
@@ -663,7 +663,8 @@ make e2e
 | 日期 | Agent | 任务 ID | 一句话简报 |
 |---|---|---|---|
 | 2026-05-20 | Cascade | (设计) | 主路线图建立；symbol 元数据改为按 broker 动态拉取 |
-| 2026-05-20 | DeepSeek | RP-1 | DataClient 实现真实 CH/PG 连接；DSL 补齐 12 个算子 (wma/var/delta/pct_change/zscore/rank/corr/cov/cross_up/cross_down/pow/if_)；parity test 358 tests / ~6200 assertions |
+| 2026-05-20 | DeepSeek | RP-1 | DataClient 实现真实 CH/PG 连接；DSL 补齐 12 个算子；parity test 358 tests / ~6200 assertions |
+| 2026-05-20 | DeepSeek | RP-2 | vectorized backtest 引擎 + broker_sim + metrics 扩展 + pg.py broker 元数据；backtest 集成测试 18 tests |
 
 ---
 
