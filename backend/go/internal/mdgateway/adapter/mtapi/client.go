@@ -8,11 +8,13 @@ import (
 	"strings"
 
 	"github.com/alfq/backend/go/internal/common/config"
+	"github.com/google/uuid"
 	mt4pb "github.com/alfq/backend/go/gen/mt4"
 	mt5pb "github.com/alfq/backend/go/gen/mt5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // AccountInfo returned from MT connection test.
@@ -119,8 +121,12 @@ func TestConnect(ctx context.Context, gw config.GatewayConfig, mtType, login, pa
 }
 
 func connectMT5(ctx context.Context, conn *grpc.ClientConn, login, password, host string, port int32) (*AccountInfo, error) {
+	// MT5 gRPC gateway requires an "id" header in metadata
+	tempID := uuid.New().String()
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", tempID)
+
 	connClient := mt5pb.NewConnectionClient(conn)
-	resp, err := connClient.Connect(ctx, &mt5pb.ConnectRequest{
+	resp, err := connClient.Connect(ctxWithID, &mt5pb.ConnectRequest{
 		User:     parseUint(login),
 		Password: password,
 		Host:     host,
@@ -132,18 +138,125 @@ func connectMT5(ctx context.Context, conn *grpc.ClientConn, login, password, hos
 	if resp.GetError() != nil && resp.GetError().GetMessage() != "" {
 		return nil, fmt.Errorf("mtapi: mt5 error: %s", resp.GetError().GetMessage())
 	}
-	return getAccountSummary(ctx, conn, "/mt5grpc.Connection/AccountSummary")
+
+	// Use the session ID returned by Connect for subsequent calls
+	sessionID := resp.GetResult()
+	ctxWithSession := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+
+	mt5Client := mt5pb.NewMT5Client(conn)
+	summResp, err := mt5Client.AccountSummary(ctxWithSession, &mt5pb.AccountSummaryRequest{Id: sessionID})
+	if err != nil {
+		return nil, fmt.Errorf("mtapi: mt5 account summary: %w", err)
+	}
+	summ := summResp.GetResult()
+	if summ == nil {
+		return &AccountInfo{}, nil
+	}
+	return &AccountInfo{
+		Balance:     summ.GetBalance(),
+		Equity:      summ.GetEquity(),
+		Margin:      summ.GetMargin(),
+		FreeMargin:  summ.GetFreeMargin(),
+		MarginLevel: summ.GetMarginLevel(),
+		Profit:      summ.GetProfit(),
+		Currency:    summ.GetCurrency(),
+		Leverage:    int32(summ.GetLeverage()),
+	}, nil
 }
 
 func connectMT4(ctx context.Context, conn *grpc.ClientConn, login, password, host, port string) (*AccountInfo, error) {
-	md := map[string]interface{}{
-		"user": login, "password": password, "host": host, "port": port,
-	}
-	output := make(map[string]interface{})
-	if err := conn.Invoke(ctx, "/mt4grpc.Connection/Connect", md, output); err != nil {
+	// MT4 gRPC gateway: inject "id" metadata + use proto messages (not raw maps)
+	tempID := uuid.New().String()
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", tempID)
+
+	intPort := parsePort(port)
+	connClient := mt4pb.NewConnectionClient(conn)
+	resp, err := connClient.Connect(ctxWithID, &mt4pb.ConnectRequest{
+		User:     int32(parseUint(login)),
+		Password: password,
+		Host:     host,
+		Port:     intPort,
+		Id:       &tempID,
+	})
+	if err != nil {
 		return nil, fmt.Errorf("mtapi: mt4 connect: %w", err)
 	}
-	return getAccountSummary(ctx, conn, "/mt4grpc.Connection/AccountSummary")
+	if resp.GetError() != nil && resp.GetError().GetMessage() != "" {
+		return nil, fmt.Errorf("mtapi: mt4 error: %s", resp.GetError().GetMessage())
+	}
+
+	// AccountSummary with the token returned by Connect
+	token := resp.GetResult()
+	ctxWithToken := metadata.AppendToOutgoingContext(ctx, "id", token)
+
+	mt4Client := mt4pb.NewMT4Client(conn)
+	summResp, err := mt4Client.AccountSummary(ctxWithToken, &mt4pb.AccountSummaryRequest{Id: token})
+	if err != nil {
+		return nil, fmt.Errorf("mtapi: mt4 account summary: %w", err)
+	}
+	summ := summResp.GetResult()
+	if summ == nil {
+		return &AccountInfo{}, nil
+	}
+	return &AccountInfo{
+		Balance:     summ.GetBalance(),
+		Equity:      summ.GetEquity(),
+		Margin:      summ.GetMargin(),
+		FreeMargin:  summ.GetFreeMargin(),
+		MarginLevel: summ.GetMarginLevel(),
+		Profit:      summ.GetProfit(),
+		Currency:    summ.GetCurrency(),
+		Leverage:    int32(summ.GetLeverage()),
+	}, nil
+}
+
+// FetchAccountSummary fetches the full account summary using a typed gRPC call on an existing connection.
+func FetchAccountSummary(ctx context.Context, conn *grpc.ClientConn, platform, sessionID string) (*AccountInfo, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		client := mt5pb.NewMT5Client(conn)
+		resp, err := client.AccountSummary(ctxWithID, &mt5pb.AccountSummaryRequest{Id: sessionID})
+		if err != nil {
+			return nil, fmt.Errorf("mtapi: mt5 account summary: %w", err)
+		}
+		summ := resp.GetResult()
+		if summ == nil {
+			return &AccountInfo{}, nil
+		}
+		return &AccountInfo{
+			Balance:     summ.GetBalance(),
+			Equity:      summ.GetEquity(),
+			Margin:      summ.GetMargin(),
+			FreeMargin:  summ.GetFreeMargin(),
+			MarginLevel: summ.GetMarginLevel(),
+			Profit:      summ.GetProfit(),
+			Currency:    summ.GetCurrency(),
+			Leverage:    int32(summ.GetLeverage()),
+		}, nil
+	case "MT4":
+		client := mt4pb.NewMT4Client(conn)
+		resp, err := client.AccountSummary(ctxWithID, &mt4pb.AccountSummaryRequest{Id: sessionID})
+		if err != nil {
+			return nil, fmt.Errorf("mtapi: mt4 account summary: %w", err)
+		}
+		summ := resp.GetResult()
+		if summ == nil {
+			return &AccountInfo{}, nil
+		}
+		return &AccountInfo{
+			Balance:     summ.GetBalance(),
+			Equity:      summ.GetEquity(),
+			Margin:      summ.GetMargin(),
+			FreeMargin:  summ.GetFreeMargin(),
+			MarginLevel: summ.GetMarginLevel(),
+			Profit:      summ.GetProfit(),
+			Currency:    summ.GetCurrency(),
+			Leverage:    int32(summ.GetLeverage()),
+		}, nil
+	default:
+		return nil, fmt.Errorf("mtapi: unsupported platform %q", platform)
+	}
 }
 
 func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string) (*AccountInfo, error) {

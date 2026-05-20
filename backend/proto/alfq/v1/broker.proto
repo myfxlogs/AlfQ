@@ -66,15 +66,24 @@ message Account {
   string alias = 19;
   google.protobuf.Timestamp connected_at = 20;
   google.protobuf.Timestamp created_at = 21;
+  string server_name = 22;    // display name (e.g. "Exness-Trial"), server = access
+  string platform = 23;       // "MT4" or "MT5"
 }
 message CreateAccountRequest {
   string tenant_id = 1; string broker_id = 2; string login = 3;
   string password = 4; string server = 5; string account_type = 6;
   string mt_type = 7;  // "MT4" or "MT5"
+  string server_name = 8;  // display name (e.g. "Exness-Trial")
 }
 message GetAccountRequest { string id = 1; }
 message ListAccountsRequest { string tenant_id = 1; }
-message ListAccountsResponse { repeated Account accounts = 1; }
+message AccountSummary {
+  int32 connected_count = 1;
+  double total_balance = 2;
+  double total_equity = 3;
+  double total_profit = 4;
+}
+message ListAccountsResponse { repeated Account accounts = 1; AccountSummary summary = 2; }
 message DeleteAccountRequest { string id = 1; }
 message DeleteAccountResponse {}
 message ConnectAccountRequest { string id = 1; }

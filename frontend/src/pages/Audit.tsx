@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
-import { apiFetch } from "../api/client";
-import type { AuditLog, ListAuditLogsResponse } from "../gen/alfq/v1/auth_pb";
+import { auditClient } from "../api/client";
+import type { AuditLog } from "../gen/alfq/v1/auth_pb";
 
 export default function Audit() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -11,10 +11,7 @@ export default function Audit() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch<ListAuditLogsResponse>("/alfq.v1.AuditService/ListAuditLogs", {
-      method: "POST",
-      body: JSON.stringify({ tenantId: "", limit: 50 }),
-    })
+    auditClient.listAuditLogs({ tenantId: "", limit: 50 })
       .then(res => { setLogs(res.logs ?? []); setLoading(false); })
       .catch((e: unknown) => { setError(e instanceof Error ? e.message : "加载失败"); setLoading(false); });
   }, []);

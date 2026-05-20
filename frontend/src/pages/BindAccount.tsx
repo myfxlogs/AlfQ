@@ -1,9 +1,16 @@
 // BindAccount — 三步交易账户绑定向导 (AntTrader 风格)
-import { useState } from "react";
+// 改动: login 纯数字验证 + "只读密码/观摩密码" 文案 + 30s 超时
+import { useState, useRef } from "react";
 import { brokerClient, accountClient } from "../api/client";
 import type { BrokerMatch, BrokerServer } from "../gen/alfq/v1/broker_pb";
 
 type MtType = "MT4" | "MT5";
+
+// ── Login 数字过滤 ──
+const ALLOWED_KEYS = new Set([
+  "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+  "Home", "End", "Tab", "Enter", "Escape",
+]);
 
 export default function BindAccount({ onDone }: { onDone?: () => void }) {
   const done = onDone || (() => { window.location.hash = "#/"; });
@@ -20,6 +27,19 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [result, setResult] = useState<{ balance?: number; equity?: number; status?: string } | null>(null);
+  const loginRef = useRef<HTMLInputElement>(null);
+
+  // ── Login 输入处理（仅保留数字过滤作为输入辅助，业务验证由后端负责）──
+  const handleLoginChange = (raw: string) => {
+    setLogin(raw.replace(/\D/g, ""));
+  };
+
+  const handleLoginKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (ALLOWED_KEYS.has(e.key)) return;
+    if (e.key >= "0" && e.key <= "9") return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === "a" || e.key === "c" || e.key === "v")) return;
+    e.preventDefault();
+  };
 
   const handleSearch = async () => {
     if (!companySearch.trim()) { setMsg("请输入经纪商名称"); return; }
@@ -35,17 +55,28 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
 
   const handleBind = async () => {
     if (!selectedServer) return;
+    if (!login) { setError("请输入交易账号"); return; }
+    if (!password) { setError("请输入只读密码/观摩密码"); return; }
     setLoading(true); setError("");
+
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => { ctrl.abort(); }, 30_000);
+
     try {
       const res = await accountClient.createAccount({
-        tenantId: "", brokerId: "00000000-0000-0000-0000-000000000000",
-        login, password, server: selectedServer.access, accountType: "demo",
+        tenantId: "", brokerId: "",
+        login, password, server: selectedServer.access, serverName: selectedServer.name, accountType: "demo",
         mtType,
       });
+      clearTimeout(timer);
+      setPassword(""); // 成功后丢弃密码
       setResult({ balance: res.balance, equity: res.equity, status: res.status });
       setStep(3);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "绑定失败");
+      clearTimeout(timer);
+      setPassword(""); // 失败后丢弃密码
+      const msg = e instanceof Error ? e.message : "绑定失败";
+      setError(msg);
       setResult({ status: "error" }); setStep(3);
     } finally { setLoading(false); }
   };
@@ -155,18 +186,19 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
 
           {/* Next button */}
           {selectedServer && (
-            <button className="btn-primary" onClick={() => setStep(2)} style={{ width: "100%", height: 48, fontSize: 16 }}>
+            <button className="btn-primary" onClick={() => { setStep(2); setError(""); }}
+              style={{ width: "100%", height: 48, fontSize: 16 }}>
               下一步
             </button>
           )}
         </div>
       )}
 
-      {/* Step 2: Credentials */}
+      {/* Step 2: 账号信息 */}
       {step === 2 && (
         <div>
           <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-            <h2 style={{ margin: 0, color: "var(--color-text)", fontSize: 20 }}>输入交易凭据</h2>
+            <h2 style={{ margin: 0, color: "var(--color-text)", fontSize: 20 }}>输入账号信息</h2>
             <p style={{ margin: "0.5rem 0 0", color: "var(--color-text-muted)", fontSize: 14 }}>
               平台: {mtType} · {selectedCompany?.company}
             </p>
@@ -175,10 +207,27 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
             <span style={{ color: "var(--color-text-muted)" }}>服务器</span>
             <span style={{ fontWeight: 600 }}>{selectedServer?.name}</span>
           </div>
-          <input className="input" style={{ width: "100%", height: 48, fontSize: 16, marginBottom: "0.75rem" }}
-            placeholder="交易账号 (Login)" value={login} onChange={(e) => setLogin(e.target.value)} />
-          <input className="input" type="text" style={{ width: "100%", height: 48, fontSize: 16, marginBottom: "1rem" }}
-            placeholder="交易密码 (Password)" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+          {/* 交易账号 */}
+          <div style={{ marginBottom: "0.75rem" }}>
+            <input
+              ref={loginRef}
+              className="input"
+              inputMode="numeric"
+              style={{ width: "100%", height: 48, fontSize: 16, fontFamily: "monospace" }}
+              placeholder="交易账号 (Login)"
+              value={login}
+              onChange={(e) => handleLoginChange(e.target.value)}
+              onKeyDown={handleLoginKeyDown}
+            />
+          </div>
+
+          {/* 只读密码/观摩密码 */}
+          <input className="input" type="text" style={{ width: "100%", height: 48, fontSize: 16, marginBottom: "1rem", fontFamily: "monospace" }}
+            placeholder="只读密码/观摩密码 (Investor Password)" value={password} onChange={(e) => setPassword(e.target.value)} />
+
+          {error && <p style={{ color: "var(--color-danger)", fontSize: 13, marginBottom: "0.75rem" }}>{error}</p>}
+
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button className="btn-secondary" onClick={() => setStep(1)} style={{ flex: 1, height: 48 }}>返回</button>
             <button className="btn-primary" onClick={handleBind} disabled={!login || !password || loading}
@@ -199,19 +248,19 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
             {result?.status === "connected" ? "绑定成功" : "绑定失败"}
           </h2>
           {result?.status === "connected" && result.balance !== undefined && (
-            <div className="glass-card" style={{ padding: "1.5rem", marginBottom: "1.5rem", display: "inline-block", textAlign: "left" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "2rem", padding: "0.25rem 0" }}>
-                <span style={{ color: "var(--color-text-muted)" }}>余额</span>
-                <span style={{ fontWeight: 600 }}>${result.balance.toFixed(2)}</span>
+            <div className="glass-card" style={{ padding: "1.25rem 1.5rem", margin: "0 auto 1.5rem", maxWidth: 260 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1.5rem", padding: "0.3rem 0" }}>
+                <span style={{ color: "var(--color-text-muted)", fontSize: 14 }}>余额</span>
+                <span style={{ fontWeight: 600, fontSize: 15, color: "var(--color-success)" }}>${result.balance.toFixed(2)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "2rem", padding: "0.25rem 0" }}>
-                <span style={{ color: "var(--color-text-muted)" }}>净值</span>
-                <span style={{ fontWeight: 600 }}>${result.equity?.toFixed(2)}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1.5rem", padding: "0.3rem 0" }}>
+                <span style={{ color: "var(--color-text-muted)", fontSize: 14 }}>净值</span>
+                <span style={{ fontWeight: 600, fontSize: 15, color: "var(--color-success)" }}>${result.equity?.toFixed(2)}</span>
               </div>
             </div>
           )}
-          {error && <p style={{ color: "var(--color-danger)", marginBottom: "1rem" }}>{error}</p>}
-          <button className="btn-primary" onClick={done} style={{ width: "100%", maxWidth: 300, height: 48 }}>
+          {error && <p style={{ color: "var(--color-danger)", fontSize: 13, marginBottom: "1rem" }}>{error}</p>}
+          <button className="btn-primary" onClick={done} style={{ width: "100%", maxWidth: 300, height: 48, margin: "0 auto" }}>
             {result?.status === "connected" ? "完成" : "返回"}
           </button>
         </div>

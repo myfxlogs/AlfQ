@@ -3,6 +3,7 @@ package adminapi
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/alfq/backend/go/internal/common/auth"
 	"github.com/alfq/backend/go/internal/common/config"
@@ -12,10 +13,26 @@ import (
 
 // Service holds all RPC service implementations for trading-core API layer.
 type Service struct {
-	pool       *pg.Pool
-	log        *zap.Logger
-	mt4Gateway config.GatewayConfig
-	mt5Gateway config.GatewayConfig
+	pool        *pg.Pool
+	log         *zap.Logger
+	mt4Gateway  config.GatewayConfig
+	mt5Gateway  config.GatewayConfig
+	acctConn    AccountConnector
+}
+
+// AccountInfo holds data needed for persistent connection.
+type AccountInfo struct {
+	ID       string
+	Login    string
+	Password string
+	Server   string
+	Platform string
+}
+
+// AccountConnector is the interface for account connection management.
+type AccountConnector interface {
+	Connect(ctx context.Context, info AccountInfo)
+	Disconnect(accountID string)
 }
 
 // NewService creates a trading-core API service backed by a PG connection pool.
@@ -36,29 +53,27 @@ func (s *Service) WithLog(log *zap.Logger) *Service {
 	return s
 }
 
-// defaultTenantID is used when no tenant is available from context.
-const defaultTenantID = "00000000-0000-0000-0000-000000000000"
-
-// defaultBrokerID is the placeholder used by BindAccount when no broker exists.
-const defaultBrokerID = "00000000-0000-0000-0000-000000000000"
+// WithAccountConnector sets the account connection manager for persistent MT links.
+func (s *Service) WithAccountConnector(ac AccountConnector) *Service {
+	s.acctConn = ac
+	return s
+}
 
 // effectiveTenantID returns reqTenantID if non-empty, otherwise falls back to
-// the context tenant ID, and finally to the default tenant.
+// the context tenant ID. Returns empty string when neither is available.
 func effectiveTenantID(ctx context.Context, reqTenantID string) string {
 	if reqTenantID != "" {
 		return reqTenantID
 	}
-	if tid := auth.TenantFromContext(ctx); tid != "" {
-		return tid
-	}
-	return defaultTenantID
+	return auth.TenantFromContext(ctx)
 }
 
 // setRLS sets the tenant_id session variable for RLS, extracted from context.
+// Returns an error when no tenant is available.
 func (s *Service) setRLS(ctx context.Context) error {
 	tenantID := auth.TenantFromContext(ctx)
 	if tenantID == "" {
-		tenantID = defaultTenantID
+		return fmt.Errorf("no tenant in context")
 	}
 	return s.pool.SetTenant(ctx, tenantID)
 }

@@ -3,10 +3,10 @@ server:
 log:
   level: info
 nats:
-  url: "nats://localhost:4222"
+  url_env: NATS_URL
 clickhouse:
-  addr: "localhost:9000"
+  addr_env: CH_ADDR
   database: "alfq"
 postgres:
-  dsn: "postgres://alfq:alfq_dev@localhost:5432/alfq"
+  dsn_env: DATABASE_URL
 factors: []

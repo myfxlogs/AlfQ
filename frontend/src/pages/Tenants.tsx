@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
-import { apiFetch } from "../api/client";
-import type { Tenant, ListTenantsResponse } from "../gen/alfq/v1/auth_pb";
+import { tenantClient } from "../api/client";
+import type { Tenant } from "../gen/alfq/v1/auth_pb";
 
 export default function Tenants() {
   const [items, setItems] = useState<Tenant[]>([]);
@@ -11,10 +11,7 @@ export default function Tenants() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch<ListTenantsResponse>("/alfq.v1.TenantService/ListTenants", {
-      method: "POST",
-      body: JSON.stringify({}),
-    })
+    tenantClient.listTenants({})
       .then(res => { setItems(res.tenants ?? []); setLoading(false); })
       .catch((e: unknown) => { setError(e instanceof Error ? e.message : "加载失败"); setLoading(false); });
   }, []);

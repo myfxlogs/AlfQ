@@ -4,6 +4,8 @@
 package bootstrap
 
 import (
+	"net/http"
+
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -12,12 +14,13 @@ import (
 
 // Deps holds infrastructure dependencies that services may need.
 type Deps struct {
-	Cfg  Config
-	Log  *zap.Logger
-	PG   *pg.Pool
-	RDB  redis.UniversalClient
-	NATS interface{ Close() error }
-	CH   *pgxpool.Pool // ClickHouse uses pgx protocol compatibility
+	Cfg        Config
+	Log        *zap.Logger
+	PG         *pg.Pool
+	RDB        redis.UniversalClient
+	NATS       interface{ Close() error }
+	CH         *pgxpool.Pool // ClickHouse uses pgx protocol compatibility
+	Middleware func(http.Handler) http.Handler // optional: set by registrars that create auth
 }
 
 // Config is the subset of config needed by bootstrap.

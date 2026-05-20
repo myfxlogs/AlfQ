@@ -5,10 +5,16 @@ import type { Account } from "../gen/alfq/v1/broker_pb";
 
 export default function Dashboard() {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [brokers, setBrokers] = useState(0);
-  const [strategies, setStrategies] = useState(0);
+  const [, setBrokers] = useState(0);
+  const [, setStrategies] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // 总览卡随 accounts 实时重算（避免 SSE 后总览与列表不同步）
+  const connectedCount = accounts.filter((a) => a.status === "connected").length;
+  const totalEquity = accounts.reduce((s, a) => s + (a.equity ?? 0), 0);
+  const totalBalance = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
+  const totalProfit = accounts.reduce((s, a) => s + (a.profit ?? 0), 0);
 
   useEffect(() => {
     async function load() {
@@ -30,10 +36,37 @@ export default function Dashboard() {
     load();
   }, []);
 
-  const connectedCount = accounts.filter((a) => a.status === "connected").length;
-  const totalEquity = accounts.reduce((s, a) => s + (a.equity ?? 0), 0);
-  const totalBalance = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
-  const totalProfit = accounts.reduce((s, a) => s + (a.profit ?? 0), 0);
+  // SSE — real-time account status updates (与 Accounts 页一致)
+  useEffect(() => {
+    const es = new EventSource("/sse/accounts");
+    es.onmessage = (e) => {
+      try {
+        const u = JSON.parse(e.data) as {
+          accountId: string; status?: string;
+          balance: number; equity: number; margin: number;
+          freeMargin: number; marginLevel: number; profit: number;
+          currency: string; leverage: number;
+        };
+        setAccounts((prev) =>
+          prev.map((a) =>
+            a.id === u.accountId
+              ? {
+                  ...a,
+                  status: u.status ?? a.status,
+                  balance: u.balance, equity: u.equity, margin: u.margin,
+                  freeMargin: u.freeMargin, marginLevel: u.marginLevel,
+                  profit: u.profit,
+                  currency: u.currency || a.currency,
+                  leverage: u.leverage || a.leverage,
+                }
+              : a
+          )
+        );
+      } catch { /* ignore malformed */ }
+    };
+    es.onerror = () => { /* EventSource auto-reconnects */ };
+    return () => es.close();
+  }, []);
 
   return (
     <div className="page">
@@ -77,6 +110,7 @@ export default function Dashboard() {
             <thead>
               <tr>
                 <th>登录号</th>
+                <th>平台</th>
                 <th>服务器</th>
                 <th>状态</th>
                 <th>余额</th>
@@ -89,8 +123,17 @@ export default function Dashboard() {
               {accounts.map((a) => (
                 <tr key={a.id}>
                   <td style={{ fontWeight: 600 }}>{a.login || "—"}</td>
+                  <td>
+                    <span style={{
+                      display: "inline-block", padding: "2px 8px", borderRadius: 4, fontSize: 12, fontWeight: 600,
+                      background: a.platform === "MT4" ? "rgba(33,150,243,0.1)" : "rgba(212,175,55,0.15)",
+                      color: a.platform === "MT4" ? "#1976D2" : "#B8960B",
+                    }}>
+                      {a.platform || "—"}
+                    </span>
+                  </td>
                   <td style={{ fontSize: 12, color: "var(--color-text-secondary)", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {a.server || "—"}
+                    {a.serverName || a.server || "—"}
                   </td>
                   <td>
                     <span style={{

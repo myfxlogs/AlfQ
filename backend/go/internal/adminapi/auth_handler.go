@@ -107,13 +107,17 @@ func (h *AuthHandler) Login(ctx context.Context, req *connect.Request[pb.LoginRe
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("token sign: %w", err))
 	}
 
-	refreshToken, err := generateRefreshToken()
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("refresh token: %w", err))
-	}
-	hash := sha256Hex(refreshToken)
-	if err := h.rdb.Set(ctx, "refresh:"+hash, u.UserID, 7*24*time.Hour).Err(); err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("redis: %w", err))
+	var refreshToken string
+	if h.rdb != nil {
+		var err error
+		refreshToken, err = generateRefreshToken()
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("refresh token: %w", err))
+		}
+		hash := sha256Hex(refreshToken)
+		if err := h.rdb.Set(ctx, "refresh:"+hash, u.UserID, 7*24*time.Hour).Err(); err != nil {
+			return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("redis: %w", err))
+		}
 	}
 
 	return connect.NewResponse(&pb.LoginResponse{
@@ -124,7 +128,11 @@ func (h *AuthHandler) Login(ctx context.Context, req *connect.Request[pb.LoginRe
 }
 
 // RefreshToken validates a refresh token and issues new tokens.
+// Returns an error when Redis is unavailable (refresh tokens require Redis).
 func (h *AuthHandler) RefreshToken(ctx context.Context, req *connect.Request[pb.RefreshTokenRequest]) (*connect.Response[pb.LoginResponse], error) {
+	if h.rdb == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, fmt.Errorf("refresh tokens unavailable: redis not configured"))
+	}
 	hash := sha256Hex(req.Msg.RefreshToken)
 	userID, err := h.rdb.Get(ctx, "refresh:"+hash).Result()
 	if err == redis.Nil {
@@ -183,9 +191,13 @@ func (h *AuthHandler) VerifyTOTP(ctx context.Context, req *connect.Request[pb.Ve
 }
 
 // Logout invalidates the access token by adding it to a blacklist.
+// Blacklist is skipped when Redis is unavailable.
 func (h *AuthHandler) Logout(ctx context.Context, req *connect.Request[pb.LogoutRequest]) (*connect.Response[pb.LogoutResponse], error) {
 	token := req.Msg.AccessToken
 	if token == "" {
+		return connect.NewResponse(&pb.LogoutResponse{}), nil
+	}
+	if h.rdb == nil {
 		return connect.NewResponse(&pb.LogoutResponse{}), nil
 	}
 	claims, err := auth.Verify(token, map[string]auth.Ed25519PublicKey{h.kp.Kid: h.kp.PublicKey})
@@ -201,7 +213,11 @@ func (h *AuthHandler) Logout(ctx context.Context, req *connect.Request[pb.Logout
 }
 
 // IsTokenBlacklisted checks if a token has been revoked.
+// Returns false when Redis is unavailable (blacklist check skipped).
 func (h *AuthHandler) IsTokenBlacklisted(ctx context.Context, token string) bool {
+	if h.rdb == nil {
+		return false
+	}
 	hash := sha256Hex(token)
 	_, err := h.rdb.Get(ctx, "bl:"+hash).Result()
 	return err == nil

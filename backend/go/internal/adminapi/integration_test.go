@@ -9,8 +9,16 @@ import (
 	"testing"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
+	"github.com/alfq/backend/go/internal/common/auth"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 )
+
+const testTenantID = "00000000-0000-0000-0000-000000000099"
+
+// testCtx returns a context with the test tenant injected (required by setRLS).
+func testCtx() context.Context {
+	return auth.WithTenant(context.Background(), testTenantID)
+}
 
 func setupDB(t *testing.T) *pg.Pool {
 	t.Helper()
@@ -68,10 +76,10 @@ func TestIntegrationBrokerCRUD(t *testing.T) {
 	defer pool.Close()
 
 	svc := NewService(pool)
-	tid := defaultTenantID
+	tid := testTenantID
 
 	// Create
-	b, err := svc.CreateBroker(context.Background(), &pb.CreateBrokerRequest{
+	b, err := svc.CreateBroker(testCtx(), &pb.CreateBrokerRequest{
 		TenantId: tid, Code: "INT-T1", Name: "Integration Broker", Platform: "mt5",
 	})
 	if err != nil {
@@ -79,7 +87,7 @@ func TestIntegrationBrokerCRUD(t *testing.T) {
 	}
 
 	// List
-	resp, err := svc.ListBrokers(context.Background(), &pb.ListBrokersRequest{TenantId: tid})
+	resp, err := svc.ListBrokers(testCtx(), &pb.ListBrokersRequest{TenantId: tid})
 	if err != nil {
 		t.Fatalf("ListBrokers: %v", err)
 	}
@@ -88,7 +96,7 @@ func TestIntegrationBrokerCRUD(t *testing.T) {
 	}
 
 	// Get
-	got, err := svc.GetBroker(context.Background(), &pb.GetBrokerRequest{Id: b.Id})
+	got, err := svc.GetBroker(testCtx(), &pb.GetBrokerRequest{Id: b.Id})
 	if err != nil {
 		t.Fatalf("GetBroker: %v", err)
 	}
@@ -97,7 +105,7 @@ func TestIntegrationBrokerCRUD(t *testing.T) {
 	}
 
 	// Update
-	upd, err := svc.UpdateBroker(context.Background(), &pb.Broker{
+	upd, err := svc.UpdateBroker(testCtx(), &pb.Broker{
 		Id: b.Id, TenantId: b.TenantId, Code: "INT-T2", Name: "Updated", Platform: "mt4",
 	})
 	if err != nil {
@@ -108,7 +116,7 @@ func TestIntegrationBrokerCRUD(t *testing.T) {
 	}
 
 	// Delete
-	_, err = svc.DeleteBroker(context.Background(), &pb.DeleteBrokerRequest{Id: b.Id})
+	_, err = svc.DeleteBroker(testCtx(), &pb.DeleteBrokerRequest{Id: b.Id})
 	if err != nil {
 		t.Fatalf("DeleteBroker: %v", err)
 	}
@@ -119,23 +127,23 @@ func TestIntegrationAccountCRUD(t *testing.T) {
 	defer pool.Close()
 
 	svc := NewService(pool)
-	tid := defaultTenantID
+	tid := testTenantID
 
-	brk, err := svc.CreateBroker(context.Background(), &pb.CreateBrokerRequest{
+	brk, err := svc.CreateBroker(testCtx(), &pb.CreateBrokerRequest{
 		TenantId: tid, Code: "INT-ACC-BRK", Name: "Acc Broker", Platform: "mt5",
 	})
 	if err != nil {
 		t.Fatalf("CreateBroker: %v", err)
 	}
 
-	a, err := svc.CreateAccount(context.Background(), &pb.CreateAccountRequest{
+	a, err := svc.CreateAccount(testCtx(), &pb.CreateAccountRequest{
 		TenantId: tid, BrokerId: brk.Id, Login: "99999", Password: "secret",
 	})
 	if err != nil {
 		t.Fatalf("CreateAccount: %v", err)
 	}
 
-	resp, err := svc.ListAccounts(context.Background(), &pb.ListAccountsRequest{TenantId: tid})
+	resp, err := svc.ListAccounts(testCtx(), &pb.ListAccountsRequest{TenantId: tid})
 	if err != nil {
 		t.Fatalf("ListAccounts: %v", err)
 	}
@@ -143,7 +151,7 @@ func TestIntegrationAccountCRUD(t *testing.T) {
 		t.Fatal("expected at least 1 account")
 	}
 
-	got, err := svc.GetAccount(context.Background(), &pb.GetAccountRequest{Id: a.Id})
+	got, err := svc.GetAccount(testCtx(), &pb.GetAccountRequest{Id: a.Id})
 	if err != nil {
 		t.Fatalf("GetAccount: %v", err)
 	}
@@ -151,7 +159,7 @@ func TestIntegrationAccountCRUD(t *testing.T) {
 		t.Fatalf("Login: %s", got.Login)
 	}
 
-	upd, err := svc.UpdateAccount(context.Background(), &pb.Account{
+	upd, err := svc.UpdateAccount(testCtx(), &pb.Account{
 		Id: a.Id, TenantId: a.TenantId, BrokerId: a.BrokerId,
 		Login: a.Login, Server: "Demo", AccountType: "real", Currency: "EUR", Leverage: 200,
 	})
@@ -162,7 +170,7 @@ func TestIntegrationAccountCRUD(t *testing.T) {
 		t.Fatalf("Currency: %s", upd.Currency)
 	}
 
-	_, err = svc.DeleteAccount(context.Background(), &pb.DeleteAccountRequest{Id: a.Id})
+	_, err = svc.DeleteAccount(testCtx(), &pb.DeleteAccountRequest{Id: a.Id})
 	if err != nil {
 		t.Fatalf("DeleteAccount: %v", err)
 	}
@@ -173,16 +181,16 @@ func TestIntegrationStrategyLifecycle(t *testing.T) {
 	defer pool.Close()
 
 	svc := NewService(pool)
-	tid := defaultTenantID
+	tid := testTenantID
 
-	st, err := svc.CreateStrategy(context.Background(), &pb.CreateStrategyRequest{
+	st, err := svc.CreateStrategy(testCtx(), &pb.CreateStrategyRequest{
 		TenantId: tid, Name: "IntStrat", Description: "integration test", SpecJson: `{"entry":"macd"}`,
 	})
 	if err != nil {
 		t.Fatalf("CreateStrategy: %v", err)
 	}
 
-	resp, err := svc.ListStrategies(context.Background(), &pb.ListStrategiesRequest{TenantId: tid})
+	resp, err := svc.ListStrategies(testCtx(), &pb.ListStrategiesRequest{TenantId: tid})
 	if err != nil {
 		t.Fatalf("ListStrategies: %v", err)
 	}
@@ -190,7 +198,7 @@ func TestIntegrationStrategyLifecycle(t *testing.T) {
 		t.Fatal("expected at least 1 strategy")
 	}
 
-	got, err := svc.GetStrategy(context.Background(), &pb.GetStrategyRequest{Id: st.Id})
+	got, err := svc.GetStrategy(testCtx(), &pb.GetStrategyRequest{Id: st.Id})
 	if err != nil {
 		t.Fatalf("GetStrategy: %v", err)
 	}
@@ -198,7 +206,7 @@ func TestIntegrationStrategyLifecycle(t *testing.T) {
 		t.Fatalf("Name: %s", got.Name)
 	}
 
-	dep, err := svc.DeployStrategy(context.Background(), &pb.DeployStrategyRequest{Id: st.Id})
+	dep, err := svc.DeployStrategy(testCtx(), &pb.DeployStrategyRequest{Id: st.Id})
 	if err != nil {
 		t.Fatalf("DeployStrategy: %v", err)
 	}
@@ -206,7 +214,7 @@ func TestIntegrationStrategyLifecycle(t *testing.T) {
 		t.Fatalf("Status: %s", dep.Status)
 	}
 
-	stopped, err := svc.StopStrategy(context.Background(), &pb.StopStrategyRequest{Id: st.Id})
+	stopped, err := svc.StopStrategy(testCtx(), &pb.StopStrategyRequest{Id: st.Id})
 	if err != nil {
 		t.Fatalf("StopStrategy: %v", err)
 	}
@@ -221,16 +229,16 @@ func TestIntegrationAdapterBroker(t *testing.T) {
 
 	svc := NewService(pool)
 	adp := NewAdapter(svc)
-	tid := defaultTenantID
+	tid := testTenantID
 
-	b, err := adp.CreateBroker(context.Background(), connect.NewRequest(&pb.CreateBrokerRequest{
+	b, err := adp.CreateBroker(testCtx(), connect.NewRequest(&pb.CreateBrokerRequest{
 		TenantId: tid, Code: "ADP-BRK", Name: "Adapter Broker", Platform: "mt5",
 	}))
 	if err != nil {
 		t.Fatalf("adapter CreateBroker: %v", err)
 	}
 
-	resp, err := adp.ListBrokers(context.Background(), connect.NewRequest(&pb.ListBrokersRequest{TenantId: tid}))
+	resp, err := adp.ListBrokers(testCtx(), connect.NewRequest(&pb.ListBrokersRequest{TenantId: tid}))
 	if err != nil {
 		t.Fatalf("adapter ListBrokers: %v", err)
 	}
@@ -238,7 +246,7 @@ func TestIntegrationAdapterBroker(t *testing.T) {
 		t.Fatal("expected brokers")
 	}
 
-	_, err = adp.DeleteBroker(context.Background(), connect.NewRequest(&pb.DeleteBrokerRequest{Id: b.Msg.Id}))
+	_, err = adp.DeleteBroker(testCtx(), connect.NewRequest(&pb.DeleteBrokerRequest{Id: b.Msg.Id}))
 	if err != nil {
 		t.Fatalf("adapter DeleteBroker: %v", err)
 	}
@@ -250,20 +258,20 @@ func TestIntegrationAdapterAccount(t *testing.T) {
 
 	svc := NewService(pool)
 	adp := NewAdapter(svc)
-	tid := defaultTenantID
+	tid := testTenantID
 
-	brk, _ := adp.CreateBroker(context.Background(), connect.NewRequest(&pb.CreateBrokerRequest{
+	brk, _ := adp.CreateBroker(testCtx(), connect.NewRequest(&pb.CreateBrokerRequest{
 		TenantId: tid, Code: "ADP-ACC", Name: "A", Platform: "mt5",
 	}))
 
-	a, err := adp.CreateAccount(context.Background(), connect.NewRequest(&pb.CreateAccountRequest{
+	a, err := adp.CreateAccount(testCtx(), connect.NewRequest(&pb.CreateAccountRequest{
 		TenantId: tid, BrokerId: brk.Msg.Id, Login: "adp-1", Password: "x",
 	}))
 	if err != nil {
 		t.Fatalf("adapter CreateAccount: %v", err)
 	}
 
-	resp, err := adp.ListAccounts(context.Background(), connect.NewRequest(&pb.ListAccountsRequest{TenantId: tid}))
+	resp, err := adp.ListAccounts(testCtx(), connect.NewRequest(&pb.ListAccountsRequest{TenantId: tid}))
 	if err != nil {
 		t.Fatalf("adapter ListAccounts: %v", err)
 	}
@@ -271,7 +279,7 @@ func TestIntegrationAdapterAccount(t *testing.T) {
 		t.Fatal("expected accounts")
 	}
 
-	_, err = adp.DeleteAccount(context.Background(), connect.NewRequest(&pb.DeleteAccountRequest{Id: a.Msg.Id}))
+	_, err = adp.DeleteAccount(testCtx(), connect.NewRequest(&pb.DeleteAccountRequest{Id: a.Msg.Id}))
 	if err != nil {
 		t.Fatalf("adapter DeleteAccount: %v", err)
 	}

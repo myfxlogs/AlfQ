@@ -10,13 +10,16 @@ import (
 )
 
 // ServeMuxAdapter wraps *http.ServeMux so that registrars can mount handlers.
-type ServeMuxAdapter struct{ Mux *http.ServeMux }
+type ServeMuxAdapter struct {
+	Mux        *http.ServeMux
+	OnShutdown []func() // called in LIFO order during graceful shutdown
+}
 
 // newServer creates an h2c server with graceful shutdown.
-func newServer(addr string, mux *http.ServeMux) *http.Server {
+func newServer(addr string, handler http.Handler) *http.Server {
 	return &http.Server{
 		Addr:    addr,
-		Handler: h2c.NewHandler(mux, &http2.Server{}),
+		Handler: h2c.NewHandler(handler, &http2.Server{}),
 	}
 }
 

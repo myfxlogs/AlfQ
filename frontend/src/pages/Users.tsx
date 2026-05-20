@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
-import { apiFetch } from "../api/client";
-import type { User, ListUsersResponse } from "../gen/alfq/v1/auth_pb";
+import { userClient } from "../api/client";
+import type { User } from "../gen/alfq/v1/auth_pb";
 
 export default function Users() {
   const [items, setItems] = useState<User[]>([]);
@@ -11,10 +11,7 @@ export default function Users() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch<ListUsersResponse>("/alfq.v1.UserService/ListUsers", {
-      method: "POST",
-      body: JSON.stringify({ tenantId: "" }),
-    })
+    userClient.listUsers({ tenantId: "" })
       .then(res => { setItems(res.users ?? []); setLoading(false); })
       .catch((e: unknown) => { setError(e instanceof Error ? e.message : "加载失败"); setLoading(false); });
   }, []);

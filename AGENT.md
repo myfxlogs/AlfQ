@@ -25,6 +25,8 @@
 
 **安全红线**：用户 Python **不进生产**。生产仅 DSL + ONNX。sqlc 生成 SQL，不用 ORM。
 
+**前后端职责**：所有业务计算在后端完成，前端仅负责展示和渲染。后端对前端零信任——所有输入必须独立验证，不可依赖前端校验。数字格式化、货币计算、状态推断、数据转换等逻辑一律在后端执行后返回最终展示值。
+
 **价格**：`NUMERIC(20,8)` / decimal，禁止 float64 直接比较。时间统一 UTC。
 
 **日志**：结构化 JSON，必带 `trace_id` `tenant_id` `user_id` `request_id`。
@@ -117,6 +119,7 @@ make sec-scan       # govulncheck + trivy
 
 - main 直接 push · force push 共享分支 · `--no-verify`
 - REST 新接口（除 healthz/metrics）· WebSocket
+- 已知违规：assistant-svc `/chat` `/tools` REST 端点需迁移到 Connect RPC（见 `AIChat.tsx` TODO）
 - 用户 Python 进生产 · proto 不跑 buf breaking
 - 硬编码秘钥 · Vault 路径入仓 · >100MB 入仓
 - AGPL 代码复制 · 跨里程碑实施 · 凭常识决定安全/合规

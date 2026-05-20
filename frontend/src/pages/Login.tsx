@@ -15,6 +15,7 @@ export default function Login() {
       const res = await authClient.login({ email, password });
       if (res.accessToken) {
         setToken(res.accessToken);
+        localStorage.setItem("alfq_email", email);
         window.location.href = "/";
       } else {
         setError("登录失败：未返回 token");

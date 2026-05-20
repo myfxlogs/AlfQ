@@ -1,5 +1,6 @@
 // ALFQ App — sidebar layout + responsive mobile
 import { useState, useEffect, useCallback } from "react";
+import { authClient, getToken, clearToken } from "./api/client";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Orders from "./pages/Orders";
@@ -59,6 +60,23 @@ function useHash(): string {
 }
 
 function Sidebar({ hash, isAdmin, onClose }: { hash: string; isAdmin: boolean; onClose: () => void }) {
+  const token = getToken();
+  const loggedIn = !!token;
+
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await authClient.logout({ accessToken: token });
+      }
+    } catch {
+      // 即使后端调用失败也清除本地状态
+    }
+    clearToken();
+    localStorage.removeItem("alfq_email");
+    window.location.hash = "#/login";
+    window.location.reload();
+  };
+
   return (
     <>
       <div className={`sidebar${isAdmin ? "" : ""}`} id="sidebar">
@@ -93,7 +111,17 @@ function Sidebar({ hash, isAdmin, onClose }: { hash: string; isAdmin: boolean; o
             <div className="sidebar-footer">
               <a href="#/settings" className="sidebar-footer-link">设置</a>
               <a href="#/admin/tenants" className="sidebar-footer-link">管理端</a>
-              <a href="#/login" className="sidebar-footer-link">登录</a>
+              {loggedIn ? (
+                <a
+                  href="#"
+                  className="sidebar-footer-link"
+                  onClick={(e) => { e.preventDefault(); handleLogout(); }}
+                >
+                  退出
+                </a>
+              ) : (
+                <a href="#/login" className="sidebar-footer-link">登录</a>
+              )}
             </div>
           </>
         )}

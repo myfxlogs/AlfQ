@@ -20,7 +20,7 @@ func (s *Service) CreateBroker(ctx context.Context, req *pb.CreateBrokerRequest)
 		INSERT INTO brokers (tenant_id, code, name, platform, mtapi_endpoint, default_server)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, tenant_id, code, name, platform, mtapi_endpoint, default_server
-	`, req.TenantId, req.Code, req.Name, req.Platform, req.MtapiEndpoint, "").Scan(
+	`, effectiveTenantID(ctx, req.TenantId), req.Code, req.Name, req.Platform, req.MtapiEndpoint, "").Scan(
 		&b.Id, &b.TenantId, &b.Code, &b.Name, &b.Platform, &b.MtapiEndpoint, &b.DefaultServer,
 	)
 	if err != nil {
@@ -88,6 +88,9 @@ func (s *Service) UpdateBroker(ctx context.Context, req *pb.Broker) (*pb.Broker,
 }
 
 func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest) (*pb.SearchBrokerResponse, error) {
+	if err := s.setRLS(ctx); err != nil {
+		return nil, fmt.Errorf("rls: %w", err)
+	}
 	// 1. Try DB first
 	rows, err := s.pool.Query(ctx,
 		`SELECT id, tenant_id, code, name, platform, mtapi_endpoint, COALESCE(default_server,'')

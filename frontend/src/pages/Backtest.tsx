@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
-import { apiFetch } from "../api/client";
-import type { BacktestTask, ListBacktestsResponse } from "../gen/alfq/v1/strategy_pb";
+import { backtestClient } from "../api/client";
+import type { BacktestTask } from "../gen/alfq/v1/strategy_pb";
 
 export default function Backtest() {
   const [tasks, setTasks] = useState<BacktestTask[]>([]);
@@ -11,10 +11,7 @@ export default function Backtest() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    apiFetch<ListBacktestsResponse>("/alfq.v1.BacktestService/ListBacktests", {
-      method: "POST",
-      body: JSON.stringify({ strategyId: "" }),
-    })
+    backtestClient.listBacktests({ strategyId: "" })
       .then(res => { setTasks(res.tasks ?? []); setLoading(false); })
       .catch((e: unknown) => { setError(e instanceof Error ? e.message : "加载失败"); setLoading(false); });
   }, []);

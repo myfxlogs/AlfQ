@@ -1,14 +1,18 @@
 version: "3.9"
 
+# ALFQ Production Docker Compose
+# 所有密码/密钥通过 .env 文件或环境变量注入。
+# 复制 .env.example → .env 并填入生产实际值。
+
 services:
   # ── Infrastructure ──
   postgres:
     image: postgres:18-alpine
     environment:
       POSTGRES_USER: alfq
-      POSTGRES_PASSWORD: alfq_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?err}
       POSTGRES_DB: alfq
-    ports: ["5432:5432"]
+    ports: ["127.0.0.1:5432:5432"]
     volumes: [pg_data:/var/lib/postgresql]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U alfq"]
@@ -21,18 +25,19 @@ services:
     image: clickhouse/clickhouse-server:26.1-alpine
     environment:
       CLICKHOUSE_USER: alfq
-      CLICKHOUSE_PASSWORD: alfq_dev
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?err}
       CLICKHOUSE_DB: alfq
-    ports: ["8123:8123"]  # native 9000 仅内网，避免与 trading-core 9000 冲突
+    ports: ["127.0.0.1:8123:8123"]
     volumes: [ch_data:/var/lib/clickhouse]
     networks: [alfq-net]
 
   redis:
     image: redis:8-alpine
-    ports: ["6379:6379"]
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?err}"]
+    ports: ["127.0.0.1:6379:6379"]
     volumes: [redis_data:/data]
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -41,7 +46,7 @@ services:
   nats:
     image: nats:2-alpine
     command: ["-js", "-m", "8222"]
-    ports: ["4222:4222", "8222:8222"]
+    ports: ["127.0.0.1:4222:4222", "127.0.0.1:8222:8222"]
     volumes: [nats_data:/data]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8222 || exit 1"]
@@ -51,14 +56,13 @@ services:
     networks: [alfq-net]
 
   vault:
-    # 注：锁定 1.18，详见 docs/26 §4.4 豁免（WSL2 不支持 CAP_SETFCAP，无法运行 Vault 2.0）
     image: hashicorp/vault:1.18
     cap_add: [IPC_LOCK]
     environment:
       VAULT_ADDR: "http://0.0.0.0:8200"
-      VAULT_DEV_ROOT_TOKEN_ID: alfq_dev_root
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:-}
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
-    ports: ["8200:8200"]
+    ports: ["127.0.0.1:8200:8200"]
     volumes: [vault_data:/vault/file]
     command: server -dev
     restart: unless-stopped
@@ -81,8 +85,8 @@ services:
       - grafana_data:/var/lib/grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-    ports: ["3000:3000"]
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?err}
+    ports: ["127.0.0.1:3000:3000"]
     restart: unless-stopped
     networks: [alfq-net]
 
@@ -110,14 +114,17 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: trading-core }
-    ports: ["9000:9000"]
+    ports: ["127.0.0.1:9000:9000"]
     volumes:
       - ../configs:/app/configs:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      DATABASE_URL: "postgres://alfq:alfq_dev@postgres:5432/alfq?sslmode=disable"
+      DATABASE_URL: ${DATABASE_URL:?err}
       REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       NATS_URL: "nats://nats:4222"
+      NATS_USER: ${NATS_USER:-}
+      NATS_PASSWORD: ${NATS_PASSWORD:-}
     depends_on:
       postgres: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -129,10 +136,12 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: quant-engine }
-    ports: ["9002:9002"]
+    ports: ["127.0.0.1:9002:9002"]
     environment:
       LISTEN_ADDR: ":9002"
       NATS_URL: "nats://nats:4222"
+      NATS_USER: ${NATS_USER:-}
+      NATS_PASSWORD: ${NATS_PASSWORD:-}
     depends_on:
       nats: { condition: service_healthy }
     networks: [alfq-net]
@@ -142,11 +151,14 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: md-gateway }
-    ports: ["9001:9001"]
+    ports: ["127.0.0.1:9001:9001"]
     environment:
       LISTEN_ADDR: ":9001"
       NATS_URL: "nats://nats:4222"
+      NATS_USER: ${NATS_USER:-}
+      NATS_PASSWORD: ${NATS_PASSWORD:-}
       REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       CH_ADDR: "clickhouse:9000"
     depends_on:
       nats:       { condition: service_healthy }
@@ -159,9 +171,11 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: assistant-svc }
-    ports: ["9003:9003"]
+    ports: ["127.0.0.1:9003:9003"]
     environment:
       LISTEN_ADDR: ":9003"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     networks: [alfq-net]
 
   frontend:

@@ -27,12 +27,6 @@ func TestNewAdapter(t *testing.T) {
 	}
 }
 
-func TestDefaultTenantID(t *testing.T) {
-	if defaultTenantID != "00000000-0000-0000-0000-000000000000" {
-		t.Fatalf("defaultTenantID = %q", defaultTenantID)
-	}
-}
-
 func TestEffectiveTenantIDFromRequest(t *testing.T) {
 	ctx := context.Background()
 	tid := effectiveTenantID(ctx, "aaaa-bbbb-cccc")
@@ -49,11 +43,11 @@ func TestEffectiveTenantIDFromContext(t *testing.T) {
 	}
 }
 
-func TestEffectiveTenantIDDefault(t *testing.T) {
+func TestEffectiveTenantIDEmpty(t *testing.T) {
 	ctx := context.Background()
 	tid := effectiveTenantID(ctx, "")
-	if tid != defaultTenantID {
-		t.Fatalf("effectiveTenantID default: got %q, want %q", tid, defaultTenantID)
+	if tid != "" {
+		t.Fatalf("effectiveTenantID empty: got %q, want empty", tid)
 	}
 }
 

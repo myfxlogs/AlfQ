@@ -50,7 +50,8 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 		if addr == "" {
 			addr = "localhost:6379"
 		}
-		rdb := redis.NewClient(&redis.Options{Addr: addr})
+		redisPassword := os.Getenv("REDIS_PASSWORD")
+		rdb := redis.NewClient(&redis.Options{Addr: addr, Password: redisPassword})
 		if _, err := rdb.Ping(context.Background()).Result(); err != nil {
 			log.Warn("redis unavailable, auth disabled", zap.Error(err))
 		} else {
@@ -76,7 +77,11 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 	if addr == "" {
 		addr = ":9000"
 	}
-	srv := newServer(addr, mux)
+	var handler http.Handler = mux
+	if d.Middleware != nil {
+		handler = d.Middleware(mux)
+	}
+	srv := newServer(addr, handler)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -85,6 +90,12 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 	go func() {
 		<-ctx.Done()
 		log.Info("shutting down...")
+
+		// Run registered shutdown hooks in reverse order
+		for i := len(adapter.OnShutdown) - 1; i >= 0; i-- {
+			adapter.OnShutdown[i]()
+		}
+
 		shutdownWithTimeout(srv, 5*time.Second)
 	}()
 

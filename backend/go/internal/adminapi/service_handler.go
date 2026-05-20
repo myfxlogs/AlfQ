@@ -109,7 +109,7 @@ func isInfra(host string) bool {
 }
 
 func checkTCP(host string, port int) (string, int32) {
-	addr := fmt.Sprintf("%s:%d", host, port)
+	addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
 	start := time.Now()
 	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
 	latency := int32(time.Since(start).Milliseconds())

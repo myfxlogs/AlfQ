@@ -17,7 +17,7 @@ func (s *Service) CreateStrategy(ctx context.Context, req *pb.CreateStrategyRequ
 		INSERT INTO strategies (tenant_id, name, description, spec, status)
 		VALUES ($1, $2, $3, $4, 'draft')
 		RETURNING id, tenant_id, name, description, spec::text, status
-	`, req.TenantId, req.Name, req.Description, req.SpecJson).Scan(
+	`, effectiveTenantID(ctx, req.TenantId), req.Name, req.Description, req.SpecJson).Scan(
 		&st.Id, &st.TenantId, &st.Name, &st.Description, &st.SpecJson, &st.Status,
 	)
 	if err != nil {

@@ -19,5 +19,10 @@ func main() {
 func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 	mux := adapter.Mux
 	_ = bootstrap.CORSMiddleware(mux)
-	return tradingcore.RunTradingCore(mux, d)
+	shutdown, err := tradingcore.RunTradingCore(mux, d)
+	if err != nil {
+		return err
+	}
+	adapter.OnShutdown = append(adapter.OnShutdown, shutdown)
+	return nil
 }

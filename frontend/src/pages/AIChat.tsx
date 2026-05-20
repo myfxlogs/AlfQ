@@ -1,4 +1,6 @@
 // AIChat page — ALFQ
+// TODO: migrate to Connect RPC (assistant-svc needs ChatService in proto).
+// Current /chat REST endpoint violates AGENT.md "禁止 REST 新接口" rule.
 import { useState } from "react";
 
 interface ChatMessage {
