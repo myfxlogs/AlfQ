@@ -639,7 +639,7 @@ make e2e
 |---|---|---|---|---|
 | EP-1 | trainer + ONNX exporter + spec submitter | ☑ | — | 2026-05-20 |
 | EP-2 | strategy spec loader + ONNX runtime | ☑ | — | 2026-05-20 |
-| EP-3 | signal → OMS wiring + risk gates | ☐ | — | — |
+| EP-3 | signal → OMS wiring + risk gates | ☑ | — | 2026-05-20 |
 
 ### Phase E 生命周期
 
@@ -668,6 +668,7 @@ make e2e
 | 2026-05-20 | DeepSeek | RP-3 | event-driven backtest + consistency gate (corr≥0.95, 日PnL MAD<1%)；6 consistency tests |
 | 2026-05-20 | DeepSeek | EP-1 | trainer (LGBM/RF/Linear) + ONNX exporter (skl2onnx/onnxmltools) + StrategySpec + ConnectClient；7 ONNX roundtrip tests |
 | 2026-05-20 | DeepSeek | EP-2 | Go StrategySpec + loader (YAML/JSON) + signal generator + ONNX runtime fallback + sizing；quant-engine 集成；spec_test 9 tests |
+| 2026-05-20 | DeepSeek | EP-3 | OrderExecutor (risk→submit→SSE) + SignalToOMS bridge + canonical→symbol_raw resolver；bridge_test 5 tests |
 
 ---
 
