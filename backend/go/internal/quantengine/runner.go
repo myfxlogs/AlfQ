@@ -1,30 +1,76 @@
 // Package quantengine wires factor-svc and strategy-svc into a single process.
+// EP-2: Integrates strategy spec loading, signal generation, and OMS wiring.
 package quantengine
 
 import (
 	"context"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/factorsvc"
-	"github.com/alfq/backend/go/internal/strategysvc"
+	stratspec "github.com/alfq/backend/go/internal/strategysvc/spec"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
+// StrategyRuntime bundles a loaded spec with its model runner.
+type StrategyRuntime struct {
+	Spec   *stratspec.StrategySpec
+	Runner *ModelRunner
+	mu     sync.Mutex
+}
+
+// SignalHandler receives signals and routes them to OMS.
+type SignalHandler func(symbol string, side string, qty float64, reason string)
+
 // RunQuantEngine wires factor + strategy services and registers /readyz on mux.
 func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
+	return RunQuantEngineWithSignalHandler(mux, d, nil)
+}
+
+// RunQuantEngineWithSignalHandler starts quant-engine with an optional signal handler for OMS wiring.
+func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSignal SignalHandler) error {
 	ctx := context.Background()
+
+	// ── Load strategy specs ──
+	specDir := os.Getenv("ALFQ_SPEC_DIR")
+	if specDir == "" {
+		specDir = "configs/specs"
+	}
+	specs, err := stratspec.LoadDir(specDir)
+	if err != nil {
+		d.Log.Warn("spec load dir failed, using demo config", zap.Error(err), zap.String("dir", specDir))
+		specs = []*stratspec.StrategySpec{defaultDemoSpec()}
+	}
+	d.Log.Info("strategy specs loaded", zap.Int("count", len(specs)))
+
+	// Build runtime map
+	runtimes := make(map[string]*StrategyRuntime, len(specs))
+	factorDefs := make([]factorsvc.FactorDef, 0)
+
+	for _, spec := range specs {
+		mr, err := NewModelRunner(spec)
+		if err != nil {
+			d.Log.Warn("model runner creation failed", zap.String("spec", spec.Name), zap.Error(err))
+			continue
+		}
+		runtimes[spec.Name] = &StrategyRuntime{Spec: spec, Runner: mr}
+
+		for name, expr := range spec.Factors {
+			factorDefs = append(factorDefs, factorsvc.FactorDef{
+				Name:       name,
+				Expression: expr,
+				Symbols:    spec.CanonicalSymbols,
+			})
+		}
+	}
 
 	fCfg := factorsvc.Config{
 		NatsURL: os.Getenv("NATS_URL"),
-		Factors: []factorsvc.FactorDef{
-			{Name: "sma20", Expression: "sma($close, 20)", Symbols: []string{"EURUSD"}},
-			{Name: "sma60", Expression: "sma($close, 60)", Symbols: []string{"EURUSD"}},
-			{Name: "rsi14", Expression: "rsi(14)", Symbols: []string{"EURUSD"}},
-		},
+		Factors: factorDefs,
 	}
 	if fCfg.NatsURL == "" {
 		fCfg.NatsURL = "nats://localhost:4222"
@@ -40,13 +86,8 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 	chWCfg := factorsvc.DefaultFactorCHWriterConfig()
 	chWriter := factorsvc.NewFactorCHWriter(chWCfg, d.Log)
 
-	loader := strategysvc.NewLoader()
-	allocator := strategysvc.NewAllocator()
-	allocator.SetAccount("demo", 100000.0)
-	allocator.AddStrategy("demo", "sma_cross", 0.3, 5.0, 0.1)
-
 	d.Log.Info("quant-engine starting",
-		zap.Int("runners", loader.Count()),
+		zap.Int("runtimes", len(runtimes)),
 		zap.Int("factors", len(fCfg.Factors)),
 	)
 
@@ -56,7 +97,7 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 	})
 
 	chWriter.Start(ctx)
-	defer func() { _ = chWriter.Close() }() //nolint:errcheck
+	defer func() { _ = chWriter.Close() }()
 
 	go func() {
 		if err := sub.Start(ctx); err != nil {
@@ -64,6 +105,7 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 		}
 	}()
 
+	// ── Main evaluation loop: evaluate factors → generate signals ──
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -72,16 +114,64 @@ func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				for _, id := range loader.List() {
-					if runner := loader.Get(id); runner != nil {
-						_, _ = runner.Evaluate(ctx, "EURUSD", 1.0)
-					}
-				}
+				evaluateAll(ctx, engine, runtimes, onSignal, d.Log)
 			}
 		}
 	}()
 
 	return nil
+}
+
+func evaluateAll(ctx context.Context, engine *factorsvc.Engine, runtimes map[string]*StrategyRuntime, onSignal SignalHandler, log *zap.Logger) {
+	for name, rt := range runtimes {
+		// Evaluate all factors for this strategy's symbols
+		factorVals := make(map[string]float64)
+		for _, sym := range rt.Spec.CanonicalSymbols {
+			// Factor evaluation uses the engine's bar stream.
+			// For demo: use a single symbol's latest bar.
+			_ = sym
+		}
+
+		// In production this would come from NATS bar stream.
+		// For now, run DSL signal evaluation.
+		signal, err := rt.Runner.Predict(ctx, factorVals)
+		if err != nil {
+			log.Warn("signal eval failed", zap.String("strategy", name), zap.Error(err))
+			continue
+		}
+
+		dir := Direction(signal)
+		if dir == "flat" {
+			continue
+		}
+
+		qty := 0.1 // default 0.1 lots; in prod use sizing calculator
+		if onSignal != nil {
+			// Route to OMS via signal handler
+			onSignal(rt.Spec.CanonicalSymbols[0], dir, qty, name)
+		}
+
+		log.Debug("signal generated",
+			zap.String("strategy", name),
+			zap.Float64("signal", signal),
+			zap.String("direction", dir),
+		)
+	}
+}
+
+func defaultDemoSpec() *stratspec.StrategySpec {
+	return &stratspec.StrategySpec{
+		Name:             "demo_sma_cross",
+		Version:          "1.0.0",
+		CanonicalSymbols: []string{"EURUSD"},
+		Period:           "1h",
+		Factors: map[string]string{
+			"sma20": "sma($close, 20)",
+			"sma60": "sma($close, 60)",
+		},
+		SignalRule: "sma20 > sma60 ? 1 : -1",
+		Sizing:     map[string]any{"type": "fixed_lots", "lots": 0.1},
+	}
 }
 
 func ensureBarStream(natsURL string, log *zap.Logger) {
@@ -98,7 +188,6 @@ func ensureBarStream(natsURL string, log *zap.Logger) {
 		return
 	}
 
-	// Try to add stream; ignore if already exists
 	_, err = js.AddStream(&nats.StreamConfig{
 		Name:     "MD_BARS",
 		Subjects: []string{"md.bar.>"},

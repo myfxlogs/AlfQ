@@ -33,6 +33,19 @@ func (c *Compiler) Compile(expr string) (Op, error) {
 	return c.compileNode(node)
 }
 
+// CompileWithFactors compiles an expression with runtime factor Ops.
+func (c *Compiler) CompileWithFactors(expr string, factors map[string]Op) (Op, error) {
+	saved := c.factors
+	c.factors = factors
+	defer func() { c.factors = saved }()
+
+	node, err := Parse(expr)
+	if err != nil {
+		return nil, fmt.Errorf("compile: %w", err)
+	}
+	return c.compileNode(node)
+}
+
 func (c *Compiler) compileNode(node Node) (Op, error) {
 	switch n := node.(type) {
 	case *NumberLit:
