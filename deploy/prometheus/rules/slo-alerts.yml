@@ -1,0 +1,72 @@
+# ALFQ SLO Alerts — per docs/15 §SLO
+groups:
+  - name: alfq_slo
+    rules:
+      # ── Market Data SLO ──
+      - alert: TickLatencyHigh
+        expr: histogram_quantile(0.99, rate(alfq_md_tick_latency_seconds_bucket[5m])) > 0.050
+        for: 5m
+        labels: { severity: P1, slo: md_latency }
+        annotations:
+          summary: "Tick latency p99 > 50ms"
+          description: "p99 tick latency is {{ $value | humanizeDuration }} (target < 50ms)"
+
+      - alert: TickGapRateHigh
+        expr: rate(alfq_md_gap_total[1h]) / rate(alfq_md_tick_total[1h]) > 0.0001
+        for: 10m
+        labels: { severity: P1, slo: md_quality }
+        annotations:
+          summary: "Tick gap rate > 0.01%"
+          description: "Gap rate is {{ $value | humanizePercentage }} (target < 0.01%)"
+
+      # ── Order SLO ──
+      - alert: OrderLatencyHigh
+        expr: histogram_quantile(0.99, rate(alfq_order_e2e_latency_seconds_bucket[5m])) > 0.150
+        for: 5m
+        labels: { severity: P1, slo: order_latency }
+        annotations:
+          summary: "Order submit p99 > 150ms"
+          description: "p99 order e2e latency is {{ $value | humanizeDuration }} (target < 150ms)"
+
+      - alert: OrderSuccessRateLow
+        expr: sum(rate(alfq_order_submit_total{result="success"}[5m])) / sum(rate(alfq_order_submit_total[5m])) < 0.999
+        for: 5m
+        labels: { severity: P0, slo: order_success }
+        annotations:
+          summary: "Order success rate < 99.9%"
+          description: "Order success rate dropped to {{ $value | humanizePercentage }}"
+
+      # ── Risk SLO ──
+      - alert: KillSwitchActive
+        expr: alfq_risk_killswitch_active == 1
+        for: 1m
+        labels: { severity: P0, slo: risk_killswitch }
+        annotations:
+          summary: "Kill switch is ACTIVE"
+          description: "All trading halted. Investigate immediately."
+
+      - alert: RiskBreakerTripped
+        expr: alfq_risk_breaker_state > 0
+        for: 2m
+        labels: { severity: P1, slo: risk_breaker }
+        annotations:
+          summary: "Circuit breaker tripped"
+          description: "Risk circuit breaker active for {{ $value }} scope(s)"
+
+      # ── Data SLO ──
+      - alert: CHWriteSuccessRateLow
+        expr: sum(rate(alfq_ch_insert_rows_total{status="success"}[5m])) / sum(rate(alfq_ch_insert_rows_total[5m])) < 0.9999
+        for: 10m
+        labels: { severity: P1, slo: ch_write }
+        annotations:
+          summary: "CH write success rate < 99.99%"
+          description: "ClickHouse write success rate is {{ $value | humanizePercentage }}"
+
+      # ── Infrastructure ──
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels: { severity: P0, slo: infra }
+        annotations:
+          summary: "Service {{ $labels.job }} is DOWN"
+          description: "{{ $labels.job }} has been down for > 2 minutes"

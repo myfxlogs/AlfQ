@@ -652,9 +652,9 @@ make e2e
 
 | ID | 标题 | 状态 | Commit | 完成时间 |
 |---|---|---|---|---|
-| OP-1 | SLO dashboards | ☐ | — | — |
-| OP-2 | incident runbooks | ☐ | — | — |
-| OP-3 | backup + DR drill | ☐ | — | — |
+| OP-1 | SLO dashboards | ☑ | — | 2026-05-20 |
+| OP-2 | incident runbooks | ☑ | — | 2026-05-20 |
+| OP-3 | backup + DR drill | ☑ | — | 2026-05-20 |
 
 ---
 
@@ -671,6 +671,9 @@ make e2e
 | 2026-05-20 | DeepSeek | EP-3 | OrderExecutor (risk→submit→SSE) + SignalToOMS bridge + canonical→symbol_raw resolver；bridge_test 5 tests |
 | 2026-05-20 | DeepSeek | LP-1 | BacktestService RunBacktest (call Python CLI→consistency gate→status update) + ListBacktests；backtest runner |
 | 2026-05-20 | DeepSeek | LP-2 | paper→live 双签状态机 (draft→ready→paper→live) + PromoteToLive + Sharpe>1.0 + P0/P1 risk check；integration test 更新 |
+| 2026-05-20 | DeepSeek | OP-1 | SLO Overview dashboard + Prometheus 告警规则 (8 alerts) + prometheus.yml 规则加载 |
+| 2026-05-20 | DeepSeek | OP-2 | 6 类故障 runbook (行情中断/CH失败/连接被踢/策略熔断/KillSwitch/Spill满) |
+| 2026-05-20 | DeepSeek | OP-3 | PG 全量+WAL 备份脚本 + DR 演练模板 (RTO<30min, RPO<5min) |
 
 ---
 
