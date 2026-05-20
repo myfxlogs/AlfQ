@@ -57,7 +57,8 @@ func setupDB(t *testing.T) *pg.Pool {
 			name TEXT NOT NULL,
 			description TEXT NOT NULL DEFAULT '',
 			spec JSONB NOT NULL DEFAULT '{}',
-			status TEXT NOT NULL DEFAULT 'draft'
+			status TEXT NOT NULL DEFAULT 'draft',
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		)`,
 	} {
 		if _, err := pool.Exec(context.Background(), stmt); err != nil {
@@ -206,12 +207,19 @@ func TestIntegrationStrategyLifecycle(t *testing.T) {
 		t.Fatalf("Name: %s", got.Name)
 	}
 
+	// Set status to 'ready' first (simulating backtest gate pass)
+	if _, err := pool.Exec(context.Background(),
+		`UPDATE strategies SET status = 'ready' WHERE id = $1`, st.Id,
+	); err != nil {
+		t.Fatalf("set ready: %v", err)
+	}
+
 	dep, err := svc.DeployStrategy(testCtx(), &pb.DeployStrategyRequest{Id: st.Id})
 	if err != nil {
 		t.Fatalf("DeployStrategy: %v", err)
 	}
-	if dep.Status != "deployed" {
-		t.Fatalf("Status: %s", dep.Status)
+	if dep.Status != "paper" {
+		t.Fatalf("Status: expected paper, got %s", dep.Status)
 	}
 
 	stopped, err := svc.StopStrategy(testCtx(), &pb.StopStrategyRequest{Id: st.Id})

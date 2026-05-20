@@ -646,7 +646,7 @@ make e2e
 | ID | 标题 | 状态 | Commit | 完成时间 |
 |---|---|---|---|---|
 | LP-1 | BacktestService + auto consistency gate | ☑ | — | 2026-05-20 |
-| LP-2 | paper → live double sign-off | ☐ | — | — |
+| LP-2 | paper → live double sign-off | ☑ | — | 2026-05-20 |
 
 ### Phase F 生产化
 
@@ -670,6 +670,7 @@ make e2e
 | 2026-05-20 | DeepSeek | EP-2 | Go StrategySpec + loader (YAML/JSON) + signal generator + ONNX runtime fallback + sizing；quant-engine 集成；spec_test 9 tests |
 | 2026-05-20 | DeepSeek | EP-3 | OrderExecutor (risk→submit→SSE) + SignalToOMS bridge + canonical→symbol_raw resolver；bridge_test 5 tests |
 | 2026-05-20 | DeepSeek | LP-1 | BacktestService RunBacktest (call Python CLI→consistency gate→status update) + ListBacktests；backtest runner |
+| 2026-05-20 | DeepSeek | LP-2 | paper→live 双签状态机 (draft→ready→paper→live) + PromoteToLive + Sharpe>1.0 + P0/P1 risk check；integration test 更新 |
 
 ---
 

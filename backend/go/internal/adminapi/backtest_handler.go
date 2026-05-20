@@ -125,7 +125,7 @@ func (s *Service) updateStrategyStatus(ctx context.Context, strategyID, newStatu
 		return nil
 	}
 	_, err := s.pool.Exec(ctx,
-		`UPDATE strategies SET status = $1, updated_at = now() WHERE id = $2`,
+		`UPDATE strategies SET status = $1 WHERE id = $2`,
 		newStatus, strategyID,
 	)
 	return err
