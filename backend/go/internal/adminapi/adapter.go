@@ -112,6 +112,22 @@ func (a *Adapter) DisconnectAccount(ctx context.Context, req *connect.Request[pb
 	return connect.NewResponse(resp), nil
 }
 
+func (a *Adapter) ListAccountOrders(ctx context.Context, req *connect.Request[pb.ListAccountOrdersRequest]) (*connect.Response[pb.ListAccountOrdersResponse], error) {
+	resp, err := a.svc.ListAccountOrders(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (a *Adapter) ListAccountPositions(ctx context.Context, req *connect.Request[pb.ListAccountPositionsRequest]) (*connect.Response[pb.ListAccountPositionsResponse], error) {
+	resp, err := a.svc.ListAccountPositions(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // -- StrategyService --
 
 func (a *Adapter) CreateStrategy(ctx context.Context, req *connect.Request[pb.CreateStrategyRequest]) (*connect.Response[pb.Strategy], error) {
@@ -155,18 +171,7 @@ func (a *Adapter) StreamSignals(ctx context.Context, req *connect.Request[pb.Str
 }
 
 // -- BacktestService --
-
-func (a *Adapter) RunBacktest(ctx context.Context, req *connect.Request[pb.RunBacktestRequest], stream *connect.ServerStream[pb.BacktestProgress]) error {
-	return nil // stub
-}
-
-func (a *Adapter) ListBacktests(ctx context.Context, req *connect.Request[pb.ListBacktestsRequest]) (*connect.Response[pb.ListBacktestsResponse], error) {
-	resp, err := a.svc.ListBacktests(ctx, req.Msg)
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(resp), nil
-}
+// RunBacktest and ListBacktests are now implemented in backtest_handler.go.
 
 // -- SystemSettingsService --
 

@@ -3,12 +3,25 @@ package adminapi
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"time"
 
+	"connectrpc.com/connect"
+	"github.com/alfq/backend/go/internal/accountconn"
 	"github.com/alfq/backend/go/internal/common/auth"
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/db/pg"
+	"github.com/alfq/backend/go/internal/oms/repo"
 	"go.uber.org/zap"
+)
+
+// ErrSessionExpired is returned when no tenant is bound to the request context
+// (no token, expired token, or signature mismatch e.g. after a key rotation).
+// It carries a `connect.CodeUnauthenticated` so the client transport can route
+// the user to the login screen instead of showing a 500.
+var ErrSessionExpired = connect.NewError(
+	connect.CodeUnauthenticated,
+	errors.New("会话已过期或无效，请重新登录"),
 )
 
 // Service holds all RPC service implementations for trading-core API layer.
@@ -18,6 +31,19 @@ type Service struct {
 	mt4Gateway  config.GatewayConfig
 	mt5Gateway  config.GatewayConfig
 	acctConn    AccountConnector
+	syncWorker  OrderSyncer
+	historyRepo HistoryOrderRepo
+}
+
+// OrderSyncer abstracts the order history sync worker.
+type OrderSyncer interface {
+	FullSync(ctx context.Context, accountID string) error
+	GetSyncState(ctx context.Context, accountID string) (*accountconn.SyncState, error)
+}
+
+// HistoryOrderRepo abstracts the local order-history repository.
+type HistoryOrderRepo interface {
+	List(ctx context.Context, tenantID, accountID string, from, to time.Time) ([]*repo.HistoryOrder, error)
 }
 
 // AccountInfo holds data needed for persistent connection.
@@ -27,12 +53,32 @@ type AccountInfo struct {
 	Password string
 	Server   string
 	Platform string
+	BrokerID string
 }
 
 // AccountConnector is the interface for account connection management.
 type AccountConnector interface {
 	Connect(ctx context.Context, info AccountInfo)
 	Disconnect(accountID string)
+	// LatestPositions returns the most-recent positions for an account, or nil if
+	// no live session is available. Implementations must be non-blocking.
+	LatestPositions(accountID string) []*PositionInfo
+	// WithLiveSession invokes fn with the live gateway gRPC connection and session ID.
+	// Returns an error if no live session is available. Implementations must not
+	// block on dialing — the live session is expected to already exist.
+	WithLiveSession(accountID string, fn func(conn interface{}, sessionID, platform string) error) error
+}
+
+// PositionInfo is a unified position record exposed by AccountConnector.
+type PositionInfo struct {
+	Ticket     int64
+	Symbol     string
+	Type       string
+	Lots       float64
+	OpenPrice  float64
+	Profit     float64
+	Swap       float64
+	Commission float64
 }
 
 // NewService creates a trading-core API service backed by a PG connection pool.
@@ -59,6 +105,18 @@ func (s *Service) WithAccountConnector(ac AccountConnector) *Service {
 	return s
 }
 
+// WithSyncWorker sets the order sync worker for full/incremental sync.
+func (s *Service) WithSyncWorker(sw OrderSyncer) *Service {
+	s.syncWorker = sw
+	return s
+}
+
+// WithHistoryRepo sets the local order-history repository.
+func (s *Service) WithHistoryRepo(r HistoryOrderRepo) *Service {
+	s.historyRepo = r
+	return s
+}
+
 // effectiveTenantID returns reqTenantID if non-empty, otherwise falls back to
 // the context tenant ID. Returns empty string when neither is available.
 func effectiveTenantID(ctx context.Context, reqTenantID string) string {
@@ -73,7 +131,7 @@ func effectiveTenantID(ctx context.Context, reqTenantID string) string {
 func (s *Service) setRLS(ctx context.Context) error {
 	tenantID := auth.TenantFromContext(ctx)
 	if tenantID == "" {
-		return fmt.Errorf("no tenant in context")
+		return ErrSessionExpired
 	}
 	return s.pool.SetTenant(ctx, tenantID)
 }
