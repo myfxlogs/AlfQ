@@ -8,6 +8,11 @@ import os
 import polars as pl
 import pytest
 
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("ALFQ_CH_HOST"),
+    reason="requires running ClickHouse (set ALFQ_CH_HOST)",
+)
+
 from alfq_research.data.client import DataClient
 from alfq_research.backtest import (
     BacktestConfig,
