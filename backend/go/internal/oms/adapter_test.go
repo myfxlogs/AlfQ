@@ -73,3 +73,28 @@ func TestInterfaceCompliance(t *testing.T) {
 	var _ BrokerAdapter = NewMT4Adapter("x", "", "", "")
 	var _ BrokerAdapter = NewMT5Adapter("x", "", "", "")
 }
+
+func TestMT5AdapterCancel(t *testing.T) {
+	a := NewMT5Adapter("x", "user", "pass", "srv")
+	if err := a.Cancel(nil, "ticket"); err != nil {
+		t.Fatalf("Cancel: %v", err)
+	}
+}
+
+func TestMT5AdapterModify(t *testing.T) {
+	a := NewMT5Adapter("x", "user", "pass", "srv")
+	if err := a.Modify(nil, "ticket", 1.0, 1.0); err != nil {
+		t.Fatalf("Modify: %v", err)
+	}
+}
+
+func TestMT5AdapterQuery(t *testing.T) {
+	a := NewMT5Adapter("x", "user", "pass", "srv")
+	order, err := a.Query(nil, "ticket")
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+	if order != nil {
+		t.Fatal("expected nil order")
+	}
+}
