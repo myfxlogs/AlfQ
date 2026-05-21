@@ -14,6 +14,24 @@ func TestNewPublisher(t *testing.T) {
 	}
 }
 
+func TestPublisher_Fields(t *testing.T) {
+	p := NewPublisher(nil, "nats://localhost:4222")
+	if p.nc != nil {
+		t.Fatal("expected nc to be nil")
+	}
+	if p.js != nil {
+		t.Fatal("expected js to be nil")
+	}
+}
+
+func TestPublisher_Close_NilConn(t *testing.T) {
+	p := NewPublisher(nil, "nats://localhost:4222")
+	err := p.Close()
+	if err != nil {
+		t.Fatalf("Close on nil conn should return nil, got %v", err)
+	}
+}
+
 func TestPublisher_PublishRaw_NilConn(t *testing.T) {
 	p := NewPublisher(nil, "nats://localhost:4222")
 	err := p.PublishRaw("test.subject", []byte("test"))
@@ -22,10 +40,9 @@ func TestPublisher_PublishRaw_NilConn(t *testing.T) {
 	}
 }
 
-func TestPublisher_Close_NilConn(t *testing.T) {
-	p := NewPublisher(nil, "nats://localhost:4222")
-	err := p.Close()
-	if err != nil {
-		t.Fatalf("Close with nil conn should return nil, got %v", err)
+func TestPublisher_NewPublisher_DifferentURL(t *testing.T) {
+	p := NewPublisher(nil, "nats://example.com:4222")
+	if p.natsURL != "nats://example.com:4222" {
+		t.Fatalf("expected nats://example.com:4222, got %s", p.natsURL)
 	}
 }

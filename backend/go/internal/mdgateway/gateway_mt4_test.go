@@ -16,14 +16,21 @@ func TestNewMT4Gateway(t *testing.T) {
 }
 
 func TestMT4Gateway_Platform(t *testing.T) {
-	cfg := AccountConfig{Platform: "mt4"}
-	g := newMT4Gateway(cfg, nil)
+	g := newMT4Gateway(AccountConfig{Broker: "broker-1"}, nil)
 	if g.Platform() != "mt4" {
 		t.Fatalf("expected mt4, got %s", g.Platform())
 	}
 }
 
 func TestMT4Gateway_BrokerID(t *testing.T) {
+	cfg := AccountConfig{Broker: "broker-1"}
+	g := newMT4Gateway(cfg, nil)
+	if g.BrokerID() != "broker-1" {
+		t.Fatalf("expected broker-1, got %s", g.BrokerID())
+	}
+}
+
+func TestMT4Gateway_BrokerID_2(t *testing.T) {
 	cfg := AccountConfig{Broker: "test-broker"}
 	g := newMT4Gateway(cfg, nil)
 	if g.BrokerID() != "test-broker" {

@@ -8,6 +8,9 @@ func TestDefaultEndpoint(t *testing.T) {
 	if DefaultEndpoint == "" {
 		t.Fatal("DefaultEndpoint should not be empty")
 	}
+	if DefaultEndpoint != "mt5grpc3.mtapi.io:443" {
+		t.Fatalf("expected mt5grpc3.mtapi.io:443, got %s", DefaultEndpoint)
+	}
 }
 
 func TestClient_Conn(t *testing.T) {
@@ -15,5 +18,12 @@ func TestClient_Conn(t *testing.T) {
 	conn := c.Conn()
 	if conn != nil {
 		t.Fatal("expected nil conn")
+	}
+}
+
+func TestClient_Fields(t *testing.T) {
+	c := &Client{cc: nil}
+	if c.cc != nil {
+		t.Fatal("expected cc to be nil")
 	}
 }

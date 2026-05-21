@@ -173,3 +173,25 @@ func TestPtrString(t *testing.T) {
 		t.Fatalf("expected test, got %s", *p)
 	}
 }
+
+func TestParseUint_NonDigit(t *testing.T) {
+	n := parseUint("abc")
+	if n != 0 {
+		t.Fatalf("expected 0, got %d", n)
+	}
+}
+
+func TestParsePort_Zero(t *testing.T) {
+	n := parsePort("0")
+	if n != 443 {
+		t.Fatalf("expected 443, got %d", n)
+	}
+}
+
+func TestParseMoney_Valid(t *testing.T) {
+	m := &pb.Money{Value: "123.45"}
+	v := parseMoney(m)
+	if v != 123.45 {
+		t.Fatalf("expected 123.45, got %f", v)
+	}
+}

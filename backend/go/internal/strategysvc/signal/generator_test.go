@@ -99,3 +99,22 @@ func TestConstOp(t *testing.T) {
 		t.Fatalf("constOp.Warmup() = %d, want 0", op.Warmup())
 	}
 }
+
+func TestGenerator_Fields(t *testing.T) {
+	spec := &stratspec.StrategySpec{
+		Name:       "test",
+		SignalRule: "sma20 > sma60 ? 1 : -1",
+		Factors:    map[string]string{},
+	}
+	
+	g, err := NewGenerator(spec)
+	if err != nil {
+		t.Fatalf("NewGenerator() error = %v", err)
+	}
+	if g.spec != spec {
+		t.Fatal("expected spec to match")
+	}
+	if g.compiler == nil {
+		t.Fatal("expected compiler to be set")
+	}
+}

@@ -14,6 +14,16 @@ func TestNewSpillReplay(t *testing.T) {
 	}
 }
 
+func TestSpillReplay_Fields(t *testing.T) {
+	s := NewSpillReplay("/tmp/spill", nil, nil)
+	if s.chConn != nil {
+		t.Fatal("expected chConn to be nil")
+	}
+	if s.log != nil {
+		t.Fatal("expected log to be nil")
+	}
+}
+
 func TestSpillReplay_Replay_EmptyDir(t *testing.T) {
 	s := NewSpillReplay("", nil, nil)
 	count, err := s.Replay(nil)

@@ -8,10 +8,30 @@ import (
 
 func TestNewModelRunner(t *testing.T) {
 	spec := &stratspec.StrategySpec{
-		Name:    "test",
-		Version: "1.0.0",
+		Name:      "test",
+		ModelURI:  "",
+		SignalRule: "close > 0 ? 1 : -1",
 	}
-	_, err := NewModelRunner(spec)
-	// NewModelRunner may fail if spec is invalid, just ensure it doesn't panic
-	_ = err
+	mr, err := NewModelRunner(spec)
+	if err != nil {
+		t.Fatalf("NewModelRunner error: %v", err)
+	}
+	if mr == nil {
+		t.Fatal("NewModelRunner returned nil")
+	}
+}
+
+func TestModelRunner_Fields(t *testing.T) {
+	spec := &stratspec.StrategySpec{
+		Name:      "test",
+		ModelURI:  "",
+		SignalRule: "close > 0 ? 1 : -1",
+	}
+	mr, _ := NewModelRunner(spec)
+	if mr.spec != spec {
+		t.Fatal("expected spec to match")
+	}
+	if !mr.useDSL {
+		t.Fatal("expected useDSL to be true when ModelURI is empty")
+	}
 }

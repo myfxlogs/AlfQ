@@ -83,3 +83,10 @@ func TestConfig_Fields(t *testing.T) {
 		t.Fatalf("expected info, got %s", cfg.Log.Level)
 	}
 }
+
+func TestAccountConfig_Default(t *testing.T) {
+	cfg := AccountConfig{}
+	if cfg.Platform != "" {
+		t.Fatalf("expected empty platform, got %s", cfg.Platform)
+	}
+}

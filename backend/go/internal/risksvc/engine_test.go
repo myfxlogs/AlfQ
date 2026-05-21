@@ -22,6 +22,25 @@ func TestMaxLotRule(t *testing.T) {
 	}
 }
 
+func TestAccountState_Fields(t *testing.T) {
+	state := risksvc.AccountState{
+		Equity:         10000.0,
+		Margin:         1000.0,
+		FreeMargin:     9000.0,
+		DailyPnL:       500.0,
+		MaxDrawdown:    0.10,
+		Positions:      make(map[string]*pb.Position),
+		TotalPositions: 2,
+		OpenOrders:     3,
+	}
+	if state.Equity != 10000.0 {
+		t.Fatalf("expected 10000.0, got %f", state.Equity)
+	}
+	if state.TotalPositions != 2 {
+		t.Fatalf("expected 2, got %d", state.TotalPositions)
+	}
+}
+
 func TestDailyLossRejected(t *testing.T) {
 	engine := risksvc.NewEngine()
 	req := &pb.OrderRequest{

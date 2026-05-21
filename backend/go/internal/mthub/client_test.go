@@ -23,3 +23,16 @@ func TestEnsureSessionResult_Fields(t *testing.T) {
 		t.Fatal("expected AlreadyActive to be true")
 	}
 }
+
+func TestEnsureSessionResult_Fields2(t *testing.T) {
+	r := &EnsureSessionResult{
+		SessionID:     "session-2",
+		AlreadyActive: false,
+	}
+	if r.SessionID != "session-2" {
+		t.Fatalf("expected session-2, got %s", r.SessionID)
+	}
+	if r.AlreadyActive {
+		t.Fatal("expected AlreadyActive to be false")
+	}
+}

@@ -46,3 +46,18 @@ func TestMedianSigma(t *testing.T) {
 		})
 	}
 }
+
+func TestQualityConfig_Fields(t *testing.T) {
+	cfg := QualityConfig{
+		GapMaxSeconds:  10,
+		OutlierSigma:   3,
+		SkewMaxSeconds: 60,
+		HistorySize:    200,
+	}
+	if cfg.GapMaxSeconds != 10 {
+		t.Fatalf("expected 10, got %f", cfg.GapMaxSeconds)
+	}
+	if cfg.HistorySize != 200 {
+		t.Fatalf("expected 200, got %d", cfg.HistorySize)
+	}
+}

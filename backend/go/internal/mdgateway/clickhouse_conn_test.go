@@ -7,16 +7,31 @@ import (
 func TestDefaultCHConnConfig(t *testing.T) {
 	cfg := DefaultCHConnConfig()
 	if cfg.Addr != "localhost:9000" {
-		t.Fatalf("expected Addr=localhost:9000, got %s", cfg.Addr)
+		t.Fatalf("expected localhost:9000, got %s", cfg.Addr)
 	}
 	if cfg.Database != "alfq" {
-		t.Fatalf("expected Database=alfq, got %s", cfg.Database)
+		t.Fatalf("expected alfq, got %s", cfg.Database)
 	}
 	if cfg.User != "alfq" {
-		t.Fatalf("expected User=alfq, got %s", cfg.User)
+		t.Fatalf("expected alfq, got %s", cfg.User)
 	}
 	if cfg.Password != "" {
-		t.Fatalf("expected Password='', got %s", cfg.Password)
+		t.Fatalf("expected empty password, got %s", cfg.Password)
+	}
+}
+
+func TestCHConnConfig_Fields(t *testing.T) {
+	cfg := CHConnConfig{
+		Addr:     "example.com:9000",
+		Database: "mydb",
+		User:     "myuser",
+		Password: "mypass",
+	}
+	if cfg.Addr != "example.com:9000" {
+		t.Fatalf("expected example.com:9000, got %s", cfg.Addr)
+	}
+	if cfg.Database != "mydb" {
+		t.Fatalf("expected mydb, got %s", cfg.Database)
 	}
 }
 

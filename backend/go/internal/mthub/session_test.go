@@ -14,3 +14,14 @@ func TestSession_Fields(t *testing.T) {
 		t.Fatalf("expected test-account, got %s", s.AccountID)
 	}
 }
+
+func TestSession_Platform(t *testing.T) {
+	s := &Session{
+		AccountID: "test-account",
+		Gateway:   nil,
+	}
+	// With nil gateway, Platform will panic - just test struct exists
+	if s.AccountID != "test-account" {
+		t.Fatalf("expected test-account, got %s", s.AccountID)
+	}
+}

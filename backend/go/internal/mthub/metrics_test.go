@@ -14,6 +14,11 @@ func TestRecordActiveSessions(t *testing.T) {
 	// No assertion needed, just ensure it runs without panic
 }
 
+func TestRecordActiveSessions_Empty(t *testing.T) {
+	active := map[string]int{}
+	recordActiveSessions(active) // Should not panic
+}
+
 func TestMetrics_NotNil(t *testing.T) {
 	// Metrics are initialized in init(), just ensure they exist
 	// This test ensures the init function ran

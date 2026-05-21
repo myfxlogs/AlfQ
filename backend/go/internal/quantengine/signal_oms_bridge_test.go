@@ -96,13 +96,20 @@ func TestSignalToOMS_FlatSkips(t *testing.T) {
 }
 
 func TestDefaultSymbolResolver(t *testing.T) {
-	r := DefaultSymbolResolver()
-	raw, err := r("EURUSD")
+	resolver := DefaultSymbolResolver()
+	symbol, err := resolver("EURUSD")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("DefaultSymbolResolver error: %v", err)
 	}
-	if raw != "EURUSD" {
-		t.Errorf("raw = %q, want EURUSD", raw)
+	if symbol != "EURUSD" {
+		t.Fatalf("expected EURUSD, got %s", symbol)
+	}
+}
+
+func TestPGSymbolResolver(t *testing.T) {
+	resolver := PGSymbolResolver("broker-1", nil)
+	if resolver == nil {
+		t.Fatal("PGSymbolResolver returned nil")
 	}
 }
 

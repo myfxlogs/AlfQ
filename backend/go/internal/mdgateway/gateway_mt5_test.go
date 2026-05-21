@@ -16,14 +16,21 @@ func TestNewMT5Gateway(t *testing.T) {
 }
 
 func TestMT5Gateway_Platform(t *testing.T) {
-	cfg := AccountConfig{Platform: "mt5"}
-	g := newMT5Gateway(cfg, nil)
+	g := newMT5Gateway(AccountConfig{Broker: "broker-1"}, nil)
 	if g.Platform() != "mt5" {
 		t.Fatalf("expected mt5, got %s", g.Platform())
 	}
 }
 
 func TestMT5Gateway_BrokerID(t *testing.T) {
+	cfg := AccountConfig{Broker: "broker-1"}
+	g := newMT5Gateway(cfg, nil)
+	if g.BrokerID() != "broker-1" {
+		t.Fatalf("expected broker-1, got %s", g.BrokerID())
+	}
+}
+
+func TestMT5Gateway_BrokerID_2(t *testing.T) {
 	cfg := AccountConfig{Broker: "test-broker"}
 	g := newMT5Gateway(cfg, nil)
 	if g.BrokerID() != "test-broker" {

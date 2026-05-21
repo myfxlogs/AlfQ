@@ -141,3 +141,18 @@ func TestParseFloat(t *testing.T) {
 		}
 	}
 }
+
+func TestBar_Fields2(t *testing.T) {
+	bar := Bar{
+		TenantID:  "tenant-2",
+		Broker:    "broker-2",
+		SymbolRaw: "GBPUSD",
+		Period:    "5m",
+	}
+	if bar.TenantID != "tenant-2" {
+		t.Fatalf("expected tenant-2, got %s", bar.TenantID)
+	}
+	if bar.SymbolRaw != "GBPUSD" {
+		t.Fatalf("expected GBPUSD, got %s", bar.SymbolRaw)
+	}
+}

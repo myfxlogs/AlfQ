@@ -8,10 +8,34 @@ import (
 func TestDefaultCHWriterConfig(t *testing.T) {
 	cfg := DefaultCHWriterConfig()
 	if cfg.FlushInterval != time.Second {
-		t.Fatalf("expected FlushInterval=1s, got %v", cfg.FlushInterval)
+		t.Fatalf("expected 1s, got %v", cfg.FlushInterval)
 	}
 	if cfg.MaxBatchSize != 1000 {
-		t.Fatalf("expected MaxBatchSize=1000, got %d", cfg.MaxBatchSize)
+		t.Fatalf("expected 1000, got %d", cfg.MaxBatchSize)
+	}
+}
+
+func TestCHWriterConfig_Fields(t *testing.T) {
+	cfg := CHWriterConfig{
+		FlushInterval: 5 * time.Second,
+		MaxBatchSize:  500,
+	}
+	if cfg.FlushInterval != 5*time.Second {
+		t.Fatalf("expected 5s, got %v", cfg.FlushInterval)
+	}
+	if cfg.MaxBatchSize != 500 {
+		t.Fatalf("expected 500, got %d", cfg.MaxBatchSize)
+	}
+}
+
+func TestCHWriterConfig_DefaultValues(t *testing.T) {
+	cfg := CHWriterConfig{}
+	w := NewCHWriter(cfg, nil, nil)
+	if w.cfg.FlushInterval != time.Second {
+		t.Fatalf("expected 1s, got %v", w.cfg.FlushInterval)
+	}
+	if w.cfg.MaxBatchSize != 1000 {
+		t.Fatalf("expected 1000, got %d", w.cfg.MaxBatchSize)
 	}
 }
 
