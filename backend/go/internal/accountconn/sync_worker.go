@@ -8,17 +8,40 @@ import (
 
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
+	"github.com/alfq/backend/go/internal/mthub"
 	"github.com/alfq/backend/go/internal/oms/repo"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
+var (
+	orderSyncFullTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "order_sync_full_total",
+		Help: "Total number of full order syncs completed.",
+	})
+	orderSyncIncrTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "order_sync_incr_total",
+		Help: "Total number of incremental order syncs completed.",
+	})
+	orderSyncDeltaCount = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "order_sync_delta_count",
+		Help: "Number of orders changed in the most recent sync.",
+	})
+	orderSyncLagSeconds = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "order_sync_lag_seconds",
+		Help: "Seconds between OnOrderUpdate event timestamp and DB write completion.",
+	})
+)
+
 // SyncWorker orchestrates full and incremental order history sync.
 type SyncWorker struct {
-	pool    *pg.Pool
-	repo    *repo.HistoryOrderRepo
-	log     *zap.Logger
-	manager *Manager
+	pool        *pg.Pool
+	repo        *repo.HistoryOrderRepo
+	log         *zap.Logger
+	manager     *Manager
+	mthubClient *mthub.Client
 }
 
 // NewSyncWorker creates a sync worker backed by the given pool + repo.
@@ -27,8 +50,11 @@ func NewSyncWorker(pool *pg.Pool, r *repo.HistoryOrderRepo, log *zap.Logger) *Sy
 }
 
 // SetManager binds the sync worker to the account connection manager
-// so it can reuse live sessions.
-func (w *SyncWorker) SetManager(m *Manager) { w.manager = m }
+// so it can reuse live sessions and the mthub client.
+func (w *SyncWorker) SetManager(m *Manager) {
+	w.manager = m
+	w.mthubClient = m.mthubClient
+}
 
 // SyncState holds per-account sync bookkeeping.
 type SyncState struct {
@@ -48,34 +74,28 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 	}
 	start := time.Now()
 
-	// Resolve account metadata
-	var tenantID, platform string
+	// Resolve account metadata + connection details
+	var tenantID, platform, login, password, server string
 	err := w.pool.QueryRow(ctx,
-		`SELECT tenant_id, platform FROM accounts WHERE id = $1`, accountID,
-	).Scan(&tenantID, &platform)
+		`SELECT tenant_id, platform, login, password, server FROM accounts WHERE id = $1`, accountID,
+	).Scan(&tenantID, &platform, &login, &password, &server)
 	if err != nil {
 		w.setSyncStatus(ctx, accountID, "error", err.Error())
 		return fmt.Errorf("lookup account: %w", err)
 	}
 
-	// Default window: account creation / 1 year ago → now
-	var accountCreated time.Time
-	_ = w.pool.QueryRow(ctx,
-		`SELECT COALESCE(created_at, now() - interval '1 year') FROM accounts WHERE id = $1`, accountID,
-	).Scan(&accountCreated)
-	if accountCreated.IsZero() {
-		accountCreated = time.Now().AddDate(-1, 0, 0)
+	// Resolve mtapi gateway address: try live Manager first, fallback to defaults.
+	mtapiAddr := w.resolveGatewayAddr(platform)
+	if mtapiAddr == "" {
+		w.setSyncStatus(ctx, accountID, "error", "no gateway address for platform "+platform)
+		return fmt.Errorf("sync worker: no gateway addr for %s", platform)
 	}
 
-	// Use live session via Manager if available
-	if w.manager == nil {
-		w.setSyncStatus(ctx, accountID, "error", "manager not bound")
-		return fmt.Errorf("sync worker: manager not bound")
-	}
+	// Default window: 10 years ago → now.
+	windowEnd := time.Now()
+	windowStart := windowEnd.AddDate(-10, 0, 0)
 
 	total := 0
-	windowEnd := time.Now()
-	windowStart := accountCreated
 
 	// Batch by month to avoid huge payloads
 	for windowStart.Before(windowEnd) {
@@ -84,36 +104,53 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 			chunkEnd = windowEnd
 		}
 
-		err := w.manager.WithLiveSession(accountID, func(conn *grpc.ClientConn, sessionID, plat string) error {
-			orders, err := mtapi.FetchOrderHistory(ctx, conn, plat, sessionID,
+		var orders []*mtapi.HistoryOrderInfo
+		if w.mthubClient != nil {
+			mthubOrders, err := w.mthubClient.OrderHistory(ctx, accountID,
 				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339))
+			if err == nil {
+				for _, o := range mthubOrders {
+					orders = append(orders, &mtapi.HistoryOrderInfo{
+						Ticket: o.Ticket, Symbol: o.Symbol, Type: o.Side, Lots: o.Lots,
+						OpenPrice: o.OpenPrice, ClosePrice: o.ClosePrice,
+						Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+						OpenTime: o.OpenTime, CloseTime: o.CloseTime,
+					})
+				}
+			} else {
+				w.log.Warn("full sync chunk via mthub failed",
+					zap.String("account_id", accountID),
+					zap.Error(err),
+				)
+				windowStart = chunkEnd
+				continue
+			}
+		} else {
+			var err error
+			orders, err = mtapi.DialAndFetchOrderHistory(ctx, mtapiAddr, platform, login, password, server,
+				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339)) //nolint
 			if err != nil {
-				return err
+				w.log.Warn("full sync chunk failed",
+					zap.String("account_id", accountID),
+					zap.Time("from", windowStart),
+					zap.Time("to", chunkEnd),
+					zap.Error(err),
+				)
+				windowStart = chunkEnd
+				continue
 			}
-			if len(orders) == 0 {
-				return nil
-			}
+		}
+		if len(orders) > 0 {
 			repoOrders := make([]*repo.HistoryOrder, 0, len(orders))
 			for _, o := range orders {
 				repoOrders = append(repoOrders, repo.ToHistoryOrder(tenantID, accountID, o, "closed"))
 			}
-			_, err = w.repo.BatchUpsert(ctx, tenantID, repoOrders)
-			if err != nil {
-				return err
+			if _, err := w.repo.BatchUpsert(ctx, tenantID, repoOrders); err != nil {
+				w.log.Warn("full sync upsert failed", zap.Error(err))
+			} else {
+				total += len(orders)
 			}
-			total += len(orders)
-			return nil
-		})
-		if err != nil {
-			w.log.Warn("full sync chunk failed",
-				zap.String("account_id", accountID),
-				zap.Time("from", windowStart),
-				zap.Time("to", chunkEnd),
-				zap.Error(err),
-			)
-			// Continue with next chunk; do not abort entire sync.
 		}
-
 		windowStart = chunkEnd
 		// Throttle between chunks to avoid hammering the gateway
 		select {
@@ -124,6 +161,8 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 		}
 	}
 
+	orderSyncFullTotal.Inc()
+	orderSyncDeltaCount.Set(float64(total))
 	w.log.Info("full sync completed",
 		zap.String("account_id", accountID),
 		zap.Int("total", total),
@@ -136,20 +175,33 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 	return nil
 }
 
+// resolveGatewayAddr returns the mtapi gateway address for the given platform.
+func (w *SyncWorker) resolveGatewayAddr(platform string) string {
+	switch platform {
+	case "mt5":
+		return "mt5grpc3.mtapi.io:443"
+	case "mt4":
+		return "mt4grpc3.mtapi.io:443"
+	default:
+		return ""
+	}
+}
+
 // IncrSync performs an incremental sync for the given time window.
 // Typically called after reconnection or OnOrderUpdate events.
-func (w *SyncWorker) IncrSync(ctx context.Context, accountID string, from, to time.Time) error {
+func (w *SyncWorker) IncrSync(ctx context.Context, accountID string, from, to time.Time) ([]*repo.HistoryOrder, error) {
 	if w.manager == nil {
-		return fmt.Errorf("sync worker: manager not bound")
+		return nil, fmt.Errorf("sync worker: manager not bound")
 	}
 	var tenantID string
 	_ = w.pool.QueryRow(ctx,
 		`SELECT tenant_id FROM accounts WHERE id = $1`, accountID,
 	).Scan(&tenantID)
 	if tenantID == "" {
-		return fmt.Errorf("account not found: %s", accountID)
+		return nil, fmt.Errorf("account not found: %s", accountID)
 	}
 
+	var changed []*repo.HistoryOrder
 	err := w.manager.WithLiveSession(accountID, func(conn *grpc.ClientConn, sessionID, plat string) error {
 		orders, err := mtapi.FetchOrderHistory(ctx, conn, plat, sessionID,
 			from.Format(time.RFC3339), to.Format(time.RFC3339))
@@ -163,20 +215,21 @@ func (w *SyncWorker) IncrSync(ctx context.Context, accountID string, from, to ti
 		for _, o := range orders {
 			repoOrders = append(repoOrders, repo.ToHistoryOrder(tenantID, accountID, o, "closed"))
 		}
-		_, err = w.repo.BatchUpsert(ctx, tenantID, repoOrders)
+		changed, err = w.repo.BatchUpsert(ctx, tenantID, repoOrders)
 		return err
 	})
 	if err != nil {
 		w.setSyncStatus(ctx, accountID, "error", err.Error())
-		return err
+		return nil, err
 	}
 
+	orderSyncIncrTotal.Inc()
 	_ = w.setIncrSyncState(ctx, accountID)
-	return nil
+	return changed, nil
 }
 
 // RecentSync pulls the last 5 minutes and upserts. Used by OnOrderUpdate handler.
-func (w *SyncWorker) RecentSync(ctx context.Context, accountID string) error {
+func (w *SyncWorker) RecentSync(ctx context.Context, accountID string) ([]*repo.HistoryOrder, error) {
 	now := time.Now()
 	return w.IncrSync(ctx, accountID, now.Add(-5*time.Minute), now)
 }

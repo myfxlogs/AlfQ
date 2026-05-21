@@ -5,6 +5,7 @@ package accountconn
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -14,6 +15,8 @@ import (
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
+	"github.com/alfq/backend/go/internal/mthub"
+	"github.com/alfq/backend/go/internal/oms/repo"
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -36,39 +39,125 @@ type AccountInfo struct {
 	Password string
 	Server   string
 	Platform string // "MT4" or "MT5"
+	BrokerID string // UUID of broker record
 }
 
 // Manager manages persistent MT connections per account.
 type Manager struct {
-	mu       sync.Mutex
-	sessions map[string]*session
-	log      *zap.Logger
-	pool     *pg.Pool
-	rdb      redis.UniversalClient
-	nc       *nats.Conn
-	js       nats.JetStreamContext
-	mt4gw    config.GatewayConfig
-	mt5gw    config.GatewayConfig
-	closed   bool
+	mu          sync.Mutex
+	sessions    map[string]*session
+	log         *zap.Logger
+	pool        *pg.Pool
+	rdb         redis.UniversalClient
+	nc          *nats.Conn
+	js          nats.JetStreamContext
+	mt4gw       config.GatewayConfig
+	mt5gw       config.GatewayConfig
+	symSvc      SymbolSyncer
+	closed      bool
+	syncWorker  *SyncWorker
+	mthubClient *mthub.Client
 }
 
 type session struct {
 	info   AccountInfo
 	cancel context.CancelFunc
+
+	// live connection state, updated by streamLoop. Nil until the gateway
+	// connection is established. Protected by liveMu.
+	liveMu       sync.RWMutex
+	liveConn     *grpc.ClientConn
+	liveSession  string
+	livePosition []*mtapi.PositionInfo
+}
+
+func (s *session) setLive(conn *grpc.ClientConn, sessionID string) {
+	s.liveMu.Lock()
+	s.liveConn = conn
+	s.liveSession = sessionID
+	s.liveMu.Unlock()
+}
+
+func (s *session) clearLive() {
+	s.liveMu.Lock()
+	s.liveConn = nil
+	s.liveSession = ""
+	s.liveMu.Unlock()
+}
+
+func (s *session) setPositions(p []*mtapi.PositionInfo) {
+	s.liveMu.Lock()
+	s.livePosition = p
+	s.liveMu.Unlock()
+}
+
+func (s *session) getLive() (*grpc.ClientConn, string, string) {
+	s.liveMu.RLock()
+	defer s.liveMu.RUnlock()
+	return s.liveConn, s.liveSession, s.info.Platform
+}
+
+func (s *session) getPositions() []*mtapi.PositionInfo {
+	s.liveMu.RLock()
+	defer s.liveMu.RUnlock()
+	return s.livePosition
+}
+
+// LatestPositions returns the most-recently fetched positions for the account.
+// Returns nil if the account has no live session or no positions have been fetched yet.
+func (m *Manager) LatestPositions(accountID string) []*mtapi.PositionInfo {
+	m.mu.Lock()
+	s, ok := m.sessions[accountID]
+	m.mu.Unlock()
+	if !ok {
+		return nil
+	}
+	return s.getPositions()
+}
+
+// WithLiveSession calls fn with the live gateway connection and session ID for
+// an account. Returns an error if no live session is available.
+func (m *Manager) WithLiveSession(accountID string, fn func(conn *grpc.ClientConn, sessionID, platform string) error) error {
+	m.mu.Lock()
+	s, ok := m.sessions[accountID]
+	m.mu.Unlock()
+	if !ok {
+		return fmt.Errorf("account %s has no active connection", accountID)
+	}
+	conn, sessionID, platform := s.getLive()
+	if conn == nil || sessionID == "" {
+		return fmt.Errorf("account %s connection is not ready", accountID)
+	}
+	return fn(conn, sessionID, platform)
+}
+
+// SymbolSyncer abstracts symbol sync triggers.
+type SymbolSyncer interface {
+	Sync(ctx context.Context, brokerID, platform, sessionID string, conn *grpc.ClientConn) error
 }
 
 // NewManager creates an account connection manager.
 func NewManager(log *zap.Logger, pool *pg.Pool, rdb redis.UniversalClient, nc *nats.Conn, js nats.JetStreamContext,
-	mt4gw, mt5gw config.GatewayConfig) *Manager {
+	mt4gw, mt5gw config.GatewayConfig, symSvc SymbolSyncer, mthubAddr string) *Manager {
 	return &Manager{
-		sessions: make(map[string]*session),
-		log:      log,
-		pool:     pool,
-		rdb:      rdb,
-		nc:       nc,
-		js:       js,
-		mt4gw:    mt4gw,
-		mt5gw:    mt5gw,
+		sessions:    make(map[string]*session),
+		log:         log,
+		pool:        pool,
+		rdb:         rdb,
+		nc:          nc,
+		js:          js,
+		mt4gw:       mt4gw,
+		mt5gw:       mt5gw,
+		symSvc:      symSvc,
+		mthubClient: mthub.NewClient(mthubAddr),
+	}
+}
+
+// SetSyncWorker binds the sync worker for order history persistence.
+func (m *Manager) SetSyncWorker(sw *SyncWorker) {
+	m.syncWorker = sw
+	if sw != nil {
+		sw.SetManager(m)
 	}
 }
 
@@ -194,7 +283,16 @@ func (m *Manager) streamLoop(ctx context.Context, conn *grpc.ClientConn, info Ac
 		return fmt.Errorf("connect: %w", err)
 	}
 
-	// Fetch initial full account summary
+	// Publish live session so other components (admin API) can reuse it.
+	m.mu.Lock()
+	sess := m.sessions[info.ID]
+	m.mu.Unlock()
+	if sess != nil {
+		sess.setLive(conn, sessionID)
+		defer sess.clearLive()
+	}
+
+	// Fetch initial full account summary + positions
 	acct, err := mtapi.FetchAccountSummary(ctx, conn, info.Platform, sessionID)
 	if err != nil {
 		m.log.Warn("initial summary failed",
@@ -202,7 +300,103 @@ func (m *Manager) streamLoop(ctx context.Context, conn *grpc.ClientConn, info Ac
 			zap.Error(err),
 		)
 	} else {
-		m.publishAndUpdate(ctx, info.ID, acct)
+		positions := fetchPositionsViaMthub(ctx, m.mthubClient, info.ID)
+		if sess != nil {
+			sess.setPositions(positions)
+		}
+		m.publishAndUpdate(ctx, info.ID, acct, positions)
+	}
+
+	// Reconcile: if account has never been synced (total_synced==0),
+	// trigger a full sync first. Otherwise do incremental 5min window.
+	// This runs on every (re)connection per the reconnect → IncrSync design.
+	if m.syncWorker != nil {
+		go func() {
+			rctx, rcancel := context.WithTimeout(context.Background(), 10*time.Minute)
+			defer rcancel()
+			state, err := m.syncWorker.GetSyncState(rctx, info.ID)
+			if err != nil || state == nil || state.TotalSynced == 0 {
+				// First sync — do full
+				if err := m.syncWorker.FullSync(rctx, info.ID); err != nil {
+					m.log.Warn("initial full sync failed",
+						zap.String("account_id", info.ID),
+						zap.Error(err),
+					)
+				}
+				// Push SSE so frontend knows to refresh order list
+				m.publishSyncDone(info.ID)
+			} else {
+				// Already synced — do incremental reconciliation.
+				// Uses last_incr_sync_at if available, otherwise default 5-min window.
+				from := time.Now().Add(-5 * time.Minute)
+				if state.LastIncrSyncAt != nil {
+					from = state.LastIncrSyncAt.Add(-5 * time.Minute)
+				}
+				to := time.Now()
+				m.log.Info("reconnect incrSync",
+					zap.String("account_id", info.ID),
+					zap.Time("from", from),
+					zap.Time("to", to),
+				)
+				if _, err := m.syncWorker.IncrSync(rctx, info.ID, from, to); err != nil {
+					m.log.Warn("reconnect incrSync failed",
+						zap.String("account_id", info.ID),
+						zap.Error(err),
+					)
+				}
+			}
+		}()
+	}
+
+	// Trigger symbol metadata sync (async, non-blocking), then periodic every 6h
+	if m.symSvc != nil {
+		go func() {
+			if err := m.symSvc.Sync(context.Background(), info.BrokerID, info.Platform, sessionID, conn); err != nil {
+				m.log.Warn("symbol sync failed",
+					zap.String("account_id", info.ID),
+					zap.Error(err),
+				)
+			}
+			// Periodic refresh every 6 hours
+			ticker := time.NewTicker(6 * time.Hour)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					if err := m.symSvc.Sync(context.Background(), info.BrokerID, info.Platform, sessionID, conn); err != nil {
+						m.log.Warn("periodic symbol sync failed",
+							zap.String("account_id", info.ID),
+							zap.Error(err),
+						)
+					}
+				}
+			}
+		}()
+	}
+
+	// Periodic order history reconciliation ticker (10 min, per design §5.10)
+	if m.syncWorker != nil {
+		go func() {
+			ticker := time.NewTicker(10 * time.Minute)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					sctx, scancel := context.WithTimeout(context.Background(), 30*time.Second)
+					if _, err := m.syncWorker.RecentSync(sctx, info.ID); err != nil {
+						m.log.Warn("periodic order sync failed",
+							zap.String("account_id", info.ID),
+							zap.Error(err),
+						)
+					}
+					scancel()
+				}
+			}
+		}()
 	}
 
 	// Try event-driven streaming first
@@ -223,7 +417,7 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 		return fmt.Errorf("subscribe: %w", err)
 	}
 
-	// Background periodic full AccountSummary (every 30s)
+	// Background periodic full AccountSummary + positions (every 30s)
 	fullPollDone := make(chan struct{})
 	go func() {
 		defer close(fullPollDone)
@@ -242,11 +436,79 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 					)
 					continue
 				}
-				m.publishAndUpdate(ctx, info.ID, acct)
+				positions := fetchPositionsViaMthub(ctx, m.mthubClient, info.ID)
+				m.mu.Lock()
+				if s, ok := m.sessions[info.ID]; ok {
+					s.setPositions(positions)
+				}
+				m.mu.Unlock()
+				m.publishAndUpdate(ctx, info.ID, acct, positions)
 			}
 		}
 	}()
 	defer func() { <-fullPollDone }()
+
+	// Background OnOrderUpdate listener — fires whenever an order is opened,
+	// closed or modified on the server. We refresh positions+summary and also
+	// run an incremental order sync (last 5 min) so local DB stays up to date.
+	orderEvtDone := make(chan struct{})
+	go func() {
+		defer close(orderEvtDone)
+		evtStream, err := subscribeOrderUpdateStream(ctx, conn, info.Platform, sessionID)
+		if err != nil {
+			m.log.Warn("subscribe order update stream failed",
+				zap.String("account_id", info.ID),
+				zap.Error(err),
+			)
+			return
+		}
+		for {
+			if err := evtStream.Recv(); err != nil {
+				if ctx.Err() == nil {
+					m.log.Warn("order update stream ended",
+						zap.String("account_id", info.ID),
+						zap.Error(err),
+					)
+				}
+				return
+			}
+			// Order event received — refresh positions+summary and broadcast.
+			acct, err := mtapi.FetchAccountSummary(ctx, conn, info.Platform, sessionID)
+			if err != nil {
+				m.log.Warn("post-order-event summary fetch failed",
+					zap.String("account_id", info.ID),
+					zap.Error(err),
+				)
+				continue
+			}
+			positions := fetchPositionsViaMthub(ctx, m.mthubClient, info.ID)
+			m.mu.Lock()
+			if s, ok := m.sessions[info.ID]; ok {
+				s.setPositions(positions)
+			}
+			m.mu.Unlock()
+			m.publishEvent(info.ID, acct, positions, true)
+			m.updateDB(ctx, info.ID, acct)
+
+			// Incremental order sync (last 5 min) + publish deltas
+			if m.syncWorker != nil {
+				go func() {
+					sctx, scancel := context.WithTimeout(context.Background(), 20*time.Second)
+					defer scancel()
+					changed, err := m.syncWorker.RecentSync(sctx, info.ID)
+					if err != nil {
+						m.log.Warn("incremental sync failed",
+							zap.String("account_id", info.ID),
+							zap.Error(err),
+						)
+					} else if len(changed) > 0 {
+						m.publishOrderDelta(info.ID, changed)
+					}
+				}()
+			}
+		}
+	}()
+	defer func() { <-orderEvtDone }()
 
 	// Read stream events
 	for {
@@ -288,11 +550,11 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 			partial.Currency = currency
 			partial.Leverage = int32(leverage)
 		}
-		m.publishAndUpdate(ctx, info.ID, partial)
+		m.publishAndUpdate(ctx, info.ID, partial, nil)
 	}
 }
 
-// pollLoop fallback: periodic full AccountSummary via the same connection.
+// pollLoop fallback: periodic full AccountSummary + positions via the same connection.
 func (m *Manager) pollLoop(ctx context.Context, conn *grpc.ClientConn, info AccountInfo, sessionID string) error {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -306,7 +568,13 @@ func (m *Manager) pollLoop(ctx context.Context, conn *grpc.ClientConn, info Acco
 			if err != nil {
 				return fmt.Errorf("poll: %w", err)
 			}
-			m.publishAndUpdate(ctx, info.ID, acct)
+			positions := fetchPositionsViaMthub(ctx, m.mthubClient, info.ID)
+			m.mu.Lock()
+			if s, ok := m.sessions[info.ID]; ok {
+				s.setPositions(positions)
+			}
+			m.mu.Unlock()
+			m.publishAndUpdate(ctx, info.ID, acct, positions)
 		}
 	}
 }
@@ -431,24 +699,155 @@ func (u *mt4Upd) GetResult() profitResult {
 func (r *mt4Res) GetBalance() float64 { return r.ProfitUpdate.GetBalance() }
 func (r *mt4Res) GetEquity() float64  { return r.ProfitUpdate.GetEquity() }
 
+// orderUpdateStream is a minimal abstraction over MT4/MT5 OnOrderUpdate streams.
+// We don't need the event payload — its arrival alone signals that positions
+// and history should be refreshed.
+type orderUpdateStream interface {
+	Recv() error
+}
+
+func subscribeOrderUpdateStream(ctx context.Context, conn *grpc.ClientConn, platform, sessionID string) (orderUpdateStream, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		client := mt5pb.NewStreamsClient(conn)
+		s, err := client.OnOrderUpdate(ctxWithID, &mt5pb.OnOrderUpdateRequest{Id: sessionID})
+		if err != nil {
+			return nil, err
+		}
+		return &mt5OrderStream{s: s}, nil
+	case "MT4":
+		client := mt4pb.NewStreamsClient(conn)
+		s, err := client.OnOrderUpdate(ctxWithID, &mt4pb.OnOrderUpdateRequest{Id: sessionID})
+		if err != nil {
+			return nil, err
+		}
+		return &mt4OrderStream{s: s}, nil
+	}
+	return nil, fmt.Errorf("unknown platform: %s", platform)
+}
+
+type mt5OrderStream struct{ s mt5pb.Streams_OnOrderUpdateClient }
+
+func (s *mt5OrderStream) Recv() error { _, e := s.s.Recv(); return e }
+
+type mt4OrderStream struct{ s mt4pb.Streams_OnOrderUpdateClient }
+
+func (s *mt4OrderStream) Recv() error { _, e := s.s.Recv(); return e }
+
 // ── Helpers ──
 
-func (m *Manager) publishAndUpdate(ctx context.Context, accountID string, info *mtapi.AccountInfo) {
-	m.publish(ctx, accountID, info)
+func (m *Manager) publishAndUpdate(ctx context.Context, accountID string, info *mtapi.AccountInfo, positions []*mtapi.PositionInfo) {
+	m.publish(accountID, info, positions)
 	m.updateDB(ctx, accountID, info)
 }
 
-func (m *Manager) publish(ctx context.Context, accountID string, info *mtapi.AccountInfo) {
+func (m *Manager) publish(accountID string, info *mtapi.AccountInfo, positions []*mtapi.PositionInfo) {
+	m.publishEvent(accountID, info, positions, false)
+}
+
+func (m *Manager) publishEvent(accountID string, info *mtapi.AccountInfo, positions []*mtapi.PositionInfo, orderEvent bool) {
 	if m.nc == nil {
 		return
 	}
 	subject := fmt.Sprintf("account.status.%s", accountID)
-	data := fmt.Sprintf(`{"accountId":"%s","balance":%.2f,"equity":%.2f,"margin":%.2f,"freeMargin":%.2f,"marginLevel":%.2f,"profit":%.2f,"currency":"%s","leverage":%d}`,
-		accountID,
-		info.Balance, info.Equity, info.Margin, info.FreeMargin,
-		info.MarginLevel, info.Profit, info.Currency, info.Leverage,
-	)
-	m.nc.Publish(subject, []byte(data))
+
+	type posOut struct {
+		Ticket     int64   `json:"ticket"`
+		Symbol     string  `json:"symbol"`
+		Type       string  `json:"type"`
+		Lots       float64 `json:"lots"`
+		OpenPrice  float64 `json:"openPrice"`
+		Profit     float64 `json:"profit"`
+		Swap       float64 `json:"swap"`
+		Commission float64 `json:"commission"`
+	}
+
+	payload := map[string]interface{}{
+		"accountId":   accountID,
+		"balance":     info.Balance,
+		"equity":      info.Equity,
+		"margin":      info.Margin,
+		"freeMargin":  info.FreeMargin,
+		"marginLevel": info.MarginLevel,
+		"profit":      info.Profit,
+		"currency":    info.Currency,
+		"leverage":    info.Leverage,
+	}
+	if positions != nil {
+		out := make([]posOut, 0, len(positions))
+		for _, p := range positions {
+			out = append(out, posOut{
+				Ticket: p.Ticket, Symbol: p.Symbol, Type: p.Type,
+				Lots: p.Lots, OpenPrice: p.OpenPrice,
+				Profit: p.Profit, Swap: p.Swap, Commission: p.Commission,
+			})
+		}
+		payload["positions"] = out
+	}
+	if orderEvent {
+		payload["orderEvent"] = true
+	}
+
+	data, _ := json.Marshal(payload)
+	m.nc.Publish(subject, data)
+}
+
+// PublishSyncDone pushes a sync-complete SSE event for the given account.
+func (m *Manager) PublishSyncDone(accountID string) {
+	m.publishSyncDone(accountID)
+}
+
+func (m *Manager) publishSyncDone(accountID string) {
+	if m.nc == nil {
+		return
+	}
+	payload := map[string]interface{}{
+		"accountId": accountID,
+		"type":      "order_sync_done",
+	}
+	data, _ := json.Marshal(payload)
+	subj := fmt.Sprintf("account.orders.%s", accountID)
+	_ = m.nc.Publish(subj, data)
+}
+
+func (m *Manager) publishOrderDelta(accountID string, changed []*repo.HistoryOrder) {
+	if m.nc == nil || len(changed) == 0 {
+		return
+	}
+	changes := make([]map[string]interface{}, 0, len(changed))
+	for _, o := range changed {
+		openTime := o.OpenTime.Format(time.RFC3339)
+		var closeTime string
+		if o.CloseTime != nil {
+			closeTime = o.CloseTime.Format(time.RFC3339)
+		}
+		changes = append(changes, map[string]interface{}{
+			"op": "upsert",
+			"order": map[string]interface{}{
+				"ticket":     o.Ticket,
+				"symbol":     o.Symbol,
+				"side":       o.Side,
+				"lots":       o.Lots,
+				"openPrice":  o.OpenPrice,
+				"closePrice": o.ClosePrice,
+				"profit":     o.Profit,
+				"swap":       o.Swap,
+				"commission": o.Commission,
+				"openTime":   openTime,
+				"closeTime":  closeTime,
+				"state":      o.State,
+			},
+		})
+	}
+	subject := fmt.Sprintf("account.orders.%s", accountID)
+	payload := map[string]interface{}{
+		"accountId": accountID,
+		"type":      "order_delta",
+		"changes":   changes,
+	}
+	data, _ := json.Marshal(payload)
+	m.nc.Publish(subject, data)
 }
 
 func (m *Manager) updateDB(ctx context.Context, accountID string, info *mtapi.AccountInfo) {
@@ -505,4 +904,23 @@ func atoi(s string) int {
 		}
 	}
 	return n
+}
+
+// fetchPositionsViaMthub fetches opened orders through the MT Session Hub.
+func fetchPositionsViaMthub(ctx context.Context, client *mthub.Client, accountID string) []*mtapi.PositionInfo {
+	if client == nil {
+		return nil
+	}
+	orders, err := client.OpenedOrders(ctx, accountID)
+	if err != nil {
+		return nil
+	}
+	out := make([]*mtapi.PositionInfo, 0, len(orders))
+	for _, o := range orders {
+		out = append(out, &mtapi.PositionInfo{
+			Ticket: o.Ticket, Symbol: o.Symbol, Type: o.Side, Lots: o.Lots,
+			OpenPrice: o.OpenPrice, Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+		})
+	}
+	return out
 }

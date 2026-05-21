@@ -1,0 +1,164 @@
+syntax = "proto3";
+package alfq.mthub.v1;
+option go_package = "github.com/alfq/backend/go/gen/alfq/mthub/v1;mthubv1";
+
+// MtHubService is the internal RPC that centralises all MT4/MT5 session management.
+// Only md-gateway holds long-lived MT connections; trading-core and CLI tools
+// borrow sessions through this service.
+service MtHubService {
+  // ── Session management ──
+  rpc EnsureSession(EnsureSessionRequest) returns (EnsureSessionResponse);
+  rpc CloseSession(CloseSessionRequest) returns (CloseSessionResponse);
+
+  // ── OMS path ──
+  rpc OrderSend(OrderSendRequest) returns (OrderSendResponse);
+  rpc OrderClose(OrderCloseRequest) returns (OrderCloseResponse);
+
+  // ── History pull ──
+  rpc OrderHistory(OrderHistoryRequest) returns (OrderHistoryResponse);
+  rpc OpenedOrders(OpenedOrdersRequest) returns (OpenedOrdersResponse);
+
+  // ── Symbol + price ──
+  rpc SymbolParamsMany(SymbolParamsManyRequest) returns (SymbolParamsManyResponse);
+  rpc PriceHistory(PriceHistoryRequest) returns (PriceHistoryResponse);
+
+  // ── Push stream ──
+  rpc SubscribeOrderEvents(SubscribeOrderEventsRequest) returns (stream OrderEvent);
+}
+
+// ── Session management ──
+
+message EnsureSessionRequest {
+  string account_id = 1;
+}
+
+message EnsureSessionResponse {
+  string session_id = 1;
+  bool already_active = 2;
+}
+
+message CloseSessionRequest {
+  string account_id = 1;
+}
+
+message CloseSessionResponse {}
+
+// ── OMS ──
+
+message OrderSendRequest {
+  string account_id = 1;
+  string symbol = 2;
+  string side = 3;       // "buy" / "sell"
+  double lots = 4;
+  double price = 5;      // 0 = market
+  double sl = 6;
+  double tp = 7;
+  string comment = 8;
+}
+
+message OrderSendResponse {
+  int64 ticket = 1;
+  string error = 2;
+}
+
+message OrderCloseRequest {
+  string account_id = 1;
+  int64 ticket = 2;
+  double lots = 3;       // 0 = close full position
+  double price = 4;
+}
+
+message OrderCloseResponse {
+  int64 ticket = 1;
+  string error = 2;
+}
+
+// ── History ──
+
+message OrderHistoryRequest {
+  string account_id = 1;
+  string from = 2;       // RFC 3339
+  string to = 3;         // RFC 3339
+}
+
+message OrderHistoryResponse {
+  repeated OrderRecord orders = 1;
+}
+
+message OpenedOrdersRequest {
+  string account_id = 1;
+}
+
+message OpenedOrdersResponse {
+  repeated OrderRecord orders = 1;
+}
+
+message OrderRecord {
+  int64 ticket = 1;
+  string symbol = 2;
+  string side = 3;
+  double lots = 4;
+  double open_price = 5;
+  double close_price = 6;
+  double profit = 7;
+  double swap = 8;
+  double commission = 9;
+  string open_time = 10;   // RFC 3339
+  string close_time = 11;  // RFC 3339
+  string state = 12;
+}
+
+// ── Symbol + price ──
+
+message SymbolParamsManyRequest {
+  string account_id = 1;
+  repeated string symbols = 2;
+}
+
+message SymbolParamsManyResponse {
+  repeated SymbolParam symbols = 1;
+}
+
+message SymbolParam {
+  string symbol = 1;
+  int32 digits = 2;
+  double point = 3;
+  double contract_size = 4;
+  double min_lot = 5;
+  double max_lot = 6;
+  double lot_step = 7;
+}
+
+message PriceHistoryRequest {
+  string account_id = 1;
+  string symbol = 2;
+  string period = 3;     // "1m" / "5m" / "15m" / "1h" / "4h" / "1d"
+  string from = 4;       // RFC 3339
+  string to = 5;         // RFC 3339
+}
+
+message PriceHistoryResponse {
+  repeated PriceBar bars = 1;
+}
+
+message PriceBar {
+  int64 open_ts_ms = 1;
+  int64 close_ts_ms = 2;
+  double open = 3;
+  double high = 4;
+  double low = 5;
+  double close = 6;
+  double volume = 7;
+}
+
+// ── Order event stream ──
+
+message SubscribeOrderEventsRequest {
+  string account_id = 1;
+}
+
+message OrderEvent {
+  string account_id = 1;
+  string type = 2;       // "order_update"
+  OrderRecord order = 3;
+}

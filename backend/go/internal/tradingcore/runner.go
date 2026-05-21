@@ -6,6 +6,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/alfq/backend/go/gen/alfq/v1/alfqv1connect"
 	"github.com/alfq/backend/go/internal/accountconn"
@@ -14,12 +15,14 @@ import (
 	"github.com/alfq/backend/go/internal/common/bus"
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/ssehub"
+	"github.com/alfq/backend/go/internal/symbolsync"
 	"github.com/alfq/backend/go/internal/common/health"
 	"github.com/alfq/backend/go/internal/oms"
 	"github.com/alfq/backend/go/internal/oms/repo"
 	"github.com/alfq/backend/go/internal/risksvc"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 // RunTradingCore wires all trading-core dependencies and registers routes on mux.
@@ -64,6 +67,7 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	}
 	_ = repo.NewOrderRepo(d.PG)
 	_ = repo.NewPositionRepo(d.PG)
+	historyRepo := repo.NewHistoryOrderRepo(d.PG)
 
 	engine := risksvc.NewEngine()
 	kill := &risksvc.KillSwitch{}
@@ -79,12 +83,19 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	)
 
 	// Account connection manager
-	acctMgr := accountconn.NewManager(d.Log, d.PG, d.RDB, nc, js, cfg.MT4Gateway, cfg.MT5Gateway)
+	symSvc := &symAdapter{symbolsync.NewService(d.PG.Pool, d.Log)}
+	mthubAddr := os.Getenv("MTHUB_ADDR")
+	if mthubAddr == "" {
+		mthubAddr = "md-gateway:9001" // Docker compose internal
+	}
+	acctMgr := accountconn.NewManager(d.Log, d.PG, d.RDB, nc, js, cfg.MT4Gateway, cfg.MT5Gateway, symSvc, mthubAddr)
+	syncWorker := accountconn.NewSyncWorker(d.PG, historyRepo, d.Log)
+	acctMgr.SetSyncWorker(syncWorker)
 
 	// Reconnect all currently connected accounts on startup
 	go func() {
 		rows, err := d.PG.Query(context.Background(), `
-			SELECT a.id, a.login, a.password, a.server, a.platform
+			SELECT a.id, a.login, a.password, a.server, a.platform, a.broker_id
 			FROM accounts a
 			WHERE a.status IN ('connected', 'error') AND a.is_disabled = false
 		`)
@@ -95,7 +106,7 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		defer rows.Close()
 		for rows.Next() {
 			var info accountconn.AccountInfo
-			if err := rows.Scan(&info.ID, &info.Login, &info.Password, &info.Server, &info.Platform); err != nil {
+			if err := rows.Scan(&info.ID, &info.Login, &info.Password, &info.Server, &info.Platform, &info.BrokerID); err != nil {
 				d.Log.Warn("startup reconnect scan failed", zap.Error(err))
 				continue
 			}
@@ -104,19 +115,85 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		d.Log.Info("startup reconnect complete", zap.Int("count", acctMgr.ActiveCount()))
 	}()
 
+	// Periodic reconcile ticker: every 10 minutes pull last 5 minutes for all connected accounts
+	go func() {
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				rows, err := d.PG.Query(context.Background(), `SELECT id FROM accounts WHERE status='connected' AND is_disabled=false`)
+				if err != nil {
+					d.Log.Warn("reconcile query failed", zap.Error(err))
+					continue
+				}
+				var ids []string
+				for rows.Next() {
+					var id string
+					if err := rows.Scan(&id); err == nil {
+						ids = append(ids, id)
+					}
+				}
+				rows.Close()
+				for _, id := range ids {
+					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+					if _, err := syncWorker.RecentSync(ctx, id); err != nil {
+						d.Log.Warn("reconcile sync failed", zap.String("account_id", id), zap.Error(err))
+					}
+					cancel()
+				}
+			}
+		}
+	}()
+
 	// Admin API handlers
 	svc := adminapi.NewService(d.PG).WithGateways(cfg.MT4Gateway, cfg.MT5Gateway)
 	svc.WithLog(d.Log)
-	svc.WithAccountConnector(&acctAdapter{acctMgr}) // wire account connector
+	svc.WithAccountConnector(&acctAdapter{acctMgr})
+	svc.WithSyncWorker(syncWorker)
+	svc.WithHistoryRepo(historyRepo)
+	svc.WithSyncDonePublisher(func(id string) { acctMgr.PublishSyncDone(id) })
 
 	adp := adminapi.NewAdapter(svc)
-	mux.Handle(alfqv1connect.NewBrokerServiceHandler(adp))
-	mux.Handle(alfqv1connect.NewAccountServiceHandler(adp))
-	mux.Handle(alfqv1connect.NewStrategyServiceHandler(adp))
-	mux.Handle(alfqv1connect.NewBacktestServiceHandler(adp))
-	mux.Handle(alfqv1connect.NewAuditServiceHandler(adp))
-	mux.Handle(alfqv1connect.NewSystemSettingsServiceHandler(adp))
-	mux.Handle(alfqv1connect.NewServiceManagementServiceHandler(adp))
+
+	// Auth — must be created *before* authMW so d.Middleware is set when handlers are wrapped
+	authH, err := adminapi.NewAuthHandler(d.PG, d.RDB)
+	if err != nil {
+		d.Log.Warn("auth handler unavailable", zap.Error(err))
+	} else {
+		authPath, authHandler := alfqv1connect.NewAuthServiceHandler(authH)
+		mux.Handle(authPath, authHandler)
+		d.Log.Info("auth service registered", zap.String("path", authPath))
+		d.Middleware = authH.AuthMiddleware
+	}
+
+	// Wrap handlers with auth middleware if available
+	authMW := func(h http.Handler) http.Handler {
+		if d.Middleware != nil {
+			return d.Middleware(h)
+		}
+		return h
+	}
+
+	brokerPath, brokerHandler := alfqv1connect.NewBrokerServiceHandler(adp)
+	accountPath, accountHandler := alfqv1connect.NewAccountServiceHandler(adp)
+	strategyPath, strategyHandler := alfqv1connect.NewStrategyServiceHandler(adp)
+	backtestPath, backtestHandler := alfqv1connect.NewBacktestServiceHandler(adp)
+	auditPath, auditHandler := alfqv1connect.NewAuditServiceHandler(adp)
+	settingsPath, settingsHandler := alfqv1connect.NewSystemSettingsServiceHandler(adp)
+	servicePath, serviceHandler := alfqv1connect.NewServiceManagementServiceHandler(adp)
+
+	mux.Handle(brokerPath, authMW(brokerHandler))
+	mux.Handle(accountPath, authMW(accountHandler))
+	mux.Handle(strategyPath, authMW(strategyHandler))
+	mux.Handle(backtestPath, authMW(backtestHandler))
+	mux.Handle(auditPath, authMW(auditHandler))
+	mux.Handle(settingsPath, authMW(settingsHandler))
+	mux.Handle(servicePath, authMW(serviceHandler))
+
+	// SymbolService — broker symbol metadata
+	symPath, symHandler := adminapi.NewSymbolServiceHandler(svc)
+	mux.Handle(symPath, authMW(symHandler))
 
 	// SSE hub for real-time account status push
 	sse := ssehub.New()
@@ -129,20 +206,15 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		})
 		if err != nil {
 			d.Log.Warn("sse nats subscribe failed", zap.Error(err))
+		}
+		_, err = nc.Subscribe("account.orders.*", func(msg *nats.Msg) {
+			sse.Broadcast(msg.Data)
+		})
+		if err != nil {
+			d.Log.Warn("sse nats orders subscribe failed", zap.Error(err))
 		} else {
 			d.Log.Info("sse hub started", zap.String("path", "/sse/accounts"))
 		}
-	}
-
-	// Auth
-	authH, err := adminapi.NewAuthHandler(d.PG, d.RDB)
-	if err != nil {
-		d.Log.Warn("auth handler unavailable", zap.Error(err))
-	} else {
-		authPath, authHandler := alfqv1connect.NewAuthServiceHandler(authH)
-		mux.Handle(authPath, authHandler)
-		d.Log.Info("auth service registered", zap.String("path", authPath))
-		d.Middleware = authH.AuthMiddleware
 	}
 
 	// /readyz with kill-switch awareness
@@ -178,10 +250,43 @@ type acctAdapter struct {
 func (a *acctAdapter) Connect(ctx context.Context, info adminapi.AccountInfo) {
 	a.mgr.Connect(ctx, accountconn.AccountInfo{
 		ID: info.ID, Login: info.Login, Password: info.Password,
-		Server: info.Server, Platform: info.Platform,
+		Server: info.Server, Platform: info.Platform, BrokerID: info.BrokerID,
 	})
 }
 
 func (a *acctAdapter) Disconnect(accountID string) {
 	a.mgr.Disconnect(accountID)
+}
+
+// symAdapter adapts symbolsync.Service to accountconn.SymbolSyncer.
+type symAdapter struct {
+	svc *symbolsync.Service
+}
+
+func (a *symAdapter) Sync(ctx context.Context, brokerID, platform, sessionID string, conn *grpc.ClientConn) error {
+	return a.svc.Sync(ctx, symbolsync.SyncParams{
+		BrokerID: brokerID, Platform: platform, SessionID: sessionID, Conn: conn,
+	})
+}
+
+func (a *acctAdapter) LatestPositions(accountID string) []*adminapi.PositionInfo {
+	src := a.mgr.LatestPositions(accountID)
+	if len(src) == 0 {
+		return nil
+	}
+	out := make([]*adminapi.PositionInfo, 0, len(src))
+	for _, p := range src {
+		out = append(out, &adminapi.PositionInfo{
+			Ticket: p.Ticket, Symbol: p.Symbol, Type: p.Type,
+			Lots: p.Lots, OpenPrice: p.OpenPrice,
+			Profit: p.Profit, Swap: p.Swap, Commission: p.Commission,
+		})
+	}
+	return out
+}
+
+func (a *acctAdapter) WithLiveSession(accountID string, fn func(conn interface{}, sessionID, platform string) error) error {
+	return a.mgr.WithLiveSession(accountID, func(c *grpc.ClientConn, sessionID, platform string) error {
+		return fn(c, sessionID, platform)
+	})
 }
