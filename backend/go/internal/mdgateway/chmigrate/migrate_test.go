@@ -1,10 +1,17 @@
+// Package chmigrate — migration runner tests.
 package chmigrate
 
 import (
 	"testing"
 )
 
-func TestMustRun_Nil(t *testing.T) {
-	// MustRun with nil conn should panic in a real scenario, but we skip this
-	// since it requires a real ClickHouse connection
+func TestRun_Skipped(t *testing.T) {
+	// Skip this test since Run requires a real ClickHouse connection
+	// and panics on nil connection
+	t.Skip("Run requires real ClickHouse connection")
+}
+
+func TestMustRun_Skipped(t *testing.T) {
+	// Skip this test since MustRun panics on error and we don't have a real ClickHouse connection
+	t.Skip("MustRun requires real ClickHouse connection")
 }

@@ -52,3 +52,31 @@ func TestHistoryOrderInfo_Fields(t *testing.T) {
 		t.Fatalf("expected 12345, got %d", h.Ticket)
 	}
 }
+
+func TestBrokerMatch_Fields(t *testing.T) {
+	bm := BrokerMatch{
+		Company: "Test Broker",
+		Servers: []ServerEntry{
+			{Name: "Server1", Access: "1.2.3.4:443"},
+		},
+	}
+	if bm.Company != "Test Broker" {
+		t.Fatalf("expected Test Broker, got %s", bm.Company)
+	}
+	if len(bm.Servers) != 1 {
+		t.Fatalf("expected 1 server, got %d", len(bm.Servers))
+	}
+}
+
+func TestServerEntry_Fields(t *testing.T) {
+	se := ServerEntry{
+		Name:   "TestServer",
+		Access: "1.2.3.4:443",
+	}
+	if se.Name != "TestServer" {
+		t.Fatalf("expected TestServer, got %s", se.Name)
+	}
+	if se.Access != "1.2.3.4:443" {
+		t.Fatalf("expected 1.2.3.4:443, got %s", se.Access)
+	}
+}
