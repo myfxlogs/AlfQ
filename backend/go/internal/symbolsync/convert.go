@@ -78,6 +78,12 @@ func ConvertMT4Symbol(sp *mt4pb.SymbolParams, brokerID string, sessions []*mt4pb
 		sym.LotStep = gp.GetLotStep()
 	}
 
+	// MT4 GroupParams.TradeMode is unreliable; assume full trading for valid symbols.
+	// MT5 uses proper enum (SYMBOL_TRADE_MODE_FULL=4), but MT4 mtapi returns 0.
+	if sym.Digits > 0 && sym.Point > 0 && sym.ContractSize > 0 {
+		sym.TradeMode = 4 // SYMBOL_TRADE_MODE_FULL (per MT5 enum)
+	}
+
 	if sym.Digits == 0 || sym.Point == 0 || sym.ContractSize == 0 {
 		sym.Partial = true
 	}

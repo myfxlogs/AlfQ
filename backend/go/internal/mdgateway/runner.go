@@ -206,9 +206,14 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 
 		// Load broker-specific symbol names from broker_symbols;
 		// each broker uses its own naming (e.g. EURUSDm vs EURUSD).
-		symbols := loadBrokerSymbols(d.PG.Pool, gw.Platform() == "mt4")
+		brokerID, _ := extractBrokerID(key) // key format: "brokerID-login"
+		symbols := loadBrokerSymbols(d.PG.Pool, brokerID)
 		if len(symbols) == 0 {
-			symbols = []string{"EURUSD", "EURUSDm", "EURUSD."} // fallback
+			d.Log.Error("no tradable symbols found for broker, skipping subscription",
+				zap.String("broker_id", brokerID),
+				zap.String("key", key),
+			)
+			continue // skip this broker instead of fallback
 		}
 		d.Log.Info("subscribing to symbols",
 			zap.String("key", key),
@@ -291,10 +296,10 @@ func loadAccounts(pool *pgxpool.Pool) ([]AccountConfig, error) {
 	return accounts, rows.Err()
 }
 
-// loadBrokerSymbols loads symbol_raw names from broker_symbols.
+// loadBrokerSymbols loads symbol_raw names from broker_symbols per broker.
 // For MT4 the mt4Gateway ignores the symbol list anyway (OnQuote is global),
 // but we return the correct names for logging and future MT5 use.
-func loadBrokerSymbols(pool *pgxpool.Pool, isMT4 bool) []string {
+func loadBrokerSymbols(pool *pgxpool.Pool, brokerID string) []string {
 	if pool == nil {
 		return nil
 	}
@@ -303,8 +308,10 @@ func loadBrokerSymbols(pool *pgxpool.Pool, isMT4 bool) []string {
 
 	rows, err := pool.Query(ctx,
 		`SELECT symbol_raw FROM broker_symbols
-		 WHERE trade_mode = 3 AND partial = false
-		 ORDER BY symbol_raw LIMIT 100`)
+		 WHERE broker_id = $1 AND partial = false AND digits > 0
+		 ORDER BY symbol_raw LIMIT 200`,
+		brokerID,
+	)
 	if err != nil {
 		return nil
 	}
@@ -334,4 +341,14 @@ func splitHostPort(hostPort, defaultPort string) (string, string) {
 		}
 	}
 	return hostPort, defaultPort
+}
+
+// extractBrokerID parses "brokerID-login" or returns the full key.
+func extractBrokerID(key string) (string, string) {
+	for i := len(key) - 1; i >= 0; i-- {
+		if key[i] == '-' {
+			return key[:i], key[i+1:]
+		}
+	}
+	return key, key
 }

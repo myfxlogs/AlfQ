@@ -52,3 +52,28 @@ func TestSplitHostPort(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractBrokerID(t *testing.T) {
+	tests := []struct {
+		key          string
+		wantBrokerID string
+		wantLogin    string
+	}{
+		{"d6ad41cd-12345678", "d6ad41cd", "12345678"},
+		{"abd5a77d-87654321", "abd5a77d", "87654321"},
+		{"nodash", "nodash", "nodash"},
+		{"b3f8a91c-7e2d-4a1b-9c6d-5f0e8a2b3d4f-888888", "b3f8a91c-7e2d-4a1b-9c6d-5f0e8a2b3d4f", "888888"},
+		{"a-b-c-d-99999", "a-b-c-d", "99999"},
+		{"", "", ""},
+	}
+
+	for _, tt := range tests {
+		gotBrokerID, gotLogin := extractBrokerID(tt.key)
+		if gotBrokerID != tt.wantBrokerID {
+			t.Errorf("extractBrokerID(%q) brokerID = %q, want %q", tt.key, gotBrokerID, tt.wantBrokerID)
+		}
+		if gotLogin != tt.wantLogin {
+			t.Errorf("extractBrokerID(%q) login = %q, want %q", tt.key, gotLogin, tt.wantLogin)
+		}
+	}
+}
