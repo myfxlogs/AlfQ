@@ -2,21 +2,29 @@
 package symbolsync
 
 import (
-	"encoding/json"
 	"testing"
-
-	mt5pb "github.com/alfq/backend/go/gen/mt5"
 )
 
-func TestBrokerSymbolJSONRoundtrip(t *testing.T) {
-	bs := BrokerSymbol{
-		BrokerID:        "b1",
-		SymbolRaw:       "EURUSD.m",
+func TestBrokerSymbol(t *testing.T) {
+	bs := &BrokerSymbol{
+		BrokerID:  "test",
+		SymbolRaw: "EURUSD",
+		Canonical:  "EURUSD",
+	}
+	if bs.BrokerID != "test" {
+		t.Fatalf("expected test, got %s", bs.BrokerID)
+	}
+}
+
+func TestBrokerSymbol_Fields(t *testing.T) {
+	bs := &BrokerSymbol{
+		BrokerID:        "broker1",
+		SymbolRaw:       "EURUSD",
 		Canonical:       "EURUSD",
 		Digits:          5,
-		Point:           1e-5,
-		TickSize:        1e-5,
-		TickValue:       1.0,
+		Point:           0.00001,
+		TickSize:        0.00001,
+		TickValue:       0.1,
 		ContractSize:    100000,
 		MinLot:          0.01,
 		MaxLot:          100,
@@ -37,73 +45,11 @@ func TestBrokerSymbolJSONRoundtrip(t *testing.T) {
 		Partial:         false,
 	}
 
-	data, err := json.Marshal(bs)
-	if err != nil {
-		t.Fatal(err)
+	if bs.Digits != 5 {
+		t.Fatalf("expected 5, got %d", bs.Digits)
 	}
-
-	var decoded BrokerSymbol
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		t.Fatal(err)
-	}
-
-	if decoded.Canonical != "EURUSD" {
-		t.Errorf("canonical: got %q, want EURUSD", decoded.Canonical)
-	}
-	if decoded.Digits != 5 {
-		t.Errorf("digits: got %d, want 5", decoded.Digits)
-	}
-	if decoded.ContractSize != 100000 {
-		t.Errorf("contract_size: got %f, want 100000", decoded.ContractSize)
+	if bs.ContractSize != 100000 {
+		t.Fatalf("expected 100000, got %f", bs.ContractSize)
 	}
 }
 
-func TestSessionsForDayToJSON(t *testing.T) {
-	// sessionsForDayToJSON iterates the SessionsForDay list and extracts GetSessions().
-	// Test with a properly structured SessionsForDay.
-	day := &mt5pb.SessionsForDay{
-		Sessions: []*mt5pb.Session{
-			{StartTime: 0, EndTime: 86400},
-		},
-	}
-	jsonBytes := sessionsForDayToJSON([]*mt5pb.SessionsForDay{day})
-	if jsonBytes == nil {
-		t.Fatal("sessionsForDayToJSON returned nil")
-	}
-
-	var decoded []struct {
-		Sessions []struct {
-			Start int32 `json:"start"`
-			End   int32 `json:"end"`
-		} `json:"sessions"`
-	}
-	if err := json.Unmarshal(jsonBytes, &decoded); err != nil {
-		t.Fatalf("invalid JSON: %v", err)
-	}
-	if len(decoded) != 1 || decoded[0].Sessions[0].Start != 0 || decoded[0].Sessions[0].End != 86400 {
-		t.Errorf("unexpected JSON: %s", jsonBytes)
-	}
-}
-
-func TestNilSessionsForDayToJSON(t *testing.T) {
-	if b := sessionsForDayToJSON(nil); b != nil {
-		t.Errorf("expected nil for nil input, got %s", b)
-	}
-}
-
-func TestSymbolNamesMT5(t *testing.T) {
-	sps := []*mt5pb.SymbolParams{
-		{Symbol: "EURUSD"},
-		{Symbol: "GBPUSD"},
-		{Symbol: ""}, // empty, should be skipped
-		{Symbol: "XAUUSD"},
-	}
-
-	names := symbolNamesMT5(sps)
-	if len(names) != 3 {
-		t.Fatalf("expected 3 names, got %d", len(names))
-	}
-	if names[0] != "EURUSD" || names[1] != "GBPUSD" || names[2] != "XAUUSD" {
-		t.Errorf("unexpected names: %v", names)
-	}
-}

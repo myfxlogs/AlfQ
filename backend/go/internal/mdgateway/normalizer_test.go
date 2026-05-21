@@ -59,3 +59,34 @@ func TestMapResolverFallback(t *testing.T) {
 		t.Errorf("after load: got %q, want GBPJPY-MINI", c)
 	}
 }
+
+func TestNewMapResolver(t *testing.T) {
+	r := NewMapResolver()
+	if r == nil {
+		t.Fatal("NewMapResolver returned nil")
+	}
+}
+
+func TestNormalizer_TickFields(t *testing.T) {
+	n := NewNormalizer(nil)
+	tick := n.Tick("tenant1", "broker1", "EURUSD", 1234567890, "1.1000", "1.1005")
+	
+	if tick.TenantId != "tenant1" {
+		t.Fatalf("TenantId: got %s, want tenant1", tick.TenantId)
+	}
+	if tick.Broker != "broker1" {
+		t.Fatalf("Broker: got %s, want broker1", tick.Broker)
+	}
+	if tick.Symbol != "EURUSD" {
+		t.Fatalf("Symbol: got %s, want EURUSD", tick.Symbol)
+	}
+	if tick.TsUnixMs != 1234567890 {
+		t.Fatalf("TsUnixMs: got %d, want 1234567890", tick.TsUnixMs)
+	}
+	if tick.Bid.GetValue() != "1.1000" {
+		t.Fatalf("Bid: got %s, want 1.1000", tick.Bid.GetValue())
+	}
+	if tick.Ask.GetValue() != "1.1005" {
+		t.Fatalf("Ask: got %s, want 1.1005", tick.Ask.GetValue())
+	}
+}
