@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file alfq/v1/broker.proto.
  */
 export const file_alfq_v1_broker: GenFile = /*@__PURE__*/
-  fileDesc("ChRhbGZxL3YxL2Jyb2tlci5wcm90bxIHYWxmcS52MSKFAQoGQnJva2VyEgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIMCgRjb2RlGAMgASgJEgwKBG5hbWUYBCABKAkSEAoIcGxhdGZvcm0YBSABKAkSFgoObXRhcGlfZW5kcG9pbnQYBiABKAkSFgoOZGVmYXVsdF9zZXJ2ZXIYByABKAkibgoTQ3JlYXRlQnJva2VyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEhAKCHBsYXRmb3JtGAQgASgJEhYKDm10YXBpX2VuZHBvaW50GAUgASgJIh4KEEdldEJyb2tlclJlcXVlc3QSCgoCaWQYASABKAkiJwoSTGlzdEJyb2tlcnNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI3ChNMaXN0QnJva2Vyc1Jlc3BvbnNlEiAKB2Jyb2tlcnMYASADKAsyDy5hbGZxLnYxLkJyb2tlciIhChNEZWxldGVCcm9rZXJSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZUJyb2tlclJlc3BvbnNlIjgKE1NlYXJjaEJyb2tlclJlcXVlc3QSEAoIcGxhdGZvcm0YASABKAkSDwoHa2V5d29yZBgCIAEoCSI9ChRTZWFyY2hCcm9rZXJSZXNwb25zZRIlCgdtYXRjaGVzGAEgAygLMhQuYWxmcS52MS5Ccm9rZXJNYXRjaCJGCgtCcm9rZXJNYXRjaBIPCgdjb21wYW55GAEgASgJEiYKB3NlcnZlcnMYAiADKAsyFS5hbGZxLnYxLkJyb2tlclNlcnZlciIsCgxCcm9rZXJTZXJ2ZXISDAoEbmFtZRgBIAEoCRIOCgZhY2Nlc3MYAiABKAki6QMKB0FjY291bnQSCgoCaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEhEKCWJyb2tlcl9pZBgDIAEoCRINCgVsb2dpbhgEIAEoCRIOCgZzZXJ2ZXIYBSABKAkSFAoMYWNjb3VudF90eXBlGAYgASgJEhAKCGN1cnJlbmN5GAcgASgJEhAKCGxldmVyYWdlGAggASgFEg4KBnN0YXR1cxgJIAEoCRIPCgdiYWxhbmNlGAogASgBEg4KBmVxdWl0eRgLIAEoARIOCgZtYXJnaW4YDCABKAESEwoLZnJlZV9tYXJnaW4YDSABKAESFAoMbWFyZ2luX2xldmVsGA4gASgBEg4KBnByb2ZpdBgPIAEoARIWCg5wcm9maXRfcGVyY2VudBgQIAEoARITCgtpc19kaXNhYmxlZBgRIAEoCBISCgpsYXN0X2Vycm9yGBIgASgJEg0KBWFsaWFzGBMgASgJEjAKDGNvbm5lY3RlZF9hdBgUIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgVIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLc2VydmVyX25hbWUYFiABKAkSEAoIcGxhdGZvcm0YFyABKAkiqQEKFENyZWF0ZUFjY291bnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIRCglicm9rZXJfaWQYAiABKAkSDQoFbG9naW4YAyABKAkSEAoIcGFzc3dvcmQYBCABKAkSDgoGc2VydmVyGAUgASgJEhQKDGFjY291bnRfdHlwZRgGIAEoCRIPCgdtdF90eXBlGAcgASgJEhMKC3NlcnZlcl9uYW1lGAggASgJIh8KEUdldEFjY291bnRSZXF1ZXN0EgoKAmlkGAEgASgJIigKE0xpc3RBY2NvdW50c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJImwKDkFjY291bnRTdW1tYXJ5EhcKD2Nvbm5lY3RlZF9jb3VudBgBIAEoBRIVCg10b3RhbF9iYWxhbmNlGAIgASgBEhQKDHRvdGFsX2VxdWl0eRgDIAEoARIUCgx0b3RhbF9wcm9maXQYBCABKAEiZAoUTGlzdEFjY291bnRzUmVzcG9uc2USIgoIYWNjb3VudHMYASADKAsyEC5hbGZxLnYxLkFjY291bnQSKAoHc3VtbWFyeRgCIAEoCzIXLmFsZnEudjEuQWNjb3VudFN1bW1hcnkiIgoURGVsZXRlQWNjb3VudFJlcXVlc3QSCgoCaWQYASABKAkiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIiMKFUNvbm5lY3RBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIYChZDb25uZWN0QWNjb3VudFJlc3BvbnNlIiYKGERpc2Nvbm5lY3RBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIbChlEaXNjb25uZWN0QWNjb3VudFJlc3BvbnNlIkAKDVN5c3RlbVNldHRpbmcSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJIhoKGEdldFN5c3RlbVNldHRpbmdzUmVxdWVzdCJFChlHZXRTeXN0ZW1TZXR0aW5nc1Jlc3BvbnNlEigKCHNldHRpbmdzGAEgAygLMhYuYWxmcS52MS5TeXN0ZW1TZXR0aW5nIjgKGlVwZGF0ZVN5c3RlbVNldHRpbmdSZXF1ZXN0EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCSIdChtVcGRhdGVTeXN0ZW1TZXR0aW5nUmVzcG9uc2UiVAoNU2VydmljZVN0YXR1cxIMCgRuYW1lGAEgASgJEhEKCWNvbnRhaW5lchgCIAEoCRIOCgZzdGF0dXMYAyABKAkSEgoKbGF0ZW5jeV9tcxgEIAEoBSIZChdHZXRTZXJ2aWNlU3RhdHVzUmVxdWVzdCJEChhHZXRTZXJ2aWNlU3RhdHVzUmVzcG9uc2USKAoIc2VydmljZXMYASADKAsyFi5hbGZxLnYxLlNlcnZpY2VTdGF0dXMiJQoVUmVzdGFydFNlcnZpY2VSZXF1ZXN0EgwKBG5hbWUYASABKAkiMgoWUmVzdGFydFNlcnZpY2VSZXNwb25zZRIMCgRuYW1lGAEgASgJEgoKAm9rGAIgASgIIkIKFUdldFNlcnZpY2VMb2dzUmVxdWVzdBIMCgRuYW1lGAEgASgJEgwKBHRhaWwYAiABKAUSDQoFc2luY2UYAyABKAkiNQoWR2V0U2VydmljZUxvZ3NSZXNwb25zZRIMCgRuYW1lGAEgASgJEg0KBWxpbmVzGAIgAygJMp0DCg1Ccm9rZXJTZXJ2aWNlEj0KDENyZWF0ZUJyb2tlchIcLmFsZnEudjEuQ3JlYXRlQnJva2VyUmVxdWVzdBoPLmFsZnEudjEuQnJva2VyEjcKCUdldEJyb2tlchIZLmFsZnEudjEuR2V0QnJva2VyUmVxdWVzdBoPLmFsZnEudjEuQnJva2VyEkgKC0xpc3RCcm9rZXJzEhsuYWxmcS52MS5MaXN0QnJva2Vyc1JlcXVlc3QaHC5hbGZxLnYxLkxpc3RCcm9rZXJzUmVzcG9uc2USMAoMVXBkYXRlQnJva2VyEg8uYWxmcS52MS5Ccm9rZXIaDy5hbGZxLnYxLkJyb2tlchJLCgxEZWxldGVCcm9rZXISHC5hbGZxLnYxLkRlbGV0ZUJyb2tlclJlcXVlc3QaHS5hbGZxLnYxLkRlbGV0ZUJyb2tlclJlc3BvbnNlEksKDFNlYXJjaEJyb2tlchIcLmFsZnEudjEuU2VhcmNoQnJva2VyUmVxdWVzdBodLmFsZnEudjEuU2VhcmNoQnJva2VyUmVzcG9uc2UyjwQKDkFjY291bnRTZXJ2aWNlEkAKDUNyZWF0ZUFjY291bnQSHS5hbGZxLnYxLkNyZWF0ZUFjY291bnRSZXF1ZXN0GhAuYWxmcS52MS5BY2NvdW50EjoKCkdldEFjY291bnQSGi5hbGZxLnYxLkdldEFjY291bnRSZXF1ZXN0GhAuYWxmcS52MS5BY2NvdW50EksKDExpc3RBY2NvdW50cxIcLmFsZnEudjEuTGlzdEFjY291bnRzUmVxdWVzdBodLmFsZnEudjEuTGlzdEFjY291bnRzUmVzcG9uc2USMwoNVXBkYXRlQWNjb3VudBIQLmFsZnEudjEuQWNjb3VudBoQLmFsZnEudjEuQWNjb3VudBJOCg1EZWxldGVBY2NvdW50Eh0uYWxmcS52MS5EZWxldGVBY2NvdW50UmVxdWVzdBoeLmFsZnEudjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlElEKDkNvbm5lY3RBY2NvdW50Eh4uYWxmcS52MS5Db25uZWN0QWNjb3VudFJlcXVlc3QaHy5hbGZxLnYxLkNvbm5lY3RBY2NvdW50UmVzcG9uc2USWgoRRGlzY29ubmVjdEFjY291bnQSIS5hbGZxLnYxLkRpc2Nvbm5lY3RBY2NvdW50UmVxdWVzdBoiLmFsZnEudjEuRGlzY29ubmVjdEFjY291bnRSZXNwb25zZTLVAQoVU3lzdGVtU2V0dGluZ3NTZXJ2aWNlEloKEUdldFN5c3RlbVNldHRpbmdzEiEuYWxmcS52MS5HZXRTeXN0ZW1TZXR0aW5nc1JlcXVlc3QaIi5hbGZxLnYxLkdldFN5c3RlbVNldHRpbmdzUmVzcG9uc2USYAoTVXBkYXRlU3lzdGVtU2V0dGluZxIjLmFsZnEudjEuVXBkYXRlU3lzdGVtU2V0dGluZ1JlcXVlc3QaJC5hbGZxLnYxLlVwZGF0ZVN5c3RlbVNldHRpbmdSZXNwb25zZTKZAgoYU2VydmljZU1hbmFnZW1lbnRTZXJ2aWNlElcKEEdldFNlcnZpY2VTdGF0dXMSIC5hbGZxLnYxLkdldFNlcnZpY2VTdGF0dXNSZXF1ZXN0GiEuYWxmcS52MS5HZXRTZXJ2aWNlU3RhdHVzUmVzcG9uc2USUQoOUmVzdGFydFNlcnZpY2USHi5hbGZxLnYxLlJlc3RhcnRTZXJ2aWNlUmVxdWVzdBofLmFsZnEudjEuUmVzdGFydFNlcnZpY2VSZXNwb25zZRJRCg5HZXRTZXJ2aWNlTG9ncxIeLmFsZnEudjEuR2V0U2VydmljZUxvZ3NSZXF1ZXN0Gh8uYWxmcS52MS5HZXRTZXJ2aWNlTG9nc1Jlc3BvbnNlQi9aLWdpdGh1Yi5jb20vYWxmcS9iYWNrZW5kL2dvL2dlbi9hbGZxL3YxO2FsZnF2MWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChRhbGZxL3YxL2Jyb2tlci5wcm90bxIHYWxmcS52MSKFAQoGQnJva2VyEgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIMCgRjb2RlGAMgASgJEgwKBG5hbWUYBCABKAkSEAoIcGxhdGZvcm0YBSABKAkSFgoObXRhcGlfZW5kcG9pbnQYBiABKAkSFgoOZGVmYXVsdF9zZXJ2ZXIYByABKAkibgoTQ3JlYXRlQnJva2VyUmVxdWVzdBIRCgl0ZW5hbnRfaWQYASABKAkSDAoEY29kZRgCIAEoCRIMCgRuYW1lGAMgASgJEhAKCHBsYXRmb3JtGAQgASgJEhYKDm10YXBpX2VuZHBvaW50GAUgASgJIh4KEEdldEJyb2tlclJlcXVlc3QSCgoCaWQYASABKAkiJwoSTGlzdEJyb2tlcnNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI3ChNMaXN0QnJva2Vyc1Jlc3BvbnNlEiAKB2Jyb2tlcnMYASADKAsyDy5hbGZxLnYxLkJyb2tlciIhChNEZWxldGVCcm9rZXJSZXF1ZXN0EgoKAmlkGAEgASgJIhYKFERlbGV0ZUJyb2tlclJlc3BvbnNlIjgKE1NlYXJjaEJyb2tlclJlcXVlc3QSEAoIcGxhdGZvcm0YASABKAkSDwoHa2V5d29yZBgCIAEoCSI9ChRTZWFyY2hCcm9rZXJSZXNwb25zZRIlCgdtYXRjaGVzGAEgAygLMhQuYWxmcS52MS5Ccm9rZXJNYXRjaCJSCgtCcm9rZXJNYXRjaBIKCgJpZBgBIAEoCRIPCgdjb21wYW55GAIgASgJEiYKB3NlcnZlcnMYAyADKAsyFS5hbGZxLnYxLkJyb2tlclNlcnZlciIsCgxCcm9rZXJTZXJ2ZXISDAoEbmFtZRgBIAEoCRIOCgZhY2Nlc3MYAiABKAki6QMKB0FjY291bnQSCgoCaWQYASABKAkSEQoJdGVuYW50X2lkGAIgASgJEhEKCWJyb2tlcl9pZBgDIAEoCRINCgVsb2dpbhgEIAEoCRIOCgZzZXJ2ZXIYBSABKAkSFAoMYWNjb3VudF90eXBlGAYgASgJEhAKCGN1cnJlbmN5GAcgASgJEhAKCGxldmVyYWdlGAggASgFEg4KBnN0YXR1cxgJIAEoCRIPCgdiYWxhbmNlGAogASgBEg4KBmVxdWl0eRgLIAEoARIOCgZtYXJnaW4YDCABKAESEwoLZnJlZV9tYXJnaW4YDSABKAESFAoMbWFyZ2luX2xldmVsGA4gASgBEg4KBnByb2ZpdBgPIAEoARIWCg5wcm9maXRfcGVyY2VudBgQIAEoARITCgtpc19kaXNhYmxlZBgRIAEoCBISCgpsYXN0X2Vycm9yGBIgASgJEg0KBWFsaWFzGBMgASgJEjAKDGNvbm5lY3RlZF9hdBgUIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKY3JlYXRlZF9hdBgVIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLc2VydmVyX25hbWUYFiABKAkSEAoIcGxhdGZvcm0YFyABKAkiqQEKFENyZWF0ZUFjY291bnRSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIRCglicm9rZXJfaWQYAiABKAkSDQoFbG9naW4YAyABKAkSEAoIcGFzc3dvcmQYBCABKAkSDgoGc2VydmVyGAUgASgJEhQKDGFjY291bnRfdHlwZRgGIAEoCRIPCgdtdF90eXBlGAcgASgJEhMKC3NlcnZlcl9uYW1lGAggASgJIh8KEUdldEFjY291bnRSZXF1ZXN0EgoKAmlkGAEgASgJIigKE0xpc3RBY2NvdW50c1JlcXVlc3QSEQoJdGVuYW50X2lkGAEgASgJImwKDkFjY291bnRTdW1tYXJ5EhcKD2Nvbm5lY3RlZF9jb3VudBgBIAEoBRIVCg10b3RhbF9iYWxhbmNlGAIgASgBEhQKDHRvdGFsX2VxdWl0eRgDIAEoARIUCgx0b3RhbF9wcm9maXQYBCABKAEiZAoUTGlzdEFjY291bnRzUmVzcG9uc2USIgoIYWNjb3VudHMYASADKAsyEC5hbGZxLnYxLkFjY291bnQSKAoHc3VtbWFyeRgCIAEoCzIXLmFsZnEudjEuQWNjb3VudFN1bW1hcnkiIgoURGVsZXRlQWNjb3VudFJlcXVlc3QSCgoCaWQYASABKAkiFwoVRGVsZXRlQWNjb3VudFJlc3BvbnNlIiMKFUNvbm5lY3RBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIYChZDb25uZWN0QWNjb3VudFJlc3BvbnNlIiYKGERpc2Nvbm5lY3RBY2NvdW50UmVxdWVzdBIKCgJpZBgBIAEoCSIbChlEaXNjb25uZWN0QWNjb3VudFJlc3BvbnNlIkgKGExpc3RBY2NvdW50T3JkZXJzUmVxdWVzdBISCgphY2NvdW50X2lkGAEgASgJEgwKBGZyb20YAiABKAkSCgoCdG8YAyABKAkiRQoZTGlzdEFjY291bnRPcmRlcnNSZXNwb25zZRIoCgZvcmRlcnMYASADKAsyGC5hbGZxLnYxLkhpc3RvcmljYWxPcmRlciIxChtMaXN0QWNjb3VudFBvc2l0aW9uc1JlcXVlc3QSEgoKYWNjb3VudF9pZBgBIAEoCSJLChxMaXN0QWNjb3VudFBvc2l0aW9uc1Jlc3BvbnNlEisKCXBvc2l0aW9ucxgBIAMoCzIYLmFsZnEudjEuQWNjb3VudFBvc2l0aW9uIpMBCg9BY2NvdW50UG9zaXRpb24SDgoGdGlja2V0GAEgASgDEg4KBnN5bWJvbBgCIAEoCRIMCgRzaWRlGAMgASgJEgwKBGxvdHMYBCABKAESEgoKb3Blbl9wcmljZRgFIAEoARIOCgZwcm9maXQYBiABKAESDAoEc3dhcBgHIAEoARISCgpjb21taXNzaW9uGAggASgBIl4KGVN5bmNBY2NvdW50SGlzdG9yeVJlcXVlc3QSEgoKYWNjb3VudF9pZBgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgASgJEhMKC2Z1bGxfcmVzeW5jGAQgASgIIj0KGlN5bmNBY2NvdW50SGlzdG9yeVJlc3BvbnNlEg8KB3N5bmNfaWQYASABKAkSDgoGc3RhdHVzGAIgASgJIioKFEdldFN5bmNTdGF0dXNSZXF1ZXN0EhIKCmFjY291bnRfaWQYASABKAkioAEKFUdldFN5bmNTdGF0dXNSZXNwb25zZRISCgphY2NvdW50X2lkGAEgASgJEhMKC3N5bmNfc3RhdHVzGAIgASgJEhkKEWxhc3RfZnVsbF9zeW5jX2F0GAMgASgJEhkKEWxhc3RfaW5jcl9zeW5jX2F0GAQgASgJEhIKCmxhc3RfZXJyb3IYBSABKAkSFAoMdG90YWxfc3luY2VkGAYgASgFIs8BCg9IaXN0b3JpY2FsT3JkZXISDgoGdGlja2V0GAEgASgDEg4KBnN5bWJvbBgCIAEoCRIMCgRzaWRlGAMgASgJEgwKBGxvdHMYBCABKAESEgoKb3Blbl9wcmljZRgFIAEoARITCgtjbG9zZV9wcmljZRgGIAEoARIOCgZwcm9maXQYByABKAESDAoEc3dhcBgIIAEoARISCgpjb21taXNzaW9uGAkgASgBEhEKCW9wZW5fdGltZRgKIAEoCRISCgpjbG9zZV90aW1lGAsgASgJIkAKDVN5c3RlbVNldHRpbmcSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJIhoKGEdldFN5c3RlbVNldHRpbmdzUmVxdWVzdCJFChlHZXRTeXN0ZW1TZXR0aW5nc1Jlc3BvbnNlEigKCHNldHRpbmdzGAEgAygLMhYuYWxmcS52MS5TeXN0ZW1TZXR0aW5nIjgKGlVwZGF0ZVN5c3RlbVNldHRpbmdSZXF1ZXN0EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCSIdChtVcGRhdGVTeXN0ZW1TZXR0aW5nUmVzcG9uc2UiVAoNU2VydmljZVN0YXR1cxIMCgRuYW1lGAEgASgJEhEKCWNvbnRhaW5lchgCIAEoCRIOCgZzdGF0dXMYAyABKAkSEgoKbGF0ZW5jeV9tcxgEIAEoBSIZChdHZXRTZXJ2aWNlU3RhdHVzUmVxdWVzdCJEChhHZXRTZXJ2aWNlU3RhdHVzUmVzcG9uc2USKAoIc2VydmljZXMYASADKAsyFi5hbGZxLnYxLlNlcnZpY2VTdGF0dXMiJQoVUmVzdGFydFNlcnZpY2VSZXF1ZXN0EgwKBG5hbWUYASABKAkiMgoWUmVzdGFydFNlcnZpY2VSZXNwb25zZRIMCgRuYW1lGAEgASgJEgoKAm9rGAIgASgIIkIKFUdldFNlcnZpY2VMb2dzUmVxdWVzdBIMCgRuYW1lGAEgASgJEgwKBHRhaWwYAiABKAUSDQoFc2luY2UYAyABKAkiNQoWR2V0U2VydmljZUxvZ3NSZXNwb25zZRIMCgRuYW1lGAEgASgJEg0KBWxpbmVzGAIgAygJMp0DCg1Ccm9rZXJTZXJ2aWNlEj0KDENyZWF0ZUJyb2tlchIcLmFsZnEudjEuQ3JlYXRlQnJva2VyUmVxdWVzdBoPLmFsZnEudjEuQnJva2VyEjcKCUdldEJyb2tlchIZLmFsZnEudjEuR2V0QnJva2VyUmVxdWVzdBoPLmFsZnEudjEuQnJva2VyEkgKC0xpc3RCcm9rZXJzEhsuYWxmcS52MS5MaXN0QnJva2Vyc1JlcXVlc3QaHC5hbGZxLnYxLkxpc3RCcm9rZXJzUmVzcG9uc2USMAoMVXBkYXRlQnJva2VyEg8uYWxmcS52MS5Ccm9rZXIaDy5hbGZxLnYxLkJyb2tlchJLCgxEZWxldGVCcm9rZXISHC5hbGZxLnYxLkRlbGV0ZUJyb2tlclJlcXVlc3QaHS5hbGZxLnYxLkRlbGV0ZUJyb2tlclJlc3BvbnNlEksKDFNlYXJjaEJyb2tlchIcLmFsZnEudjEuU2VhcmNoQnJva2VyUmVxdWVzdBodLmFsZnEudjEuU2VhcmNoQnJva2VyUmVzcG9uc2Uy/wYKDkFjY291bnRTZXJ2aWNlEkAKDUNyZWF0ZUFjY291bnQSHS5hbGZxLnYxLkNyZWF0ZUFjY291bnRSZXF1ZXN0GhAuYWxmcS52MS5BY2NvdW50EjoKCkdldEFjY291bnQSGi5hbGZxLnYxLkdldEFjY291bnRSZXF1ZXN0GhAuYWxmcS52MS5BY2NvdW50EksKDExpc3RBY2NvdW50cxIcLmFsZnEudjEuTGlzdEFjY291bnRzUmVxdWVzdBodLmFsZnEudjEuTGlzdEFjY291bnRzUmVzcG9uc2USMwoNVXBkYXRlQWNjb3VudBIQLmFsZnEudjEuQWNjb3VudBoQLmFsZnEudjEuQWNjb3VudBJOCg1EZWxldGVBY2NvdW50Eh0uYWxmcS52MS5EZWxldGVBY2NvdW50UmVxdWVzdBoeLmFsZnEudjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlElEKDkNvbm5lY3RBY2NvdW50Eh4uYWxmcS52MS5Db25uZWN0QWNjb3VudFJlcXVlc3QaHy5hbGZxLnYxLkNvbm5lY3RBY2NvdW50UmVzcG9uc2USWgoRRGlzY29ubmVjdEFjY291bnQSIS5hbGZxLnYxLkRpc2Nvbm5lY3RBY2NvdW50UmVxdWVzdBoiLmFsZnEudjEuRGlzY29ubmVjdEFjY291bnRSZXNwb25zZRJaChFMaXN0QWNjb3VudE9yZGVycxIhLmFsZnEudjEuTGlzdEFjY291bnRPcmRlcnNSZXF1ZXN0GiIuYWxmcS52MS5MaXN0QWNjb3VudE9yZGVyc1Jlc3BvbnNlEmMKFExpc3RBY2NvdW50UG9zaXRpb25zEiQuYWxmcS52MS5MaXN0QWNjb3VudFBvc2l0aW9uc1JlcXVlc3QaJS5hbGZxLnYxLkxpc3RBY2NvdW50UG9zaXRpb25zUmVzcG9uc2USXQoSU3luY0FjY291bnRIaXN0b3J5EiIuYWxmcS52MS5TeW5jQWNjb3VudEhpc3RvcnlSZXF1ZXN0GiMuYWxmcS52MS5TeW5jQWNjb3VudEhpc3RvcnlSZXNwb25zZRJOCg1HZXRTeW5jU3RhdHVzEh0uYWxmcS52MS5HZXRTeW5jU3RhdHVzUmVxdWVzdBoeLmFsZnEudjEuR2V0U3luY1N0YXR1c1Jlc3BvbnNlMtUBChVTeXN0ZW1TZXR0aW5nc1NlcnZpY2USWgoRR2V0U3lzdGVtU2V0dGluZ3MSIS5hbGZxLnYxLkdldFN5c3RlbVNldHRpbmdzUmVxdWVzdBoiLmFsZnEudjEuR2V0U3lzdGVtU2V0dGluZ3NSZXNwb25zZRJgChNVcGRhdGVTeXN0ZW1TZXR0aW5nEiMuYWxmcS52MS5VcGRhdGVTeXN0ZW1TZXR0aW5nUmVxdWVzdBokLmFsZnEudjEuVXBkYXRlU3lzdGVtU2V0dGluZ1Jlc3BvbnNlMpkCChhTZXJ2aWNlTWFuYWdlbWVudFNlcnZpY2USVwoQR2V0U2VydmljZVN0YXR1cxIgLmFsZnEudjEuR2V0U2VydmljZVN0YXR1c1JlcXVlc3QaIS5hbGZxLnYxLkdldFNlcnZpY2VTdGF0dXNSZXNwb25zZRJRCg5SZXN0YXJ0U2VydmljZRIeLmFsZnEudjEuUmVzdGFydFNlcnZpY2VSZXF1ZXN0Gh8uYWxmcS52MS5SZXN0YXJ0U2VydmljZVJlc3BvbnNlElEKDkdldFNlcnZpY2VMb2dzEh4uYWxmcS52MS5HZXRTZXJ2aWNlTG9nc1JlcXVlc3QaHy5hbGZxLnYxLkdldFNlcnZpY2VMb2dzUmVzcG9uc2VCL1otZ2l0aHViLmNvbS9hbGZxL2JhY2tlbmQvZ28vZ2VuL2FsZnEvdjE7YWxmcXYxYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message alfq.v1.Broker
@@ -227,12 +227,19 @@ export const SearchBrokerResponseSchema: GenMessage<SearchBrokerResponse> = /*@_
  */
 export type BrokerMatch = Message<"alfq.v1.BrokerMatch"> & {
   /**
-   * @generated from field: string company = 1;
+   * broker UUID (empty when from online gateway search)
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string company = 2;
    */
   company: string;
 
   /**
-   * @generated from field: repeated alfq.v1.BrokerServer servers = 2;
+   * @generated from field: repeated alfq.v1.BrokerServer servers = 3;
    */
   servers: BrokerServer[];
 };
@@ -638,6 +645,330 @@ export const DisconnectAccountResponseSchema: GenMessage<DisconnectAccountRespon
   messageDesc(file_alfq_v1_broker, 22);
 
 /**
+ * @generated from message alfq.v1.ListAccountOrdersRequest
+ */
+export type ListAccountOrdersRequest = Message<"alfq.v1.ListAccountOrdersRequest"> & {
+  /**
+   * @generated from field: string account_id = 1;
+   */
+  accountId: string;
+
+  /**
+   * optional date range in ISO-8601 format; empty means all history
+   *
+   * @generated from field: string from = 2;
+   */
+  from: string;
+
+  /**
+   * @generated from field: string to = 3;
+   */
+  to: string;
+};
+
+/**
+ * Describes the message alfq.v1.ListAccountOrdersRequest.
+ * Use `create(ListAccountOrdersRequestSchema)` to create a new message.
+ */
+export const ListAccountOrdersRequestSchema: GenMessage<ListAccountOrdersRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 23);
+
+/**
+ * @generated from message alfq.v1.ListAccountOrdersResponse
+ */
+export type ListAccountOrdersResponse = Message<"alfq.v1.ListAccountOrdersResponse"> & {
+  /**
+   * @generated from field: repeated alfq.v1.HistoricalOrder orders = 1;
+   */
+  orders: HistoricalOrder[];
+};
+
+/**
+ * Describes the message alfq.v1.ListAccountOrdersResponse.
+ * Use `create(ListAccountOrdersResponseSchema)` to create a new message.
+ */
+export const ListAccountOrdersResponseSchema: GenMessage<ListAccountOrdersResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 24);
+
+/**
+ * @generated from message alfq.v1.ListAccountPositionsRequest
+ */
+export type ListAccountPositionsRequest = Message<"alfq.v1.ListAccountPositionsRequest"> & {
+  /**
+   * @generated from field: string account_id = 1;
+   */
+  accountId: string;
+};
+
+/**
+ * Describes the message alfq.v1.ListAccountPositionsRequest.
+ * Use `create(ListAccountPositionsRequestSchema)` to create a new message.
+ */
+export const ListAccountPositionsRequestSchema: GenMessage<ListAccountPositionsRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 25);
+
+/**
+ * @generated from message alfq.v1.ListAccountPositionsResponse
+ */
+export type ListAccountPositionsResponse = Message<"alfq.v1.ListAccountPositionsResponse"> & {
+  /**
+   * @generated from field: repeated alfq.v1.AccountPosition positions = 1;
+   */
+  positions: AccountPosition[];
+};
+
+/**
+ * Describes the message alfq.v1.ListAccountPositionsResponse.
+ * Use `create(ListAccountPositionsResponseSchema)` to create a new message.
+ */
+export const ListAccountPositionsResponseSchema: GenMessage<ListAccountPositionsResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 26);
+
+/**
+ * @generated from message alfq.v1.AccountPosition
+ */
+export type AccountPosition = Message<"alfq.v1.AccountPosition"> & {
+  /**
+   * @generated from field: int64 ticket = 1;
+   */
+  ticket: bigint;
+
+  /**
+   * @generated from field: string symbol = 2;
+   */
+  symbol: string;
+
+  /**
+   * "buy" | "sell"
+   *
+   * @generated from field: string side = 3;
+   */
+  side: string;
+
+  /**
+   * @generated from field: double lots = 4;
+   */
+  lots: number;
+
+  /**
+   * @generated from field: double open_price = 5;
+   */
+  openPrice: number;
+
+  /**
+   * @generated from field: double profit = 6;
+   */
+  profit: number;
+
+  /**
+   * @generated from field: double swap = 7;
+   */
+  swap: number;
+
+  /**
+   * @generated from field: double commission = 8;
+   */
+  commission: number;
+};
+
+/**
+ * Describes the message alfq.v1.AccountPosition.
+ * Use `create(AccountPositionSchema)` to create a new message.
+ */
+export const AccountPositionSchema: GenMessage<AccountPosition> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 27);
+
+/**
+ * @generated from message alfq.v1.SyncAccountHistoryRequest
+ */
+export type SyncAccountHistoryRequest = Message<"alfq.v1.SyncAccountHistoryRequest"> & {
+  /**
+   * @generated from field: string account_id = 1;
+   */
+  accountId: string;
+
+  /**
+   * @generated from field: string from = 2;
+   */
+  from: string;
+
+  /**
+   * @generated from field: string to = 3;
+   */
+  to: string;
+
+  /**
+   * @generated from field: bool full_resync = 4;
+   */
+  fullResync: boolean;
+};
+
+/**
+ * Describes the message alfq.v1.SyncAccountHistoryRequest.
+ * Use `create(SyncAccountHistoryRequestSchema)` to create a new message.
+ */
+export const SyncAccountHistoryRequestSchema: GenMessage<SyncAccountHistoryRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 28);
+
+/**
+ * @generated from message alfq.v1.SyncAccountHistoryResponse
+ */
+export type SyncAccountHistoryResponse = Message<"alfq.v1.SyncAccountHistoryResponse"> & {
+  /**
+   * @generated from field: string sync_id = 1;
+   */
+  syncId: string;
+
+  /**
+   * "started" | "in_progress" | "completed"
+   *
+   * @generated from field: string status = 2;
+   */
+  status: string;
+};
+
+/**
+ * Describes the message alfq.v1.SyncAccountHistoryResponse.
+ * Use `create(SyncAccountHistoryResponseSchema)` to create a new message.
+ */
+export const SyncAccountHistoryResponseSchema: GenMessage<SyncAccountHistoryResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 29);
+
+/**
+ * @generated from message alfq.v1.GetSyncStatusRequest
+ */
+export type GetSyncStatusRequest = Message<"alfq.v1.GetSyncStatusRequest"> & {
+  /**
+   * @generated from field: string account_id = 1;
+   */
+  accountId: string;
+};
+
+/**
+ * Describes the message alfq.v1.GetSyncStatusRequest.
+ * Use `create(GetSyncStatusRequestSchema)` to create a new message.
+ */
+export const GetSyncStatusRequestSchema: GenMessage<GetSyncStatusRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 30);
+
+/**
+ * @generated from message alfq.v1.GetSyncStatusResponse
+ */
+export type GetSyncStatusResponse = Message<"alfq.v1.GetSyncStatusResponse"> & {
+  /**
+   * @generated from field: string account_id = 1;
+   */
+  accountId: string;
+
+  /**
+   * "idle" | "syncing" | "error"
+   *
+   * @generated from field: string sync_status = 2;
+   */
+  syncStatus: string;
+
+  /**
+   * @generated from field: string last_full_sync_at = 3;
+   */
+  lastFullSyncAt: string;
+
+  /**
+   * @generated from field: string last_incr_sync_at = 4;
+   */
+  lastIncrSyncAt: string;
+
+  /**
+   * @generated from field: string last_error = 5;
+   */
+  lastError: string;
+
+  /**
+   * @generated from field: int32 total_synced = 6;
+   */
+  totalSynced: number;
+};
+
+/**
+ * Describes the message alfq.v1.GetSyncStatusResponse.
+ * Use `create(GetSyncStatusResponseSchema)` to create a new message.
+ */
+export const GetSyncStatusResponseSchema: GenMessage<GetSyncStatusResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 31);
+
+/**
+ * @generated from message alfq.v1.HistoricalOrder
+ */
+export type HistoricalOrder = Message<"alfq.v1.HistoricalOrder"> & {
+  /**
+   * @generated from field: int64 ticket = 1;
+   */
+  ticket: bigint;
+
+  /**
+   * @generated from field: string symbol = 2;
+   */
+  symbol: string;
+
+  /**
+   * "buy" | "sell"
+   *
+   * @generated from field: string side = 3;
+   */
+  side: string;
+
+  /**
+   * @generated from field: double lots = 4;
+   */
+  lots: number;
+
+  /**
+   * @generated from field: double open_price = 5;
+   */
+  openPrice: number;
+
+  /**
+   * @generated from field: double close_price = 6;
+   */
+  closePrice: number;
+
+  /**
+   * @generated from field: double profit = 7;
+   */
+  profit: number;
+
+  /**
+   * @generated from field: double swap = 8;
+   */
+  swap: number;
+
+  /**
+   * @generated from field: double commission = 9;
+   */
+  commission: number;
+
+  /**
+   * RFC3339
+   *
+   * @generated from field: string open_time = 10;
+   */
+  openTime: string;
+
+  /**
+   * RFC3339
+   *
+   * @generated from field: string close_time = 11;
+   */
+  closeTime: string;
+};
+
+/**
+ * Describes the message alfq.v1.HistoricalOrder.
+ * Use `create(HistoricalOrderSchema)` to create a new message.
+ */
+export const HistoricalOrderSchema: GenMessage<HistoricalOrder> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 32);
+
+/**
  * @generated from message alfq.v1.SystemSetting
  */
 export type SystemSetting = Message<"alfq.v1.SystemSetting"> & {
@@ -662,7 +993,7 @@ export type SystemSetting = Message<"alfq.v1.SystemSetting"> & {
  * Use `create(SystemSettingSchema)` to create a new message.
  */
 export const SystemSettingSchema: GenMessage<SystemSetting> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 23);
+  messageDesc(file_alfq_v1_broker, 33);
 
 /**
  * @generated from message alfq.v1.GetSystemSettingsRequest
@@ -675,7 +1006,7 @@ export type GetSystemSettingsRequest = Message<"alfq.v1.GetSystemSettingsRequest
  * Use `create(GetSystemSettingsRequestSchema)` to create a new message.
  */
 export const GetSystemSettingsRequestSchema: GenMessage<GetSystemSettingsRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 24);
+  messageDesc(file_alfq_v1_broker, 34);
 
 /**
  * @generated from message alfq.v1.GetSystemSettingsResponse
@@ -692,7 +1023,7 @@ export type GetSystemSettingsResponse = Message<"alfq.v1.GetSystemSettingsRespon
  * Use `create(GetSystemSettingsResponseSchema)` to create a new message.
  */
 export const GetSystemSettingsResponseSchema: GenMessage<GetSystemSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 25);
+  messageDesc(file_alfq_v1_broker, 35);
 
 /**
  * @generated from message alfq.v1.UpdateSystemSettingRequest
@@ -714,7 +1045,7 @@ export type UpdateSystemSettingRequest = Message<"alfq.v1.UpdateSystemSettingReq
  * Use `create(UpdateSystemSettingRequestSchema)` to create a new message.
  */
 export const UpdateSystemSettingRequestSchema: GenMessage<UpdateSystemSettingRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 26);
+  messageDesc(file_alfq_v1_broker, 36);
 
 /**
  * @generated from message alfq.v1.UpdateSystemSettingResponse
@@ -727,7 +1058,7 @@ export type UpdateSystemSettingResponse = Message<"alfq.v1.UpdateSystemSettingRe
  * Use `create(UpdateSystemSettingResponseSchema)` to create a new message.
  */
 export const UpdateSystemSettingResponseSchema: GenMessage<UpdateSystemSettingResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 27);
+  messageDesc(file_alfq_v1_broker, 37);
 
 /**
  * @generated from message alfq.v1.ServiceStatus
@@ -759,7 +1090,7 @@ export type ServiceStatus = Message<"alfq.v1.ServiceStatus"> & {
  * Use `create(ServiceStatusSchema)` to create a new message.
  */
 export const ServiceStatusSchema: GenMessage<ServiceStatus> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 28);
+  messageDesc(file_alfq_v1_broker, 38);
 
 /**
  * @generated from message alfq.v1.GetServiceStatusRequest
@@ -772,7 +1103,7 @@ export type GetServiceStatusRequest = Message<"alfq.v1.GetServiceStatusRequest">
  * Use `create(GetServiceStatusRequestSchema)` to create a new message.
  */
 export const GetServiceStatusRequestSchema: GenMessage<GetServiceStatusRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 29);
+  messageDesc(file_alfq_v1_broker, 39);
 
 /**
  * @generated from message alfq.v1.GetServiceStatusResponse
@@ -789,7 +1120,7 @@ export type GetServiceStatusResponse = Message<"alfq.v1.GetServiceStatusResponse
  * Use `create(GetServiceStatusResponseSchema)` to create a new message.
  */
 export const GetServiceStatusResponseSchema: GenMessage<GetServiceStatusResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 30);
+  messageDesc(file_alfq_v1_broker, 40);
 
 /**
  * @generated from message alfq.v1.RestartServiceRequest
@@ -806,7 +1137,7 @@ export type RestartServiceRequest = Message<"alfq.v1.RestartServiceRequest"> & {
  * Use `create(RestartServiceRequestSchema)` to create a new message.
  */
 export const RestartServiceRequestSchema: GenMessage<RestartServiceRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 31);
+  messageDesc(file_alfq_v1_broker, 41);
 
 /**
  * @generated from message alfq.v1.RestartServiceResponse
@@ -828,7 +1159,7 @@ export type RestartServiceResponse = Message<"alfq.v1.RestartServiceResponse"> &
  * Use `create(RestartServiceResponseSchema)` to create a new message.
  */
 export const RestartServiceResponseSchema: GenMessage<RestartServiceResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 32);
+  messageDesc(file_alfq_v1_broker, 42);
 
 /**
  * @generated from message alfq.v1.GetServiceLogsRequest
@@ -855,7 +1186,7 @@ export type GetServiceLogsRequest = Message<"alfq.v1.GetServiceLogsRequest"> & {
  * Use `create(GetServiceLogsRequestSchema)` to create a new message.
  */
 export const GetServiceLogsRequestSchema: GenMessage<GetServiceLogsRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 33);
+  messageDesc(file_alfq_v1_broker, 43);
 
 /**
  * @generated from message alfq.v1.GetServiceLogsResponse
@@ -877,7 +1208,7 @@ export type GetServiceLogsResponse = Message<"alfq.v1.GetServiceLogsResponse"> &
  * Use `create(GetServiceLogsResponseSchema)` to create a new message.
  */
 export const GetServiceLogsResponseSchema: GenMessage<GetServiceLogsResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_broker, 34);
+  messageDesc(file_alfq_v1_broker, 44);
 
 /**
  * @generated from service alfq.v1.BrokerService
@@ -993,6 +1324,38 @@ export const AccountService: GenService<{
     methodKind: "unary";
     input: typeof DisconnectAccountRequestSchema;
     output: typeof DisconnectAccountResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.AccountService.ListAccountOrders
+   */
+  listAccountOrders: {
+    methodKind: "unary";
+    input: typeof ListAccountOrdersRequestSchema;
+    output: typeof ListAccountOrdersResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.AccountService.ListAccountPositions
+   */
+  listAccountPositions: {
+    methodKind: "unary";
+    input: typeof ListAccountPositionsRequestSchema;
+    output: typeof ListAccountPositionsResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.AccountService.SyncAccountHistory
+   */
+  syncAccountHistory: {
+    methodKind: "unary";
+    input: typeof SyncAccountHistoryRequestSchema;
+    output: typeof SyncAccountHistoryResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.AccountService.GetSyncStatus
+   */
+  getSyncStatus: {
+    methodKind: "unary";
+    input: typeof GetSyncStatusRequestSchema;
+    output: typeof GetSyncStatusResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_alfq_v1_broker, 1);

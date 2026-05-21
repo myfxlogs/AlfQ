@@ -121,7 +121,13 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {accounts.map((a) => (
-                <tr key={a.id}>
+                <tr
+                  key={a.id}
+                  onClick={() => window.location.hash = `#/account/${a.id}`}
+                  style={{ cursor: "pointer", transition: "background 0.2s" }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.02)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
                   <td style={{ fontWeight: 600 }}>{a.login || "—"}</td>
                   <td>
                     <span style={{

@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
+	"google.golang.org/grpc"
 )
 
 // TickHandler is called for each normalized Tick.
@@ -27,6 +28,12 @@ type Gateway interface {
 	Disconnect(ctx context.Context) error
 	Subscribe(ctx context.Context, symbols []string, handler TickHandler) error
 	HealthCheck(ctx context.Context) error
+	// Conn returns the underlying gRPC connection (may be nil before Connect).
+	Conn() *grpc.ClientConn
+	// SessionID returns the MT session token (empty before Connect).
+	SessionID() string
+	// BrokerID returns the broker UUID for this connection.
+	BrokerID() string
 }
 
 // AccountConfig holds connection parameters for a broker account.
@@ -39,6 +46,7 @@ type AccountConfig struct {
 	Host       string
 	Port       string
 	MtapiToken string
+	TenantID   string
 }
 
 // Config holds the md-gateway service configuration.
@@ -67,8 +75,19 @@ type LogConfig struct {
 
 // Manager manages broker connections.
 type Manager struct {
-	mu       sync.Mutex
-	gateways map[string]Gateway
+	mu         sync.Mutex
+	gateways   map[string]Gateway
+	normalizer *Normalizer
+}
+
+// NewEmptyManager creates a Manager with no gateways (populated dynamically).
+func NewEmptyManager() *Manager {
+	return &Manager{gateways: make(map[string]Gateway)}
+}
+
+// SetNormalizer sets the canonical resolver for future gateway connections.
+func (m *Manager) SetNormalizer(n *Normalizer) {
+	m.normalizer = n
 }
 
 // NewManager creates a Manager and instantiates platform adapters.
@@ -85,17 +104,32 @@ func NewManager(cfg Config) *Manager {
 			Port:     entry.Port,
 		}
 		key := entry.Broker + "-" + entry.Login
-		m.gateways[key] = newGateway(ac)
+		m.gateways[key] = newGateway(ac, m.normalizer)
 	}
 	return m
 }
 
-func newGateway(cfg AccountConfig) Gateway {
+// AddGateway adds or replaces a gateway connection.
+func (m *Manager) AddGateway(cfg AccountConfig) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	key := cfg.Broker + "-" + cfg.Login
+	m.gateways[key] = newGateway(cfg, m.normalizer)
+}
+
+// RemoveGateway removes a gateway connection.
+func (m *Manager) RemoveGateway(key string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	delete(m.gateways, key)
+}
+
+func newGateway(cfg AccountConfig, normalizer *Normalizer) Gateway {
 	switch cfg.Platform {
 	case "mt4":
-		return newMT4Gateway(cfg)
+		return newMT4Gateway(cfg, normalizer)
 	case "mt5":
-		return newMT5Gateway(cfg)
+		return newMT5Gateway(cfg, normalizer)
 	default:
 		panic(fmt.Sprintf("mdgateway: unknown platform %q", cfg.Platform))
 	}

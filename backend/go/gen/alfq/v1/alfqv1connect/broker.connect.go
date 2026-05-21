@@ -77,6 +77,18 @@ const (
 	// AccountServiceDisconnectAccountProcedure is the fully-qualified name of the AccountService's
 	// DisconnectAccount RPC.
 	AccountServiceDisconnectAccountProcedure = "/alfq.v1.AccountService/DisconnectAccount"
+	// AccountServiceListAccountOrdersProcedure is the fully-qualified name of the AccountService's
+	// ListAccountOrders RPC.
+	AccountServiceListAccountOrdersProcedure = "/alfq.v1.AccountService/ListAccountOrders"
+	// AccountServiceListAccountPositionsProcedure is the fully-qualified name of the AccountService's
+	// ListAccountPositions RPC.
+	AccountServiceListAccountPositionsProcedure = "/alfq.v1.AccountService/ListAccountPositions"
+	// AccountServiceSyncAccountHistoryProcedure is the fully-qualified name of the AccountService's
+	// SyncAccountHistory RPC.
+	AccountServiceSyncAccountHistoryProcedure = "/alfq.v1.AccountService/SyncAccountHistory"
+	// AccountServiceGetSyncStatusProcedure is the fully-qualified name of the AccountService's
+	// GetSyncStatus RPC.
+	AccountServiceGetSyncStatusProcedure = "/alfq.v1.AccountService/GetSyncStatus"
 	// SystemSettingsServiceGetSystemSettingsProcedure is the fully-qualified name of the
 	// SystemSettingsService's GetSystemSettings RPC.
 	SystemSettingsServiceGetSystemSettingsProcedure = "/alfq.v1.SystemSettingsService/GetSystemSettings"
@@ -303,6 +315,10 @@ type AccountServiceClient interface {
 	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 	ConnectAccount(context.Context, *connect.Request[v1.ConnectAccountRequest]) (*connect.Response[v1.ConnectAccountResponse], error)
 	DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error)
+	ListAccountOrders(context.Context, *connect.Request[v1.ListAccountOrdersRequest]) (*connect.Response[v1.ListAccountOrdersResponse], error)
+	ListAccountPositions(context.Context, *connect.Request[v1.ListAccountPositionsRequest]) (*connect.Response[v1.ListAccountPositionsResponse], error)
+	SyncAccountHistory(context.Context, *connect.Request[v1.SyncAccountHistoryRequest]) (*connect.Response[v1.SyncAccountHistoryResponse], error)
+	GetSyncStatus(context.Context, *connect.Request[v1.GetSyncStatusRequest]) (*connect.Response[v1.GetSyncStatusResponse], error)
 }
 
 // NewAccountServiceClient constructs a client for the alfq.v1.AccountService service. By default,
@@ -358,18 +374,46 @@ func NewAccountServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(accountServiceMethods.ByName("DisconnectAccount")),
 			connect.WithClientOptions(opts...),
 		),
+		listAccountOrders: connect.NewClient[v1.ListAccountOrdersRequest, v1.ListAccountOrdersResponse](
+			httpClient,
+			baseURL+AccountServiceListAccountOrdersProcedure,
+			connect.WithSchema(accountServiceMethods.ByName("ListAccountOrders")),
+			connect.WithClientOptions(opts...),
+		),
+		listAccountPositions: connect.NewClient[v1.ListAccountPositionsRequest, v1.ListAccountPositionsResponse](
+			httpClient,
+			baseURL+AccountServiceListAccountPositionsProcedure,
+			connect.WithSchema(accountServiceMethods.ByName("ListAccountPositions")),
+			connect.WithClientOptions(opts...),
+		),
+		syncAccountHistory: connect.NewClient[v1.SyncAccountHistoryRequest, v1.SyncAccountHistoryResponse](
+			httpClient,
+			baseURL+AccountServiceSyncAccountHistoryProcedure,
+			connect.WithSchema(accountServiceMethods.ByName("SyncAccountHistory")),
+			connect.WithClientOptions(opts...),
+		),
+		getSyncStatus: connect.NewClient[v1.GetSyncStatusRequest, v1.GetSyncStatusResponse](
+			httpClient,
+			baseURL+AccountServiceGetSyncStatusProcedure,
+			connect.WithSchema(accountServiceMethods.ByName("GetSyncStatus")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // accountServiceClient implements AccountServiceClient.
 type accountServiceClient struct {
-	createAccount     *connect.Client[v1.CreateAccountRequest, v1.Account]
-	getAccount        *connect.Client[v1.GetAccountRequest, v1.Account]
-	listAccounts      *connect.Client[v1.ListAccountsRequest, v1.ListAccountsResponse]
-	updateAccount     *connect.Client[v1.Account, v1.Account]
-	deleteAccount     *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
-	connectAccount    *connect.Client[v1.ConnectAccountRequest, v1.ConnectAccountResponse]
-	disconnectAccount *connect.Client[v1.DisconnectAccountRequest, v1.DisconnectAccountResponse]
+	createAccount        *connect.Client[v1.CreateAccountRequest, v1.Account]
+	getAccount           *connect.Client[v1.GetAccountRequest, v1.Account]
+	listAccounts         *connect.Client[v1.ListAccountsRequest, v1.ListAccountsResponse]
+	updateAccount        *connect.Client[v1.Account, v1.Account]
+	deleteAccount        *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
+	connectAccount       *connect.Client[v1.ConnectAccountRequest, v1.ConnectAccountResponse]
+	disconnectAccount    *connect.Client[v1.DisconnectAccountRequest, v1.DisconnectAccountResponse]
+	listAccountOrders    *connect.Client[v1.ListAccountOrdersRequest, v1.ListAccountOrdersResponse]
+	listAccountPositions *connect.Client[v1.ListAccountPositionsRequest, v1.ListAccountPositionsResponse]
+	syncAccountHistory   *connect.Client[v1.SyncAccountHistoryRequest, v1.SyncAccountHistoryResponse]
+	getSyncStatus        *connect.Client[v1.GetSyncStatusRequest, v1.GetSyncStatusResponse]
 }
 
 // CreateAccount calls alfq.v1.AccountService.CreateAccount.
@@ -407,6 +451,26 @@ func (c *accountServiceClient) DisconnectAccount(ctx context.Context, req *conne
 	return c.disconnectAccount.CallUnary(ctx, req)
 }
 
+// ListAccountOrders calls alfq.v1.AccountService.ListAccountOrders.
+func (c *accountServiceClient) ListAccountOrders(ctx context.Context, req *connect.Request[v1.ListAccountOrdersRequest]) (*connect.Response[v1.ListAccountOrdersResponse], error) {
+	return c.listAccountOrders.CallUnary(ctx, req)
+}
+
+// ListAccountPositions calls alfq.v1.AccountService.ListAccountPositions.
+func (c *accountServiceClient) ListAccountPositions(ctx context.Context, req *connect.Request[v1.ListAccountPositionsRequest]) (*connect.Response[v1.ListAccountPositionsResponse], error) {
+	return c.listAccountPositions.CallUnary(ctx, req)
+}
+
+// SyncAccountHistory calls alfq.v1.AccountService.SyncAccountHistory.
+func (c *accountServiceClient) SyncAccountHistory(ctx context.Context, req *connect.Request[v1.SyncAccountHistoryRequest]) (*connect.Response[v1.SyncAccountHistoryResponse], error) {
+	return c.syncAccountHistory.CallUnary(ctx, req)
+}
+
+// GetSyncStatus calls alfq.v1.AccountService.GetSyncStatus.
+func (c *accountServiceClient) GetSyncStatus(ctx context.Context, req *connect.Request[v1.GetSyncStatusRequest]) (*connect.Response[v1.GetSyncStatusResponse], error) {
+	return c.getSyncStatus.CallUnary(ctx, req)
+}
+
 // AccountServiceHandler is an implementation of the alfq.v1.AccountService service.
 type AccountServiceHandler interface {
 	CreateAccount(context.Context, *connect.Request[v1.CreateAccountRequest]) (*connect.Response[v1.Account], error)
@@ -416,6 +480,10 @@ type AccountServiceHandler interface {
 	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 	ConnectAccount(context.Context, *connect.Request[v1.ConnectAccountRequest]) (*connect.Response[v1.ConnectAccountResponse], error)
 	DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error)
+	ListAccountOrders(context.Context, *connect.Request[v1.ListAccountOrdersRequest]) (*connect.Response[v1.ListAccountOrdersResponse], error)
+	ListAccountPositions(context.Context, *connect.Request[v1.ListAccountPositionsRequest]) (*connect.Response[v1.ListAccountPositionsResponse], error)
+	SyncAccountHistory(context.Context, *connect.Request[v1.SyncAccountHistoryRequest]) (*connect.Response[v1.SyncAccountHistoryResponse], error)
+	GetSyncStatus(context.Context, *connect.Request[v1.GetSyncStatusRequest]) (*connect.Response[v1.GetSyncStatusResponse], error)
 }
 
 // NewAccountServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -467,6 +535,30 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 		connect.WithSchema(accountServiceMethods.ByName("DisconnectAccount")),
 		connect.WithHandlerOptions(opts...),
 	)
+	accountServiceListAccountOrdersHandler := connect.NewUnaryHandler(
+		AccountServiceListAccountOrdersProcedure,
+		svc.ListAccountOrders,
+		connect.WithSchema(accountServiceMethods.ByName("ListAccountOrders")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accountServiceListAccountPositionsHandler := connect.NewUnaryHandler(
+		AccountServiceListAccountPositionsProcedure,
+		svc.ListAccountPositions,
+		connect.WithSchema(accountServiceMethods.ByName("ListAccountPositions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accountServiceSyncAccountHistoryHandler := connect.NewUnaryHandler(
+		AccountServiceSyncAccountHistoryProcedure,
+		svc.SyncAccountHistory,
+		connect.WithSchema(accountServiceMethods.ByName("SyncAccountHistory")),
+		connect.WithHandlerOptions(opts...),
+	)
+	accountServiceGetSyncStatusHandler := connect.NewUnaryHandler(
+		AccountServiceGetSyncStatusProcedure,
+		svc.GetSyncStatus,
+		connect.WithSchema(accountServiceMethods.ByName("GetSyncStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/alfq.v1.AccountService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AccountServiceCreateAccountProcedure:
@@ -483,6 +575,14 @@ func NewAccountServiceHandler(svc AccountServiceHandler, opts ...connect.Handler
 			accountServiceConnectAccountHandler.ServeHTTP(w, r)
 		case AccountServiceDisconnectAccountProcedure:
 			accountServiceDisconnectAccountHandler.ServeHTTP(w, r)
+		case AccountServiceListAccountOrdersProcedure:
+			accountServiceListAccountOrdersHandler.ServeHTTP(w, r)
+		case AccountServiceListAccountPositionsProcedure:
+			accountServiceListAccountPositionsHandler.ServeHTTP(w, r)
+		case AccountServiceSyncAccountHistoryProcedure:
+			accountServiceSyncAccountHistoryHandler.ServeHTTP(w, r)
+		case AccountServiceGetSyncStatusProcedure:
+			accountServiceGetSyncStatusHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -518,6 +618,22 @@ func (UnimplementedAccountServiceHandler) ConnectAccount(context.Context, *conne
 
 func (UnimplementedAccountServiceHandler) DisconnectAccount(context.Context, *connect.Request[v1.DisconnectAccountRequest]) (*connect.Response[v1.DisconnectAccountResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.DisconnectAccount is not implemented"))
+}
+
+func (UnimplementedAccountServiceHandler) ListAccountOrders(context.Context, *connect.Request[v1.ListAccountOrdersRequest]) (*connect.Response[v1.ListAccountOrdersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.ListAccountOrders is not implemented"))
+}
+
+func (UnimplementedAccountServiceHandler) ListAccountPositions(context.Context, *connect.Request[v1.ListAccountPositionsRequest]) (*connect.Response[v1.ListAccountPositionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.ListAccountPositions is not implemented"))
+}
+
+func (UnimplementedAccountServiceHandler) SyncAccountHistory(context.Context, *connect.Request[v1.SyncAccountHistoryRequest]) (*connect.Response[v1.SyncAccountHistoryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.SyncAccountHistory is not implemented"))
+}
+
+func (UnimplementedAccountServiceHandler) GetSyncStatus(context.Context, *connect.Request[v1.GetSyncStatusRequest]) (*connect.Response[v1.GetSyncStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.AccountService.GetSyncStatus is not implemented"))
 }
 
 // SystemSettingsServiceClient is a client for the alfq.v1.SystemSettingsService service.

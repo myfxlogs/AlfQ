@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file alfq/v1/market_data.proto.
  */
 export const file_alfq_v1_market_data: GenFile = /*@__PURE__*/
-  fileDesc("ChlhbGZxL3YxL21hcmtldF9kYXRhLnByb3RvEgdhbGZxLnYxIsgBCgRUaWNrEhEKCXRlbmFudF9pZBgBIAEoCRIOCgZicm9rZXIYAiABKAkSDgoGc3ltYm9sGAMgASgJEhIKCnRzX3VuaXhfbXMYBCABKAMSFwoPYXJyaXZlZF91bml4X21zGAUgASgDEhsKA2JpZBgGIAEoCzIOLmFsZnEudjEuTW9uZXkSGwoDYXNrGAcgASgLMg4uYWxmcS52MS5Nb25leRISCgpiaWRfdm9sdW1lGAggASgBEhIKCmFza192b2x1bWUYCSABKAEiZQoFUXVvdGUSDgoGc3ltYm9sGAEgASgJEhIKCnRzX3VuaXhfbXMYAiABKAMSGwoDYmlkGAMgASgLMg4uYWxmcS52MS5Nb25leRIbCgNhc2sYBCABKAsyDi5hbGZxLnYxLk1vbmV5IpcCCgNCYXISEQoJdGVuYW50X2lkGAEgASgJEg4KBmJyb2tlchgCIAEoCRIOCgZzeW1ib2wYAyABKAkSDgoGcGVyaW9kGAQgASgJEhcKD29wZW5fdHNfdW5peF9tcxgFIAEoAxIYChBjbG9zZV90c191bml4X21zGAYgASgDEhwKBG9wZW4YByABKAsyDi5hbGZxLnYxLk1vbmV5EhwKBGhpZ2gYCCABKAsyDi5hbGZxLnYxLk1vbmV5EhsKA2xvdxgJIAEoCzIOLmFsZnEudjEuTW9uZXkSHQoFY2xvc2UYCiABKAsyDi5hbGZxLnYxLk1vbmV5Eg4KBnZvbHVtZRgLIAEoARISCgp0aWNrX2NvdW50GAwgASgFQi9aLWdpdGh1Yi5jb20vYWxmcS9iYWNrZW5kL2dvL2dlbi9hbGZxL3YxO2FsZnF2MWIGcHJvdG8z", [file_alfq_v1_common]);
+  fileDesc("ChlhbGZxL3YxL21hcmtldF9kYXRhLnByb3RvEgdhbGZxLnYxItsBCgRUaWNrEhEKCXRlbmFudF9pZBgBIAEoCRIOCgZicm9rZXIYAiABKAkSDgoGc3ltYm9sGAMgASgJEhIKCnRzX3VuaXhfbXMYBCABKAMSFwoPYXJyaXZlZF91bml4X21zGAUgASgDEhsKA2JpZBgGIAEoCzIOLmFsZnEudjEuTW9uZXkSGwoDYXNrGAcgASgLMg4uYWxmcS52MS5Nb25leRISCgpiaWRfdm9sdW1lGAggASgBEhIKCmFza192b2x1bWUYCSABKAESEQoJY2Fub25pY2FsGAogASgJImUKBVF1b3RlEg4KBnN5bWJvbBgBIAEoCRISCgp0c191bml4X21zGAIgASgDEhsKA2JpZBgDIAEoCzIOLmFsZnEudjEuTW9uZXkSGwoDYXNrGAQgASgLMg4uYWxmcS52MS5Nb25leSKqAgoDQmFyEhEKCXRlbmFudF9pZBgBIAEoCRIOCgZicm9rZXIYAiABKAkSDgoGc3ltYm9sGAMgASgJEg4KBnBlcmlvZBgEIAEoCRIXCg9vcGVuX3RzX3VuaXhfbXMYBSABKAMSGAoQY2xvc2VfdHNfdW5peF9tcxgGIAEoAxIcCgRvcGVuGAcgASgLMg4uYWxmcS52MS5Nb25leRIcCgRoaWdoGAggASgLMg4uYWxmcS52MS5Nb25leRIbCgNsb3cYCSABKAsyDi5hbGZxLnYxLk1vbmV5Eh0KBWNsb3NlGAogASgLMg4uYWxmcS52MS5Nb25leRIOCgZ2b2x1bWUYCyABKAESEgoKdGlja19jb3VudBgMIAEoBRIRCgljYW5vbmljYWwYDSABKAlCL1otZ2l0aHViLmNvbS9hbGZxL2JhY2tlbmQvZ28vZ2VuL2FsZnEvdjE7YWxmcXYxYgZwcm90bzM", [file_alfq_v1_common]);
 
 /**
  * Tick is a single bid/ask quote update from a broker.
@@ -31,6 +31,8 @@ export type Tick = Message<"alfq.v1.Tick"> & {
   broker: string;
 
   /**
+   * raw broker symbol (e.g. EURUSD.m)
+   *
    * @generated from field: string symbol = 3;
    */
   symbol: string;
@@ -68,6 +70,13 @@ export type Tick = Message<"alfq.v1.Tick"> & {
    * @generated from field: double ask_volume = 9;
    */
   askVolume: number;
+
+  /**
+   * canonical symbol name (e.g. EURUSD), filled by mdgateway normalizer
+   *
+   * @generated from field: string canonical = 10;
+   */
+  canonical: string;
 };
 
 /**
@@ -129,6 +138,8 @@ export type Bar = Message<"alfq.v1.Bar"> & {
   broker: string;
 
   /**
+   * raw broker symbol
+   *
    * @generated from field: string symbol = 3;
    */
   symbol: string;
@@ -179,6 +190,13 @@ export type Bar = Message<"alfq.v1.Bar"> & {
    * @generated from field: int32 tick_count = 12;
    */
   tickCount: number;
+
+  /**
+   * canonical symbol name (e.g. EURUSD)
+   *
+   * @generated from field: string canonical = 13;
+   */
+  canonical: string;
 };
 
 /**

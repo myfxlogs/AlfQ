@@ -128,6 +128,22 @@ func (a *Adapter) ListAccountPositions(ctx context.Context, req *connect.Request
 	return connect.NewResponse(resp), nil
 }
 
+func (a *Adapter) SyncAccountHistory(ctx context.Context, req *connect.Request[pb.SyncAccountHistoryRequest]) (*connect.Response[pb.SyncAccountHistoryResponse], error) {
+	resp, err := a.svc.SyncAccountHistory(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
+func (a *Adapter) GetSyncStatus(ctx context.Context, req *connect.Request[pb.GetSyncStatusRequest]) (*connect.Response[pb.GetSyncStatusResponse], error) {
+	resp, err := a.svc.GetSyncStatus(ctx, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // -- StrategyService --
 
 func (a *Adapter) CreateStrategy(ctx context.Context, req *connect.Request[pb.CreateStrategyRequest]) (*connect.Response[pb.Strategy], error) {

@@ -17,11 +17,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// directBrokerID is the placeholder broker used for direct server binding
-// (when no broker record matches the user's selection).
-// Must exist in the brokers table (seed: 00000000-0000-0000-0000-000000000000).
-const directBrokerID = "00000000-0000-0000-0000-000000000000"
-
 func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.Account, error) {
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
@@ -34,44 +29,63 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 	if strings.TrimSpace(req.Password) == "" {
 		return nil, fmt.Errorf("密码不能为空")
 	}
-	if req.BrokerId == "" {
-		if strings.TrimSpace(req.Server) == "" {
-			return nil, fmt.Errorf("服务器地址不能为空")
-		}
-		if mt := strings.ToUpper(strings.TrimSpace(req.MtType)); mt != "MT4" && mt != "MT5" {
-			return nil, fmt.Errorf("交易平台类型无效：%s（仅支持 MT4/MT5）", req.MtType)
-		}
+
+	// Validate server connection info (either from broker lookup or from online search)
+	if strings.TrimSpace(req.Server) == "" {
+		return nil, fmt.Errorf("服务器地址不能为空")
+	}
+	if mt := strings.ToUpper(strings.TrimSpace(req.MtType)); mt != "MT4" && mt != "MT5" {
+		return nil, fmt.Errorf("交易平台类型无效：%s（仅支持 MT4/MT5）", req.MtType)
 	}
 
-	// 1. Look up broker to get MT endpoint (skip for placeholder ID)
-	var brokerHost, platform string
-	if req.BrokerId == "" {
-		brokerHost = req.Server // use server field as host:port directly
-		platform = req.MtType
-	} else {
-		if err := s.pool.QueryRow(ctx,
-			`SELECT COALESCE(mtapi_endpoint, ''), platform FROM brokers WHERE id = $1`,
-			req.BrokerId,
-		).Scan(&brokerHost, &platform); err != nil {
-			return nil, fmt.Errorf("broker lookup: %w", err)
-		}
-	}
-
-	// 2. Insert account with connecting status
+	// 1. Resolve connection endpoint, platform, and broker_id.
+	//    Two paths:
+	//    (a) broker_id provided  → look up existing brokers row (seeded broker)
+	//    (b) broker_id empty     → auto-upsert a brokers row keyed by
+	//        (tenant_id, code="ONLINE:<platform>:<server>"); idempotent
 	tid := effectiveTenantID(ctx, req.TenantId)
 	uid := auth.UserFromContext(ctx)
 	if uid == "" {
 		return nil, fmt.Errorf("user not authenticated")
 	}
 
+	var brokerHost, platform, bid string
+	if req.BrokerId != "" {
+		if err := s.pool.QueryRow(ctx,
+			`SELECT COALESCE(mtapi_endpoint, ''), platform FROM brokers WHERE id = $1`,
+			req.BrokerId,
+		).Scan(&brokerHost, &platform); err != nil {
+			return nil, fmt.Errorf("broker lookup: %w", err)
+		}
+		bid = req.BrokerId
+	} else {
+		// Online-search path: server name + platform fully define the broker.
+		// Derive a stable per-tenant code; UPSERT keeps FK integrity without
+		// duplicate rows when the same online broker is bound multiple times.
+		platform = strings.ToLower(strings.TrimSpace(req.MtType))
+		brokerHost = strings.TrimSpace(req.Server) // mtapi gateway resolves server name
+		code := fmt.Sprintf("ONLINE:%s:%s", strings.ToUpper(platform), brokerHost)
+		name := strings.TrimSpace(req.ServerName)
+		if name == "" {
+			name = brokerHost
+		}
+		if i := strings.IndexAny(name, "-_"); i > 0 {
+			name = name[:i] // "Exness-Real2" → "Exness"
+		}
+		if err := s.pool.QueryRow(ctx, `
+			INSERT INTO brokers (tenant_id, code, name, platform, mtapi_endpoint, default_server)
+			VALUES ($1, $2, $3, $4, '', $5)
+			ON CONFLICT (tenant_id, code) DO UPDATE
+				SET default_server = EXCLUDED.default_server
+			RETURNING id
+		`, tid, code, name, platform, brokerHost).Scan(&bid); err != nil {
+			return nil, fmt.Errorf("upsert broker: %w", err)
+		}
+	}
+
+	// 2. Insert account with connecting status
 	a := &pb.Account{}
 	now := time.Now()
-
-	// broker_id: use direct placeholder when no broker lookup
-	bid := req.BrokerId
-	if bid == "" {
-		bid = directBrokerID
-	}
 
 	err := s.pool.QueryRow(ctx, `
 		INSERT INTO accounts (tenant_id, user_id, broker_id, login, password, server, server_name, platform, account_type,
@@ -159,8 +173,18 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 		if s.acctConn != nil {
 			s.acctConn.Connect(context.Background(), AccountInfo{
 				ID: a.Id, Login: req.Login, Password: req.Password,
-				Server: brokerHost, Platform: platform,
+				Server: brokerHost, Platform: platform, BrokerID: bid,
 			})
+		}
+		// Async full historical order sync
+		if s.syncWorker != nil {
+			go func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
+				defer scancel()
+				if err := s.syncWorker.FullSync(sctx, a.Id); err != nil {
+					s.log.Warn("account full sync failed", zap.String("account_id", a.Id), zap.Error(err))
+				}
+			}()
 		}
 	} else {
 		// No broker endpoint — leave as disconnected (manual setup)
@@ -355,6 +379,108 @@ func scanAccountRow(row interface{ Scan(...interface{}) error }) (*pb.Account, e
 		a.CreatedAt = timestamppb.New(t)
 	}
 	return a, nil
+}
+
+func (s *Service) ListAccountOrders(ctx context.Context, req *pb.ListAccountOrdersRequest) (*pb.ListAccountOrdersResponse, error) {
+	if err := s.setRLS(ctx); err != nil {
+		return nil, fmt.Errorf("rls: %w", err)
+	}
+	if s.historyRepo == nil {
+		return nil, fmt.Errorf("history repository unavailable")
+	}
+	var from, to time.Time
+	if req.From != "" {
+		from, _ = time.Parse(time.RFC3339, req.From)
+	}
+	if req.To != "" {
+		to, _ = time.Parse(time.RFC3339, req.To)
+	}
+	tenantID := auth.TenantFromContext(ctx)
+	rows, err := s.historyRepo.List(ctx, tenantID, req.AccountId, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("list history orders: %w", err)
+	}
+	pbOrders := make([]*pb.HistoricalOrder, 0, len(rows))
+	for _, o := range rows {
+		var ct string
+		if o.CloseTime != nil {
+			ct = o.CloseTime.Format(time.RFC3339)
+		}
+		pbOrders = append(pbOrders, &pb.HistoricalOrder{
+			Ticket: o.Ticket, Symbol: o.Symbol, Side: o.Side,
+			Lots: o.Lots, OpenPrice: o.OpenPrice, ClosePrice: o.ClosePrice,
+			Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+			OpenTime: o.OpenTime.Format(time.RFC3339), CloseTime: ct,
+		})
+	}
+	return &pb.ListAccountOrdersResponse{Orders: pbOrders}, nil
+}
+
+func (s *Service) SyncAccountHistory(ctx context.Context, req *pb.SyncAccountHistoryRequest) (*pb.SyncAccountHistoryResponse, error) {
+	if err := s.setRLS(ctx); err != nil {
+		return nil, fmt.Errorf("rls: %w", err)
+	}
+	if s.syncWorker == nil {
+		return nil, fmt.Errorf("sync worker unavailable")
+	}
+	go func() {
+		sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer scancel()
+		if err := s.syncWorker.FullSync(sctx, req.AccountId); err != nil {
+			s.log.Warn("manual full sync failed", zap.String("account_id", req.AccountId), zap.Error(err))
+		}
+		if s.publishSyncDoneFn != nil {
+			s.publishSyncDoneFn(req.AccountId)
+		}
+	}()
+	return &pb.SyncAccountHistoryResponse{SyncId: req.AccountId, Status: "started"}, nil
+}
+
+func (s *Service) GetSyncStatus(ctx context.Context, req *pb.GetSyncStatusRequest) (*pb.GetSyncStatusResponse, error) {
+	if err := s.setRLS(ctx); err != nil {
+		return nil, fmt.Errorf("rls: %w", err)
+	}
+	if s.syncWorker == nil {
+		return nil, fmt.Errorf("sync worker unavailable")
+	}
+	state, err := s.syncWorker.GetSyncState(ctx, req.AccountId)
+	if err != nil {
+		return nil, fmt.Errorf("get sync state: %w", err)
+	}
+	var lastFull, lastIncr string
+	if state.LastFullSyncAt != nil {
+		lastFull = state.LastFullSyncAt.Format(time.RFC3339)
+	}
+	if state.LastIncrSyncAt != nil {
+		lastIncr = state.LastIncrSyncAt.Format(time.RFC3339)
+	}
+	return &pb.GetSyncStatusResponse{
+		AccountId:       state.AccountID,
+		SyncStatus:      state.SyncStatus,
+		LastFullSyncAt:  lastFull,
+		LastIncrSyncAt:  lastIncr,
+		LastError:       state.LastError,
+		TotalSynced:     int32(state.TotalSynced),
+	}, nil
+}
+
+func (s *Service) ListAccountPositions(ctx context.Context, req *pb.ListAccountPositionsRequest) (*pb.ListAccountPositionsResponse, error) {
+	if err := s.setRLS(ctx); err != nil {
+		return nil, fmt.Errorf("rls: %w", err)
+	}
+	if s.acctConn == nil {
+		return &pb.ListAccountPositionsResponse{}, nil
+	}
+	cached := s.acctConn.LatestPositions(req.AccountId)
+	out := make([]*pb.AccountPosition, 0, len(cached))
+	for _, p := range cached {
+		out = append(out, &pb.AccountPosition{
+			Ticket: p.Ticket, Symbol: p.Symbol, Side: p.Type,
+			Lots: p.Lots, OpenPrice: p.OpenPrice,
+			Profit: p.Profit, Swap: p.Swap, Commission: p.Commission,
+		})
+	}
+	return &pb.ListAccountPositionsResponse{Positions: out}, nil
 }
 
 func coalesce(s, def string) string {

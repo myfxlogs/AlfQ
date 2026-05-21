@@ -72,12 +72,15 @@ def _daily_pnl(result: BacktestResult, initial_capital: float) -> pl.DataFrame:
     if "ts" not in df.columns:
         return pl.DataFrame(schema={"date": pl.Utf8, "daily_pnl": pl.Float64})
 
-    # ts is in milliseconds; extract date
-    df = df.with_columns(
-        pl.from_epoch("ts", time_unit="ms")
-        .dt.strftime("%Y-%m-%d")
-        .alias("date")
-    )
+    # Extract date from ts column (int64 ms or datetime)
+    if df["ts"].dtype.is_temporal():
+        df = df.with_columns(pl.col("ts").dt.strftime("%Y-%m-%d").alias("date"))
+    else:
+        df = df.with_columns(
+            pl.from_epoch("ts", time_unit="ms")
+            .dt.strftime("%Y-%m-%d")
+            .alias("date")
+        )
 
     daily = df.group_by("date").agg(
         pl.col("equity").last().alias("equity_eod")

@@ -500,8 +500,9 @@ func (x *SearchBrokerResponse) GetMatches() []*BrokerMatch {
 
 type BrokerMatch struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Company       string                 `protobuf:"bytes,1,opt,name=company,proto3" json:"company,omitempty"`
-	Servers       []*BrokerServer        `protobuf:"bytes,2,rep,name=servers,proto3" json:"servers,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"` // broker UUID (empty when from online gateway search)
+	Company       string                 `protobuf:"bytes,2,opt,name=company,proto3" json:"company,omitempty"`
+	Servers       []*BrokerServer        `protobuf:"bytes,3,rep,name=servers,proto3" json:"servers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -534,6 +535,13 @@ func (x *BrokerMatch) ProtoReflect() protoreflect.Message {
 // Deprecated: Use BrokerMatch.ProtoReflect.Descriptor instead.
 func (*BrokerMatch) Descriptor() ([]byte, []int) {
 	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BrokerMatch) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *BrokerMatch) GetCompany() string {
@@ -1370,6 +1378,671 @@ func (*DisconnectAccountResponse) Descriptor() ([]byte, []int) {
 	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{22}
 }
 
+type ListAccountOrdersRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	AccountId string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	// optional date range in ISO-8601 format; empty means all history
+	From          string `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	To            string `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountOrdersRequest) Reset() {
+	*x = ListAccountOrdersRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountOrdersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountOrdersRequest) ProtoMessage() {}
+
+func (x *ListAccountOrdersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountOrdersRequest.ProtoReflect.Descriptor instead.
+func (*ListAccountOrdersRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListAccountOrdersRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *ListAccountOrdersRequest) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *ListAccountOrdersRequest) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+type ListAccountOrdersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Orders        []*HistoricalOrder     `protobuf:"bytes,1,rep,name=orders,proto3" json:"orders,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountOrdersResponse) Reset() {
+	*x = ListAccountOrdersResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountOrdersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountOrdersResponse) ProtoMessage() {}
+
+func (x *ListAccountOrdersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountOrdersResponse.ProtoReflect.Descriptor instead.
+func (*ListAccountOrdersResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListAccountOrdersResponse) GetOrders() []*HistoricalOrder {
+	if x != nil {
+		return x.Orders
+	}
+	return nil
+}
+
+type ListAccountPositionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountPositionsRequest) Reset() {
+	*x = ListAccountPositionsRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountPositionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountPositionsRequest) ProtoMessage() {}
+
+func (x *ListAccountPositionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountPositionsRequest.ProtoReflect.Descriptor instead.
+func (*ListAccountPositionsRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListAccountPositionsRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+type ListAccountPositionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Positions     []*AccountPosition     `protobuf:"bytes,1,rep,name=positions,proto3" json:"positions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccountPositionsResponse) Reset() {
+	*x = ListAccountPositionsResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountPositionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountPositionsResponse) ProtoMessage() {}
+
+func (x *ListAccountPositionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountPositionsResponse.ProtoReflect.Descriptor instead.
+func (*ListAccountPositionsResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ListAccountPositionsResponse) GetPositions() []*AccountPosition {
+	if x != nil {
+		return x.Positions
+	}
+	return nil
+}
+
+type AccountPosition struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ticket        int64                  `protobuf:"varint,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
+	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Side          string                 `protobuf:"bytes,3,opt,name=side,proto3" json:"side,omitempty"` // "buy" | "sell"
+	Lots          float64                `protobuf:"fixed64,4,opt,name=lots,proto3" json:"lots,omitempty"`
+	OpenPrice     float64                `protobuf:"fixed64,5,opt,name=open_price,json=openPrice,proto3" json:"open_price,omitempty"`
+	Profit        float64                `protobuf:"fixed64,6,opt,name=profit,proto3" json:"profit,omitempty"`
+	Swap          float64                `protobuf:"fixed64,7,opt,name=swap,proto3" json:"swap,omitempty"`
+	Commission    float64                `protobuf:"fixed64,8,opt,name=commission,proto3" json:"commission,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccountPosition) Reset() {
+	*x = AccountPosition{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccountPosition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccountPosition) ProtoMessage() {}
+
+func (x *AccountPosition) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccountPosition.ProtoReflect.Descriptor instead.
+func (*AccountPosition) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *AccountPosition) GetTicket() int64 {
+	if x != nil {
+		return x.Ticket
+	}
+	return 0
+}
+
+func (x *AccountPosition) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *AccountPosition) GetSide() string {
+	if x != nil {
+		return x.Side
+	}
+	return ""
+}
+
+func (x *AccountPosition) GetLots() float64 {
+	if x != nil {
+		return x.Lots
+	}
+	return 0
+}
+
+func (x *AccountPosition) GetOpenPrice() float64 {
+	if x != nil {
+		return x.OpenPrice
+	}
+	return 0
+}
+
+func (x *AccountPosition) GetProfit() float64 {
+	if x != nil {
+		return x.Profit
+	}
+	return 0
+}
+
+func (x *AccountPosition) GetSwap() float64 {
+	if x != nil {
+		return x.Swap
+	}
+	return 0
+}
+
+func (x *AccountPosition) GetCommission() float64 {
+	if x != nil {
+		return x.Commission
+	}
+	return 0
+}
+
+type SyncAccountHistoryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	From          string                 `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	To            string                 `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
+	FullResync    bool                   `protobuf:"varint,4,opt,name=full_resync,json=fullResync,proto3" json:"full_resync,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncAccountHistoryRequest) Reset() {
+	*x = SyncAccountHistoryRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncAccountHistoryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncAccountHistoryRequest) ProtoMessage() {}
+
+func (x *SyncAccountHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncAccountHistoryRequest.ProtoReflect.Descriptor instead.
+func (*SyncAccountHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SyncAccountHistoryRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *SyncAccountHistoryRequest) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *SyncAccountHistoryRequest) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *SyncAccountHistoryRequest) GetFullResync() bool {
+	if x != nil {
+		return x.FullResync
+	}
+	return false
+}
+
+type SyncAccountHistoryResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SyncId        string                 `protobuf:"bytes,1,opt,name=sync_id,json=syncId,proto3" json:"sync_id,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"` // "started" | "in_progress" | "completed"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncAccountHistoryResponse) Reset() {
+	*x = SyncAccountHistoryResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncAccountHistoryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncAccountHistoryResponse) ProtoMessage() {}
+
+func (x *SyncAccountHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncAccountHistoryResponse.ProtoReflect.Descriptor instead.
+func (*SyncAccountHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SyncAccountHistoryResponse) GetSyncId() string {
+	if x != nil {
+		return x.SyncId
+	}
+	return ""
+}
+
+func (x *SyncAccountHistoryResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type GetSyncStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSyncStatusRequest) Reset() {
+	*x = GetSyncStatusRequest{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSyncStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSyncStatusRequest) ProtoMessage() {}
+
+func (x *GetSyncStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSyncStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetSyncStatusRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *GetSyncStatusRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+type GetSyncStatusResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AccountId      string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	SyncStatus     string                 `protobuf:"bytes,2,opt,name=sync_status,json=syncStatus,proto3" json:"sync_status,omitempty"` // "idle" | "syncing" | "error"
+	LastFullSyncAt string                 `protobuf:"bytes,3,opt,name=last_full_sync_at,json=lastFullSyncAt,proto3" json:"last_full_sync_at,omitempty"`
+	LastIncrSyncAt string                 `protobuf:"bytes,4,opt,name=last_incr_sync_at,json=lastIncrSyncAt,proto3" json:"last_incr_sync_at,omitempty"`
+	LastError      string                 `protobuf:"bytes,5,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	TotalSynced    int32                  `protobuf:"varint,6,opt,name=total_synced,json=totalSynced,proto3" json:"total_synced,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetSyncStatusResponse) Reset() {
+	*x = GetSyncStatusResponse{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSyncStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSyncStatusResponse) ProtoMessage() {}
+
+func (x *GetSyncStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSyncStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetSyncStatusResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *GetSyncStatusResponse) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *GetSyncStatusResponse) GetSyncStatus() string {
+	if x != nil {
+		return x.SyncStatus
+	}
+	return ""
+}
+
+func (x *GetSyncStatusResponse) GetLastFullSyncAt() string {
+	if x != nil {
+		return x.LastFullSyncAt
+	}
+	return ""
+}
+
+func (x *GetSyncStatusResponse) GetLastIncrSyncAt() string {
+	if x != nil {
+		return x.LastIncrSyncAt
+	}
+	return ""
+}
+
+func (x *GetSyncStatusResponse) GetLastError() string {
+	if x != nil {
+		return x.LastError
+	}
+	return ""
+}
+
+func (x *GetSyncStatusResponse) GetTotalSynced() int32 {
+	if x != nil {
+		return x.TotalSynced
+	}
+	return 0
+}
+
+type HistoricalOrder struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ticket        int64                  `protobuf:"varint,1,opt,name=ticket,proto3" json:"ticket,omitempty"`
+	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Side          string                 `protobuf:"bytes,3,opt,name=side,proto3" json:"side,omitempty"` // "buy" | "sell"
+	Lots          float64                `protobuf:"fixed64,4,opt,name=lots,proto3" json:"lots,omitempty"`
+	OpenPrice     float64                `protobuf:"fixed64,5,opt,name=open_price,json=openPrice,proto3" json:"open_price,omitempty"`
+	ClosePrice    float64                `protobuf:"fixed64,6,opt,name=close_price,json=closePrice,proto3" json:"close_price,omitempty"`
+	Profit        float64                `protobuf:"fixed64,7,opt,name=profit,proto3" json:"profit,omitempty"`
+	Swap          float64                `protobuf:"fixed64,8,opt,name=swap,proto3" json:"swap,omitempty"`
+	Commission    float64                `protobuf:"fixed64,9,opt,name=commission,proto3" json:"commission,omitempty"`
+	OpenTime      string                 `protobuf:"bytes,10,opt,name=open_time,json=openTime,proto3" json:"open_time,omitempty"`    // RFC3339
+	CloseTime     string                 `protobuf:"bytes,11,opt,name=close_time,json=closeTime,proto3" json:"close_time,omitempty"` // RFC3339
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HistoricalOrder) Reset() {
+	*x = HistoricalOrder{}
+	mi := &file_alfq_v1_broker_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HistoricalOrder) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HistoricalOrder) ProtoMessage() {}
+
+func (x *HistoricalOrder) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_broker_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HistoricalOrder.ProtoReflect.Descriptor instead.
+func (*HistoricalOrder) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *HistoricalOrder) GetTicket() int64 {
+	if x != nil {
+		return x.Ticket
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *HistoricalOrder) GetSide() string {
+	if x != nil {
+		return x.Side
+	}
+	return ""
+}
+
+func (x *HistoricalOrder) GetLots() float64 {
+	if x != nil {
+		return x.Lots
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetOpenPrice() float64 {
+	if x != nil {
+		return x.OpenPrice
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetClosePrice() float64 {
+	if x != nil {
+		return x.ClosePrice
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetProfit() float64 {
+	if x != nil {
+		return x.Profit
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetSwap() float64 {
+	if x != nil {
+		return x.Swap
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetCommission() float64 {
+	if x != nil {
+		return x.Commission
+	}
+	return 0
+}
+
+func (x *HistoricalOrder) GetOpenTime() string {
+	if x != nil {
+		return x.OpenTime
+	}
+	return ""
+}
+
+func (x *HistoricalOrder) GetCloseTime() string {
+	if x != nil {
+		return x.CloseTime
+	}
+	return ""
+}
+
 type SystemSetting struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -1381,7 +2054,7 @@ type SystemSetting struct {
 
 func (x *SystemSetting) Reset() {
 	*x = SystemSetting{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[23]
+	mi := &file_alfq_v1_broker_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1393,7 +2066,7 @@ func (x *SystemSetting) String() string {
 func (*SystemSetting) ProtoMessage() {}
 
 func (x *SystemSetting) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[23]
+	mi := &file_alfq_v1_broker_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1406,7 +2079,7 @@ func (x *SystemSetting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemSetting.ProtoReflect.Descriptor instead.
 func (*SystemSetting) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{23}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *SystemSetting) GetKey() string {
@@ -1438,7 +2111,7 @@ type GetSystemSettingsRequest struct {
 
 func (x *GetSystemSettingsRequest) Reset() {
 	*x = GetSystemSettingsRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[24]
+	mi := &file_alfq_v1_broker_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1450,7 +2123,7 @@ func (x *GetSystemSettingsRequest) String() string {
 func (*GetSystemSettingsRequest) ProtoMessage() {}
 
 func (x *GetSystemSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[24]
+	mi := &file_alfq_v1_broker_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1463,7 +2136,7 @@ func (x *GetSystemSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSystemSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetSystemSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{24}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{34}
 }
 
 type GetSystemSettingsResponse struct {
@@ -1475,7 +2148,7 @@ type GetSystemSettingsResponse struct {
 
 func (x *GetSystemSettingsResponse) Reset() {
 	*x = GetSystemSettingsResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[25]
+	mi := &file_alfq_v1_broker_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1487,7 +2160,7 @@ func (x *GetSystemSettingsResponse) String() string {
 func (*GetSystemSettingsResponse) ProtoMessage() {}
 
 func (x *GetSystemSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[25]
+	mi := &file_alfq_v1_broker_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1500,7 +2173,7 @@ func (x *GetSystemSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSystemSettingsResponse.ProtoReflect.Descriptor instead.
 func (*GetSystemSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{25}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetSystemSettingsResponse) GetSettings() []*SystemSetting {
@@ -1520,7 +2193,7 @@ type UpdateSystemSettingRequest struct {
 
 func (x *UpdateSystemSettingRequest) Reset() {
 	*x = UpdateSystemSettingRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[26]
+	mi := &file_alfq_v1_broker_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1532,7 +2205,7 @@ func (x *UpdateSystemSettingRequest) String() string {
 func (*UpdateSystemSettingRequest) ProtoMessage() {}
 
 func (x *UpdateSystemSettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[26]
+	mi := &file_alfq_v1_broker_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1545,7 +2218,7 @@ func (x *UpdateSystemSettingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSystemSettingRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSystemSettingRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{26}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *UpdateSystemSettingRequest) GetKey() string {
@@ -1570,7 +2243,7 @@ type UpdateSystemSettingResponse struct {
 
 func (x *UpdateSystemSettingResponse) Reset() {
 	*x = UpdateSystemSettingResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[27]
+	mi := &file_alfq_v1_broker_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1582,7 +2255,7 @@ func (x *UpdateSystemSettingResponse) String() string {
 func (*UpdateSystemSettingResponse) ProtoMessage() {}
 
 func (x *UpdateSystemSettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[27]
+	mi := &file_alfq_v1_broker_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1595,7 +2268,7 @@ func (x *UpdateSystemSettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSystemSettingResponse.ProtoReflect.Descriptor instead.
 func (*UpdateSystemSettingResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{27}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{37}
 }
 
 type ServiceStatus struct {
@@ -1610,7 +2283,7 @@ type ServiceStatus struct {
 
 func (x *ServiceStatus) Reset() {
 	*x = ServiceStatus{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[28]
+	mi := &file_alfq_v1_broker_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1622,7 +2295,7 @@ func (x *ServiceStatus) String() string {
 func (*ServiceStatus) ProtoMessage() {}
 
 func (x *ServiceStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[28]
+	mi := &file_alfq_v1_broker_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1635,7 +2308,7 @@ func (x *ServiceStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceStatus.ProtoReflect.Descriptor instead.
 func (*ServiceStatus) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{28}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ServiceStatus) GetName() string {
@@ -1674,7 +2347,7 @@ type GetServiceStatusRequest struct {
 
 func (x *GetServiceStatusRequest) Reset() {
 	*x = GetServiceStatusRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[29]
+	mi := &file_alfq_v1_broker_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1686,7 +2359,7 @@ func (x *GetServiceStatusRequest) String() string {
 func (*GetServiceStatusRequest) ProtoMessage() {}
 
 func (x *GetServiceStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[29]
+	mi := &file_alfq_v1_broker_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1699,7 +2372,7 @@ func (x *GetServiceStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetServiceStatusRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{29}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{39}
 }
 
 type GetServiceStatusResponse struct {
@@ -1711,7 +2384,7 @@ type GetServiceStatusResponse struct {
 
 func (x *GetServiceStatusResponse) Reset() {
 	*x = GetServiceStatusResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[30]
+	mi := &file_alfq_v1_broker_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1723,7 +2396,7 @@ func (x *GetServiceStatusResponse) String() string {
 func (*GetServiceStatusResponse) ProtoMessage() {}
 
 func (x *GetServiceStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[30]
+	mi := &file_alfq_v1_broker_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1736,7 +2409,7 @@ func (x *GetServiceStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetServiceStatusResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{30}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *GetServiceStatusResponse) GetServices() []*ServiceStatus {
@@ -1755,7 +2428,7 @@ type RestartServiceRequest struct {
 
 func (x *RestartServiceRequest) Reset() {
 	*x = RestartServiceRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[31]
+	mi := &file_alfq_v1_broker_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1767,7 +2440,7 @@ func (x *RestartServiceRequest) String() string {
 func (*RestartServiceRequest) ProtoMessage() {}
 
 func (x *RestartServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[31]
+	mi := &file_alfq_v1_broker_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1780,7 +2453,7 @@ func (x *RestartServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartServiceRequest.ProtoReflect.Descriptor instead.
 func (*RestartServiceRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{31}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *RestartServiceRequest) GetName() string {
@@ -1800,7 +2473,7 @@ type RestartServiceResponse struct {
 
 func (x *RestartServiceResponse) Reset() {
 	*x = RestartServiceResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[32]
+	mi := &file_alfq_v1_broker_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1812,7 +2485,7 @@ func (x *RestartServiceResponse) String() string {
 func (*RestartServiceResponse) ProtoMessage() {}
 
 func (x *RestartServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[32]
+	mi := &file_alfq_v1_broker_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1825,7 +2498,7 @@ func (x *RestartServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartServiceResponse.ProtoReflect.Descriptor instead.
 func (*RestartServiceResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{32}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *RestartServiceResponse) GetName() string {
@@ -1853,7 +2526,7 @@ type GetServiceLogsRequest struct {
 
 func (x *GetServiceLogsRequest) Reset() {
 	*x = GetServiceLogsRequest{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[33]
+	mi := &file_alfq_v1_broker_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1865,7 +2538,7 @@ func (x *GetServiceLogsRequest) String() string {
 func (*GetServiceLogsRequest) ProtoMessage() {}
 
 func (x *GetServiceLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[33]
+	mi := &file_alfq_v1_broker_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1878,7 +2551,7 @@ func (x *GetServiceLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceLogsRequest.ProtoReflect.Descriptor instead.
 func (*GetServiceLogsRequest) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{33}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *GetServiceLogsRequest) GetName() string {
@@ -1912,7 +2585,7 @@ type GetServiceLogsResponse struct {
 
 func (x *GetServiceLogsResponse) Reset() {
 	*x = GetServiceLogsResponse{}
-	mi := &file_alfq_v1_broker_proto_msgTypes[34]
+	mi := &file_alfq_v1_broker_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1924,7 +2597,7 @@ func (x *GetServiceLogsResponse) String() string {
 func (*GetServiceLogsResponse) ProtoMessage() {}
 
 func (x *GetServiceLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_alfq_v1_broker_proto_msgTypes[34]
+	mi := &file_alfq_v1_broker_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1937,7 +2610,7 @@ func (x *GetServiceLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetServiceLogsResponse.ProtoReflect.Descriptor instead.
 func (*GetServiceLogsResponse) Descriptor() ([]byte, []int) {
-	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{34}
+	return file_alfq_v1_broker_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *GetServiceLogsResponse) GetName() string {
@@ -1986,10 +2659,11 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\bplatform\x18\x01 \x01(\tR\bplatform\x12\x18\n" +
 	"\akeyword\x18\x02 \x01(\tR\akeyword\"F\n" +
 	"\x14SearchBrokerResponse\x12.\n" +
-	"\amatches\x18\x01 \x03(\v2\x14.alfq.v1.BrokerMatchR\amatches\"X\n" +
-	"\vBrokerMatch\x12\x18\n" +
-	"\acompany\x18\x01 \x01(\tR\acompany\x12/\n" +
-	"\aservers\x18\x02 \x03(\v2\x15.alfq.v1.BrokerServerR\aservers\":\n" +
+	"\amatches\x18\x01 \x03(\v2\x14.alfq.v1.BrokerMatchR\amatches\"h\n" +
+	"\vBrokerMatch\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\acompany\x18\x02 \x01(\tR\acompany\x12/\n" +
+	"\aservers\x18\x03 \x03(\v2\x15.alfq.v1.BrokerServerR\aservers\":\n" +
 	"\fBrokerServer\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06access\x18\x02 \x01(\tR\x06access\"\xce\x05\n" +
@@ -2053,7 +2727,72 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\x16ConnectAccountResponse\"*\n" +
 	"\x18DisconnectAccountRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1b\n" +
-	"\x19DisconnectAccountResponse\"Y\n" +
+	"\x19DisconnectAccountResponse\"]\n" +
+	"\x18ListAccountOrdersRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x12\n" +
+	"\x04from\x18\x02 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x03 \x01(\tR\x02to\"M\n" +
+	"\x19ListAccountOrdersResponse\x120\n" +
+	"\x06orders\x18\x01 \x03(\v2\x18.alfq.v1.HistoricalOrderR\x06orders\"<\n" +
+	"\x1bListAccountPositionsRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\"V\n" +
+	"\x1cListAccountPositionsResponse\x126\n" +
+	"\tpositions\x18\x01 \x03(\v2\x18.alfq.v1.AccountPositionR\tpositions\"\xd4\x01\n" +
+	"\x0fAccountPosition\x12\x16\n" +
+	"\x06ticket\x18\x01 \x01(\x03R\x06ticket\x12\x16\n" +
+	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x12\n" +
+	"\x04side\x18\x03 \x01(\tR\x04side\x12\x12\n" +
+	"\x04lots\x18\x04 \x01(\x01R\x04lots\x12\x1d\n" +
+	"\n" +
+	"open_price\x18\x05 \x01(\x01R\topenPrice\x12\x16\n" +
+	"\x06profit\x18\x06 \x01(\x01R\x06profit\x12\x12\n" +
+	"\x04swap\x18\a \x01(\x01R\x04swap\x12\x1e\n" +
+	"\n" +
+	"commission\x18\b \x01(\x01R\n" +
+	"commission\"\x7f\n" +
+	"\x19SyncAccountHistoryRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x12\n" +
+	"\x04from\x18\x02 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x03 \x01(\tR\x02to\x12\x1f\n" +
+	"\vfull_resync\x18\x04 \x01(\bR\n" +
+	"fullResync\"M\n" +
+	"\x1aSyncAccountHistoryResponse\x12\x17\n" +
+	"\async_id\x18\x01 \x01(\tR\x06syncId\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\"5\n" +
+	"\x14GetSyncStatusRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\"\xef\x01\n" +
+	"\x15GetSyncStatusResponse\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1f\n" +
+	"\vsync_status\x18\x02 \x01(\tR\n" +
+	"syncStatus\x12)\n" +
+	"\x11last_full_sync_at\x18\x03 \x01(\tR\x0elastFullSyncAt\x12)\n" +
+	"\x11last_incr_sync_at\x18\x04 \x01(\tR\x0elastIncrSyncAt\x12\x1d\n" +
+	"\n" +
+	"last_error\x18\x05 \x01(\tR\tlastError\x12!\n" +
+	"\ftotal_synced\x18\x06 \x01(\x05R\vtotalSynced\"\xb1\x02\n" +
+	"\x0fHistoricalOrder\x12\x16\n" +
+	"\x06ticket\x18\x01 \x01(\x03R\x06ticket\x12\x16\n" +
+	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x12\n" +
+	"\x04side\x18\x03 \x01(\tR\x04side\x12\x12\n" +
+	"\x04lots\x18\x04 \x01(\x01R\x04lots\x12\x1d\n" +
+	"\n" +
+	"open_price\x18\x05 \x01(\x01R\topenPrice\x12\x1f\n" +
+	"\vclose_price\x18\x06 \x01(\x01R\n" +
+	"closePrice\x12\x16\n" +
+	"\x06profit\x18\a \x01(\x01R\x06profit\x12\x12\n" +
+	"\x04swap\x18\b \x01(\x01R\x04swap\x12\x1e\n" +
+	"\n" +
+	"commission\x18\t \x01(\x01R\n" +
+	"commission\x12\x1b\n" +
+	"\topen_time\x18\n" +
+	" \x01(\tR\bopenTime\x12\x1d\n" +
+	"\n" +
+	"close_time\x18\v \x01(\tR\tcloseTime\"Y\n" +
 	"\rSystemSetting\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\x12 \n" +
@@ -2092,7 +2831,7 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\vListBrokers\x12\x1b.alfq.v1.ListBrokersRequest\x1a\x1c.alfq.v1.ListBrokersResponse\x120\n" +
 	"\fUpdateBroker\x12\x0f.alfq.v1.Broker\x1a\x0f.alfq.v1.Broker\x12K\n" +
 	"\fDeleteBroker\x12\x1c.alfq.v1.DeleteBrokerRequest\x1a\x1d.alfq.v1.DeleteBrokerResponse\x12K\n" +
-	"\fSearchBroker\x12\x1c.alfq.v1.SearchBrokerRequest\x1a\x1d.alfq.v1.SearchBrokerResponse2\x8f\x04\n" +
+	"\fSearchBroker\x12\x1c.alfq.v1.SearchBrokerRequest\x1a\x1d.alfq.v1.SearchBrokerResponse2\xff\x06\n" +
 	"\x0eAccountService\x12@\n" +
 	"\rCreateAccount\x12\x1d.alfq.v1.CreateAccountRequest\x1a\x10.alfq.v1.Account\x12:\n" +
 	"\n" +
@@ -2101,7 +2840,11 @@ const file_alfq_v1_broker_proto_rawDesc = "" +
 	"\rUpdateAccount\x12\x10.alfq.v1.Account\x1a\x10.alfq.v1.Account\x12N\n" +
 	"\rDeleteAccount\x12\x1d.alfq.v1.DeleteAccountRequest\x1a\x1e.alfq.v1.DeleteAccountResponse\x12Q\n" +
 	"\x0eConnectAccount\x12\x1e.alfq.v1.ConnectAccountRequest\x1a\x1f.alfq.v1.ConnectAccountResponse\x12Z\n" +
-	"\x11DisconnectAccount\x12!.alfq.v1.DisconnectAccountRequest\x1a\".alfq.v1.DisconnectAccountResponse2\xd5\x01\n" +
+	"\x11DisconnectAccount\x12!.alfq.v1.DisconnectAccountRequest\x1a\".alfq.v1.DisconnectAccountResponse\x12Z\n" +
+	"\x11ListAccountOrders\x12!.alfq.v1.ListAccountOrdersRequest\x1a\".alfq.v1.ListAccountOrdersResponse\x12c\n" +
+	"\x14ListAccountPositions\x12$.alfq.v1.ListAccountPositionsRequest\x1a%.alfq.v1.ListAccountPositionsResponse\x12]\n" +
+	"\x12SyncAccountHistory\x12\".alfq.v1.SyncAccountHistoryRequest\x1a#.alfq.v1.SyncAccountHistoryResponse\x12N\n" +
+	"\rGetSyncStatus\x12\x1d.alfq.v1.GetSyncStatusRequest\x1a\x1e.alfq.v1.GetSyncStatusResponse2\xd5\x01\n" +
 	"\x15SystemSettingsService\x12Z\n" +
 	"\x11GetSystemSettings\x12!.alfq.v1.GetSystemSettingsRequest\x1a\".alfq.v1.GetSystemSettingsResponse\x12`\n" +
 	"\x13UpdateSystemSetting\x12#.alfq.v1.UpdateSystemSettingRequest\x1a$.alfq.v1.UpdateSystemSettingResponse2\x99\x02\n" +
@@ -2123,96 +2866,116 @@ func file_alfq_v1_broker_proto_rawDescGZIP() []byte {
 	return file_alfq_v1_broker_proto_rawDescData
 }
 
-var file_alfq_v1_broker_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_alfq_v1_broker_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_alfq_v1_broker_proto_goTypes = []any{
-	(*Broker)(nil),                      // 0: alfq.v1.Broker
-	(*CreateBrokerRequest)(nil),         // 1: alfq.v1.CreateBrokerRequest
-	(*GetBrokerRequest)(nil),            // 2: alfq.v1.GetBrokerRequest
-	(*ListBrokersRequest)(nil),          // 3: alfq.v1.ListBrokersRequest
-	(*ListBrokersResponse)(nil),         // 4: alfq.v1.ListBrokersResponse
-	(*DeleteBrokerRequest)(nil),         // 5: alfq.v1.DeleteBrokerRequest
-	(*DeleteBrokerResponse)(nil),        // 6: alfq.v1.DeleteBrokerResponse
-	(*SearchBrokerRequest)(nil),         // 7: alfq.v1.SearchBrokerRequest
-	(*SearchBrokerResponse)(nil),        // 8: alfq.v1.SearchBrokerResponse
-	(*BrokerMatch)(nil),                 // 9: alfq.v1.BrokerMatch
-	(*BrokerServer)(nil),                // 10: alfq.v1.BrokerServer
-	(*Account)(nil),                     // 11: alfq.v1.Account
-	(*CreateAccountRequest)(nil),        // 12: alfq.v1.CreateAccountRequest
-	(*GetAccountRequest)(nil),           // 13: alfq.v1.GetAccountRequest
-	(*ListAccountsRequest)(nil),         // 14: alfq.v1.ListAccountsRequest
-	(*AccountSummary)(nil),              // 15: alfq.v1.AccountSummary
-	(*ListAccountsResponse)(nil),        // 16: alfq.v1.ListAccountsResponse
-	(*DeleteAccountRequest)(nil),        // 17: alfq.v1.DeleteAccountRequest
-	(*DeleteAccountResponse)(nil),       // 18: alfq.v1.DeleteAccountResponse
-	(*ConnectAccountRequest)(nil),       // 19: alfq.v1.ConnectAccountRequest
-	(*ConnectAccountResponse)(nil),      // 20: alfq.v1.ConnectAccountResponse
-	(*DisconnectAccountRequest)(nil),    // 21: alfq.v1.DisconnectAccountRequest
-	(*DisconnectAccountResponse)(nil),   // 22: alfq.v1.DisconnectAccountResponse
-	(*SystemSetting)(nil),               // 23: alfq.v1.SystemSetting
-	(*GetSystemSettingsRequest)(nil),    // 24: alfq.v1.GetSystemSettingsRequest
-	(*GetSystemSettingsResponse)(nil),   // 25: alfq.v1.GetSystemSettingsResponse
-	(*UpdateSystemSettingRequest)(nil),  // 26: alfq.v1.UpdateSystemSettingRequest
-	(*UpdateSystemSettingResponse)(nil), // 27: alfq.v1.UpdateSystemSettingResponse
-	(*ServiceStatus)(nil),               // 28: alfq.v1.ServiceStatus
-	(*GetServiceStatusRequest)(nil),     // 29: alfq.v1.GetServiceStatusRequest
-	(*GetServiceStatusResponse)(nil),    // 30: alfq.v1.GetServiceStatusResponse
-	(*RestartServiceRequest)(nil),       // 31: alfq.v1.RestartServiceRequest
-	(*RestartServiceResponse)(nil),      // 32: alfq.v1.RestartServiceResponse
-	(*GetServiceLogsRequest)(nil),       // 33: alfq.v1.GetServiceLogsRequest
-	(*GetServiceLogsResponse)(nil),      // 34: alfq.v1.GetServiceLogsResponse
-	(*timestamppb.Timestamp)(nil),       // 35: google.protobuf.Timestamp
+	(*Broker)(nil),                       // 0: alfq.v1.Broker
+	(*CreateBrokerRequest)(nil),          // 1: alfq.v1.CreateBrokerRequest
+	(*GetBrokerRequest)(nil),             // 2: alfq.v1.GetBrokerRequest
+	(*ListBrokersRequest)(nil),           // 3: alfq.v1.ListBrokersRequest
+	(*ListBrokersResponse)(nil),          // 4: alfq.v1.ListBrokersResponse
+	(*DeleteBrokerRequest)(nil),          // 5: alfq.v1.DeleteBrokerRequest
+	(*DeleteBrokerResponse)(nil),         // 6: alfq.v1.DeleteBrokerResponse
+	(*SearchBrokerRequest)(nil),          // 7: alfq.v1.SearchBrokerRequest
+	(*SearchBrokerResponse)(nil),         // 8: alfq.v1.SearchBrokerResponse
+	(*BrokerMatch)(nil),                  // 9: alfq.v1.BrokerMatch
+	(*BrokerServer)(nil),                 // 10: alfq.v1.BrokerServer
+	(*Account)(nil),                      // 11: alfq.v1.Account
+	(*CreateAccountRequest)(nil),         // 12: alfq.v1.CreateAccountRequest
+	(*GetAccountRequest)(nil),            // 13: alfq.v1.GetAccountRequest
+	(*ListAccountsRequest)(nil),          // 14: alfq.v1.ListAccountsRequest
+	(*AccountSummary)(nil),               // 15: alfq.v1.AccountSummary
+	(*ListAccountsResponse)(nil),         // 16: alfq.v1.ListAccountsResponse
+	(*DeleteAccountRequest)(nil),         // 17: alfq.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),        // 18: alfq.v1.DeleteAccountResponse
+	(*ConnectAccountRequest)(nil),        // 19: alfq.v1.ConnectAccountRequest
+	(*ConnectAccountResponse)(nil),       // 20: alfq.v1.ConnectAccountResponse
+	(*DisconnectAccountRequest)(nil),     // 21: alfq.v1.DisconnectAccountRequest
+	(*DisconnectAccountResponse)(nil),    // 22: alfq.v1.DisconnectAccountResponse
+	(*ListAccountOrdersRequest)(nil),     // 23: alfq.v1.ListAccountOrdersRequest
+	(*ListAccountOrdersResponse)(nil),    // 24: alfq.v1.ListAccountOrdersResponse
+	(*ListAccountPositionsRequest)(nil),  // 25: alfq.v1.ListAccountPositionsRequest
+	(*ListAccountPositionsResponse)(nil), // 26: alfq.v1.ListAccountPositionsResponse
+	(*AccountPosition)(nil),              // 27: alfq.v1.AccountPosition
+	(*SyncAccountHistoryRequest)(nil),    // 28: alfq.v1.SyncAccountHistoryRequest
+	(*SyncAccountHistoryResponse)(nil),   // 29: alfq.v1.SyncAccountHistoryResponse
+	(*GetSyncStatusRequest)(nil),         // 30: alfq.v1.GetSyncStatusRequest
+	(*GetSyncStatusResponse)(nil),        // 31: alfq.v1.GetSyncStatusResponse
+	(*HistoricalOrder)(nil),              // 32: alfq.v1.HistoricalOrder
+	(*SystemSetting)(nil),                // 33: alfq.v1.SystemSetting
+	(*GetSystemSettingsRequest)(nil),     // 34: alfq.v1.GetSystemSettingsRequest
+	(*GetSystemSettingsResponse)(nil),    // 35: alfq.v1.GetSystemSettingsResponse
+	(*UpdateSystemSettingRequest)(nil),   // 36: alfq.v1.UpdateSystemSettingRequest
+	(*UpdateSystemSettingResponse)(nil),  // 37: alfq.v1.UpdateSystemSettingResponse
+	(*ServiceStatus)(nil),                // 38: alfq.v1.ServiceStatus
+	(*GetServiceStatusRequest)(nil),      // 39: alfq.v1.GetServiceStatusRequest
+	(*GetServiceStatusResponse)(nil),     // 40: alfq.v1.GetServiceStatusResponse
+	(*RestartServiceRequest)(nil),        // 41: alfq.v1.RestartServiceRequest
+	(*RestartServiceResponse)(nil),       // 42: alfq.v1.RestartServiceResponse
+	(*GetServiceLogsRequest)(nil),        // 43: alfq.v1.GetServiceLogsRequest
+	(*GetServiceLogsResponse)(nil),       // 44: alfq.v1.GetServiceLogsResponse
+	(*timestamppb.Timestamp)(nil),        // 45: google.protobuf.Timestamp
 }
 var file_alfq_v1_broker_proto_depIdxs = []int32{
 	0,  // 0: alfq.v1.ListBrokersResponse.brokers:type_name -> alfq.v1.Broker
 	9,  // 1: alfq.v1.SearchBrokerResponse.matches:type_name -> alfq.v1.BrokerMatch
 	10, // 2: alfq.v1.BrokerMatch.servers:type_name -> alfq.v1.BrokerServer
-	35, // 3: alfq.v1.Account.connected_at:type_name -> google.protobuf.Timestamp
-	35, // 4: alfq.v1.Account.created_at:type_name -> google.protobuf.Timestamp
+	45, // 3: alfq.v1.Account.connected_at:type_name -> google.protobuf.Timestamp
+	45, // 4: alfq.v1.Account.created_at:type_name -> google.protobuf.Timestamp
 	11, // 5: alfq.v1.ListAccountsResponse.accounts:type_name -> alfq.v1.Account
 	15, // 6: alfq.v1.ListAccountsResponse.summary:type_name -> alfq.v1.AccountSummary
-	23, // 7: alfq.v1.GetSystemSettingsResponse.settings:type_name -> alfq.v1.SystemSetting
-	28, // 8: alfq.v1.GetServiceStatusResponse.services:type_name -> alfq.v1.ServiceStatus
-	1,  // 9: alfq.v1.BrokerService.CreateBroker:input_type -> alfq.v1.CreateBrokerRequest
-	2,  // 10: alfq.v1.BrokerService.GetBroker:input_type -> alfq.v1.GetBrokerRequest
-	3,  // 11: alfq.v1.BrokerService.ListBrokers:input_type -> alfq.v1.ListBrokersRequest
-	0,  // 12: alfq.v1.BrokerService.UpdateBroker:input_type -> alfq.v1.Broker
-	5,  // 13: alfq.v1.BrokerService.DeleteBroker:input_type -> alfq.v1.DeleteBrokerRequest
-	7,  // 14: alfq.v1.BrokerService.SearchBroker:input_type -> alfq.v1.SearchBrokerRequest
-	12, // 15: alfq.v1.AccountService.CreateAccount:input_type -> alfq.v1.CreateAccountRequest
-	13, // 16: alfq.v1.AccountService.GetAccount:input_type -> alfq.v1.GetAccountRequest
-	14, // 17: alfq.v1.AccountService.ListAccounts:input_type -> alfq.v1.ListAccountsRequest
-	11, // 18: alfq.v1.AccountService.UpdateAccount:input_type -> alfq.v1.Account
-	17, // 19: alfq.v1.AccountService.DeleteAccount:input_type -> alfq.v1.DeleteAccountRequest
-	19, // 20: alfq.v1.AccountService.ConnectAccount:input_type -> alfq.v1.ConnectAccountRequest
-	21, // 21: alfq.v1.AccountService.DisconnectAccount:input_type -> alfq.v1.DisconnectAccountRequest
-	24, // 22: alfq.v1.SystemSettingsService.GetSystemSettings:input_type -> alfq.v1.GetSystemSettingsRequest
-	26, // 23: alfq.v1.SystemSettingsService.UpdateSystemSetting:input_type -> alfq.v1.UpdateSystemSettingRequest
-	29, // 24: alfq.v1.ServiceManagementService.GetServiceStatus:input_type -> alfq.v1.GetServiceStatusRequest
-	31, // 25: alfq.v1.ServiceManagementService.RestartService:input_type -> alfq.v1.RestartServiceRequest
-	33, // 26: alfq.v1.ServiceManagementService.GetServiceLogs:input_type -> alfq.v1.GetServiceLogsRequest
-	0,  // 27: alfq.v1.BrokerService.CreateBroker:output_type -> alfq.v1.Broker
-	0,  // 28: alfq.v1.BrokerService.GetBroker:output_type -> alfq.v1.Broker
-	4,  // 29: alfq.v1.BrokerService.ListBrokers:output_type -> alfq.v1.ListBrokersResponse
-	0,  // 30: alfq.v1.BrokerService.UpdateBroker:output_type -> alfq.v1.Broker
-	6,  // 31: alfq.v1.BrokerService.DeleteBroker:output_type -> alfq.v1.DeleteBrokerResponse
-	8,  // 32: alfq.v1.BrokerService.SearchBroker:output_type -> alfq.v1.SearchBrokerResponse
-	11, // 33: alfq.v1.AccountService.CreateAccount:output_type -> alfq.v1.Account
-	11, // 34: alfq.v1.AccountService.GetAccount:output_type -> alfq.v1.Account
-	16, // 35: alfq.v1.AccountService.ListAccounts:output_type -> alfq.v1.ListAccountsResponse
-	11, // 36: alfq.v1.AccountService.UpdateAccount:output_type -> alfq.v1.Account
-	18, // 37: alfq.v1.AccountService.DeleteAccount:output_type -> alfq.v1.DeleteAccountResponse
-	20, // 38: alfq.v1.AccountService.ConnectAccount:output_type -> alfq.v1.ConnectAccountResponse
-	22, // 39: alfq.v1.AccountService.DisconnectAccount:output_type -> alfq.v1.DisconnectAccountResponse
-	25, // 40: alfq.v1.SystemSettingsService.GetSystemSettings:output_type -> alfq.v1.GetSystemSettingsResponse
-	27, // 41: alfq.v1.SystemSettingsService.UpdateSystemSetting:output_type -> alfq.v1.UpdateSystemSettingResponse
-	30, // 42: alfq.v1.ServiceManagementService.GetServiceStatus:output_type -> alfq.v1.GetServiceStatusResponse
-	32, // 43: alfq.v1.ServiceManagementService.RestartService:output_type -> alfq.v1.RestartServiceResponse
-	34, // 44: alfq.v1.ServiceManagementService.GetServiceLogs:output_type -> alfq.v1.GetServiceLogsResponse
-	27, // [27:45] is the sub-list for method output_type
-	9,  // [9:27] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	32, // 7: alfq.v1.ListAccountOrdersResponse.orders:type_name -> alfq.v1.HistoricalOrder
+	27, // 8: alfq.v1.ListAccountPositionsResponse.positions:type_name -> alfq.v1.AccountPosition
+	33, // 9: alfq.v1.GetSystemSettingsResponse.settings:type_name -> alfq.v1.SystemSetting
+	38, // 10: alfq.v1.GetServiceStatusResponse.services:type_name -> alfq.v1.ServiceStatus
+	1,  // 11: alfq.v1.BrokerService.CreateBroker:input_type -> alfq.v1.CreateBrokerRequest
+	2,  // 12: alfq.v1.BrokerService.GetBroker:input_type -> alfq.v1.GetBrokerRequest
+	3,  // 13: alfq.v1.BrokerService.ListBrokers:input_type -> alfq.v1.ListBrokersRequest
+	0,  // 14: alfq.v1.BrokerService.UpdateBroker:input_type -> alfq.v1.Broker
+	5,  // 15: alfq.v1.BrokerService.DeleteBroker:input_type -> alfq.v1.DeleteBrokerRequest
+	7,  // 16: alfq.v1.BrokerService.SearchBroker:input_type -> alfq.v1.SearchBrokerRequest
+	12, // 17: alfq.v1.AccountService.CreateAccount:input_type -> alfq.v1.CreateAccountRequest
+	13, // 18: alfq.v1.AccountService.GetAccount:input_type -> alfq.v1.GetAccountRequest
+	14, // 19: alfq.v1.AccountService.ListAccounts:input_type -> alfq.v1.ListAccountsRequest
+	11, // 20: alfq.v1.AccountService.UpdateAccount:input_type -> alfq.v1.Account
+	17, // 21: alfq.v1.AccountService.DeleteAccount:input_type -> alfq.v1.DeleteAccountRequest
+	19, // 22: alfq.v1.AccountService.ConnectAccount:input_type -> alfq.v1.ConnectAccountRequest
+	21, // 23: alfq.v1.AccountService.DisconnectAccount:input_type -> alfq.v1.DisconnectAccountRequest
+	23, // 24: alfq.v1.AccountService.ListAccountOrders:input_type -> alfq.v1.ListAccountOrdersRequest
+	25, // 25: alfq.v1.AccountService.ListAccountPositions:input_type -> alfq.v1.ListAccountPositionsRequest
+	28, // 26: alfq.v1.AccountService.SyncAccountHistory:input_type -> alfq.v1.SyncAccountHistoryRequest
+	30, // 27: alfq.v1.AccountService.GetSyncStatus:input_type -> alfq.v1.GetSyncStatusRequest
+	34, // 28: alfq.v1.SystemSettingsService.GetSystemSettings:input_type -> alfq.v1.GetSystemSettingsRequest
+	36, // 29: alfq.v1.SystemSettingsService.UpdateSystemSetting:input_type -> alfq.v1.UpdateSystemSettingRequest
+	39, // 30: alfq.v1.ServiceManagementService.GetServiceStatus:input_type -> alfq.v1.GetServiceStatusRequest
+	41, // 31: alfq.v1.ServiceManagementService.RestartService:input_type -> alfq.v1.RestartServiceRequest
+	43, // 32: alfq.v1.ServiceManagementService.GetServiceLogs:input_type -> alfq.v1.GetServiceLogsRequest
+	0,  // 33: alfq.v1.BrokerService.CreateBroker:output_type -> alfq.v1.Broker
+	0,  // 34: alfq.v1.BrokerService.GetBroker:output_type -> alfq.v1.Broker
+	4,  // 35: alfq.v1.BrokerService.ListBrokers:output_type -> alfq.v1.ListBrokersResponse
+	0,  // 36: alfq.v1.BrokerService.UpdateBroker:output_type -> alfq.v1.Broker
+	6,  // 37: alfq.v1.BrokerService.DeleteBroker:output_type -> alfq.v1.DeleteBrokerResponse
+	8,  // 38: alfq.v1.BrokerService.SearchBroker:output_type -> alfq.v1.SearchBrokerResponse
+	11, // 39: alfq.v1.AccountService.CreateAccount:output_type -> alfq.v1.Account
+	11, // 40: alfq.v1.AccountService.GetAccount:output_type -> alfq.v1.Account
+	16, // 41: alfq.v1.AccountService.ListAccounts:output_type -> alfq.v1.ListAccountsResponse
+	11, // 42: alfq.v1.AccountService.UpdateAccount:output_type -> alfq.v1.Account
+	18, // 43: alfq.v1.AccountService.DeleteAccount:output_type -> alfq.v1.DeleteAccountResponse
+	20, // 44: alfq.v1.AccountService.ConnectAccount:output_type -> alfq.v1.ConnectAccountResponse
+	22, // 45: alfq.v1.AccountService.DisconnectAccount:output_type -> alfq.v1.DisconnectAccountResponse
+	24, // 46: alfq.v1.AccountService.ListAccountOrders:output_type -> alfq.v1.ListAccountOrdersResponse
+	26, // 47: alfq.v1.AccountService.ListAccountPositions:output_type -> alfq.v1.ListAccountPositionsResponse
+	29, // 48: alfq.v1.AccountService.SyncAccountHistory:output_type -> alfq.v1.SyncAccountHistoryResponse
+	31, // 49: alfq.v1.AccountService.GetSyncStatus:output_type -> alfq.v1.GetSyncStatusResponse
+	35, // 50: alfq.v1.SystemSettingsService.GetSystemSettings:output_type -> alfq.v1.GetSystemSettingsResponse
+	37, // 51: alfq.v1.SystemSettingsService.UpdateSystemSetting:output_type -> alfq.v1.UpdateSystemSettingResponse
+	40, // 52: alfq.v1.ServiceManagementService.GetServiceStatus:output_type -> alfq.v1.GetServiceStatusResponse
+	42, // 53: alfq.v1.ServiceManagementService.RestartService:output_type -> alfq.v1.RestartServiceResponse
+	44, // 54: alfq.v1.ServiceManagementService.GetServiceLogs:output_type -> alfq.v1.GetServiceLogsResponse
+	33, // [33:55] is the sub-list for method output_type
+	11, // [11:33] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_alfq_v1_broker_proto_init() }
@@ -2226,7 +2989,7 @@ func file_alfq_v1_broker_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_alfq_v1_broker_proto_rawDesc), len(file_alfq_v1_broker_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   35,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   4,
 		},

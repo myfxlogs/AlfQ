@@ -107,6 +107,7 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 				continue
 			}
 			matches = append(matches, &pb.BrokerMatch{
+				Id:      b.Id,
 				Company: b.Name,
 				Servers: []*pb.BrokerServer{{Name: b.DefaultServer, Access: b.MtapiEndpoint}},
 			})

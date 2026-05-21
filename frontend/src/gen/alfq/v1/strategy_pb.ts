@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file alfq/v1/strategy.proto.
  */
 export const file_alfq_v1_strategy: GenFile = /*@__PURE__*/
-  fileDesc("ChZhbGZxL3YxL3N0cmF0ZWd5LnByb3RvEgdhbGZxLnYxIm8KCFN0cmF0ZWd5EgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEhEKCXNwZWNfanNvbhgFIAEoCRIOCgZzdGF0dXMYBiABKAkiYAoVQ3JlYXRlU3RyYXRlZ3lSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhEKCXNwZWNfanNvbhgEIAEoCSIgChJHZXRTdHJhdGVneVJlcXVlc3QSCgoCaWQYASABKAkiKgoVTGlzdFN0cmF0ZWdpZXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI/ChZMaXN0U3RyYXRlZ2llc1Jlc3BvbnNlEiUKCnN0cmF0ZWdpZXMYASADKAsyES5hbGZxLnYxLlN0cmF0ZWd5IjcKFURlcGxveVN0cmF0ZWd5UmVxdWVzdBIKCgJpZBgBIAEoCRISCgphY2NvdW50X2lkGAIgASgJIiEKE1N0b3BTdHJhdGVneVJlcXVlc3QSCgoCaWQYASABKAkiKwoUU3RyZWFtU2lnbmFsc1JlcXVlc3QSEwoLc3RyYXRlZ3lfaWQYASABKAkicAoGU2lnbmFsEhMKC3N0cmF0ZWd5X2lkGAEgASgJEg4KBnN5bWJvbBgCIAEoCRIMCgRzaWRlGAMgASgJEgsKA3F0eRgEIAEoARISCgpjb25maWRlbmNlGAUgASgBEhIKCnRzX3VuaXhfbXMYBiABKAMiVAoMQmFja3Rlc3RUYXNrEgoKAmlkGAEgASgJEhMKC3N0cmF0ZWd5X2lkGAIgASgJEg4KBnN0YXR1cxgDIAEoCRITCgtyZXN1bHRfanNvbhgEIAEoCSJRChJSdW5CYWNrdGVzdFJlcXVlc3QSEwoLc3RyYXRlZ3lfaWQYASABKAkSEwoLc3RhcnRfdHNfbXMYAiABKAMSEQoJZW5kX3RzX21zGAMgASgDIloKEEJhY2t0ZXN0UHJvZ3Jlc3MSDwoHdGFza19pZBgBIAEoCRIQCghwcm9ncmVzcxgCIAEoARIOCgZzdGF0dXMYAyABKAkSEwoLcmVzdWx0X2pzb24YBCABKAkiKwoUTGlzdEJhY2t0ZXN0c1JlcXVlc3QSEwoLc3RyYXRlZ3lfaWQYASABKAkiPQoVTGlzdEJhY2t0ZXN0c1Jlc3BvbnNlEiQKBXRhc2tzGAEgAygLMhUuYWxmcS52MS5CYWNrdGVzdFRhc2siZAoGU3ltYm9sEgwKBG5hbWUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSDgoGZGlnaXRzGAMgASgFEhUKDWNvbnRyYWN0X3NpemUYBCABKAESEAoIY3VycmVuY3kYBSABKAkiJwoSTGlzdFN5bWJvbHNSZXF1ZXN0EhEKCWJyb2tlcl9pZBgBIAEoCSI3ChNMaXN0U3ltYm9sc1Jlc3BvbnNlEiAKB3N5bWJvbHMYASADKAsyDy5hbGZxLnYxLlN5bWJvbDKxAwoPU3RyYXRlZ3lTZXJ2aWNlEkMKDkNyZWF0ZVN0cmF0ZWd5Eh4uYWxmcS52MS5DcmVhdGVTdHJhdGVneVJlcXVlc3QaES5hbGZxLnYxLlN0cmF0ZWd5Ej0KC0dldFN0cmF0ZWd5EhsuYWxmcS52MS5HZXRTdHJhdGVneVJlcXVlc3QaES5hbGZxLnYxLlN0cmF0ZWd5ElEKDkxpc3RTdHJhdGVnaWVzEh4uYWxmcS52MS5MaXN0U3RyYXRlZ2llc1JlcXVlc3QaHy5hbGZxLnYxLkxpc3RTdHJhdGVnaWVzUmVzcG9uc2USQwoORGVwbG95U3RyYXRlZ3kSHi5hbGZxLnYxLkRlcGxveVN0cmF0ZWd5UmVxdWVzdBoRLmFsZnEudjEuU3RyYXRlZ3kSPwoMU3RvcFN0cmF0ZWd5EhwuYWxmcS52MS5TdG9wU3RyYXRlZ3lSZXF1ZXN0GhEuYWxmcS52MS5TdHJhdGVneRJBCg1TdHJlYW1TaWduYWxzEh0uYWxmcS52MS5TdHJlYW1TaWduYWxzUmVxdWVzdBoPLmFsZnEudjEuU2lnbmFsMAEyqgEKD0JhY2t0ZXN0U2VydmljZRJHCgtSdW5CYWNrdGVzdBIbLmFsZnEudjEuUnVuQmFja3Rlc3RSZXF1ZXN0GhkuYWxmcS52MS5CYWNrdGVzdFByb2dyZXNzMAESTgoNTGlzdEJhY2t0ZXN0cxIdLmFsZnEudjEuTGlzdEJhY2t0ZXN0c1JlcXVlc3QaHi5hbGZxLnYxLkxpc3RCYWNrdGVzdHNSZXNwb25zZTJZCg1TeW1ib2xTZXJ2aWNlEkgKC0xpc3RTeW1ib2xzEhsuYWxmcS52MS5MaXN0U3ltYm9sc1JlcXVlc3QaHC5hbGZxLnYxLkxpc3RTeW1ib2xzUmVzcG9uc2VCL1otZ2l0aHViLmNvbS9hbGZxL2JhY2tlbmQvZ28vZ2VuL2FsZnEvdjE7YWxmcXYxYgZwcm90bzM");
+  fileDesc("ChZhbGZxL3YxL3N0cmF0ZWd5LnByb3RvEgdhbGZxLnYxIm8KCFN0cmF0ZWd5EgoKAmlkGAEgASgJEhEKCXRlbmFudF9pZBgCIAEoCRIMCgRuYW1lGAMgASgJEhMKC2Rlc2NyaXB0aW9uGAQgASgJEhEKCXNwZWNfanNvbhgFIAEoCRIOCgZzdGF0dXMYBiABKAkiYAoVQ3JlYXRlU3RyYXRlZ3lSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCRIMCgRuYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhEKCXNwZWNfanNvbhgEIAEoCSIgChJHZXRTdHJhdGVneVJlcXVlc3QSCgoCaWQYASABKAkiKgoVTGlzdFN0cmF0ZWdpZXNSZXF1ZXN0EhEKCXRlbmFudF9pZBgBIAEoCSI/ChZMaXN0U3RyYXRlZ2llc1Jlc3BvbnNlEiUKCnN0cmF0ZWdpZXMYASADKAsyES5hbGZxLnYxLlN0cmF0ZWd5IjcKFURlcGxveVN0cmF0ZWd5UmVxdWVzdBIKCgJpZBgBIAEoCRISCgphY2NvdW50X2lkGAIgASgJIiEKE1N0b3BTdHJhdGVneVJlcXVlc3QSCgoCaWQYASABKAkiKwoUU3RyZWFtU2lnbmFsc1JlcXVlc3QSEwoLc3RyYXRlZ3lfaWQYASABKAkicAoGU2lnbmFsEhMKC3N0cmF0ZWd5X2lkGAEgASgJEg4KBnN5bWJvbBgCIAEoCRIMCgRzaWRlGAMgASgJEgsKA3F0eRgEIAEoARISCgpjb25maWRlbmNlGAUgASgBEhIKCnRzX3VuaXhfbXMYBiABKAMiVAoMQmFja3Rlc3RUYXNrEgoKAmlkGAEgASgJEhMKC3N0cmF0ZWd5X2lkGAIgASgJEg4KBnN0YXR1cxgDIAEoCRITCgtyZXN1bHRfanNvbhgEIAEoCSJRChJSdW5CYWNrdGVzdFJlcXVlc3QSEwoLc3RyYXRlZ3lfaWQYASABKAkSEwoLc3RhcnRfdHNfbXMYAiABKAMSEQoJZW5kX3RzX21zGAMgASgDIloKEEJhY2t0ZXN0UHJvZ3Jlc3MSDwoHdGFza19pZBgBIAEoCRIQCghwcm9ncmVzcxgCIAEoARIOCgZzdGF0dXMYAyABKAkSEwoLcmVzdWx0X2pzb24YBCABKAkiKwoUTGlzdEJhY2t0ZXN0c1JlcXVlc3QSEwoLc3RyYXRlZ3lfaWQYASABKAkiPQoVTGlzdEJhY2t0ZXN0c1Jlc3BvbnNlEiQKBXRhc2tzGAEgAygLMhUuYWxmcS52MS5CYWNrdGVzdFRhc2siLQoYTGlzdEJyb2tlclN5bWJvbHNSZXF1ZXN0EhEKCWJyb2tlcl9pZBgBIAEoCSJHChlMaXN0QnJva2VyU3ltYm9sc1Jlc3BvbnNlEioKB3N5bWJvbHMYASADKAsyGS5hbGZxLnYxLkJyb2tlclN5bWJvbEluZm8iOwoTTG9va3VwU3ltYm9sUmVxdWVzdBIRCgljYW5vbmljYWwYASABKAkSEQoJYnJva2VyX2lkGAIgASgJIoUCChBCcm9rZXJTeW1ib2xJbmZvEhEKCWJyb2tlcl9pZBgBIAEoCRISCgpzeW1ib2xfcmF3GAIgASgJEhEKCWNhbm9uaWNhbBgDIAEoCRIOCgZkaWdpdHMYBCABKAUSDQoFcG9pbnQYBSABKAESEQoJdGlja19zaXplGAYgASgBEhUKDWNvbnRyYWN0X3NpemUYByABKAESDwoHbWluX2xvdBgIIAEoARIPCgdtYXhfbG90GAkgASgBEhAKCGxvdF9zdGVwGAogASgBEhEKCXN3YXBfbG9uZxgLIAEoARISCgpzd2FwX3Nob3J0GAwgASgBEhMKC2Rlc2NyaXB0aW9uGA0gASgJImQKBlN5bWJvbBIMCgRuYW1lGAEgASgJEhMKC2Rlc2NyaXB0aW9uGAIgASgJEg4KBmRpZ2l0cxgDIAEoBRIVCg1jb250cmFjdF9zaXplGAQgASgBEhAKCGN1cnJlbmN5GAUgASgJIicKEkxpc3RTeW1ib2xzUmVxdWVzdBIRCglicm9rZXJfaWQYASABKAkiNwoTTGlzdFN5bWJvbHNSZXNwb25zZRIgCgdzeW1ib2xzGAEgAygLMg8uYWxmcS52MS5TeW1ib2wysQMKD1N0cmF0ZWd5U2VydmljZRJDCg5DcmVhdGVTdHJhdGVneRIeLmFsZnEudjEuQ3JlYXRlU3RyYXRlZ3lSZXF1ZXN0GhEuYWxmcS52MS5TdHJhdGVneRI9CgtHZXRTdHJhdGVneRIbLmFsZnEudjEuR2V0U3RyYXRlZ3lSZXF1ZXN0GhEuYWxmcS52MS5TdHJhdGVneRJRCg5MaXN0U3RyYXRlZ2llcxIeLmFsZnEudjEuTGlzdFN0cmF0ZWdpZXNSZXF1ZXN0Gh8uYWxmcS52MS5MaXN0U3RyYXRlZ2llc1Jlc3BvbnNlEkMKDkRlcGxveVN0cmF0ZWd5Eh4uYWxmcS52MS5EZXBsb3lTdHJhdGVneVJlcXVlc3QaES5hbGZxLnYxLlN0cmF0ZWd5Ej8KDFN0b3BTdHJhdGVneRIcLmFsZnEudjEuU3RvcFN0cmF0ZWd5UmVxdWVzdBoRLmFsZnEudjEuU3RyYXRlZ3kSQQoNU3RyZWFtU2lnbmFscxIdLmFsZnEudjEuU3RyZWFtU2lnbmFsc1JlcXVlc3QaDy5hbGZxLnYxLlNpZ25hbDABMqoBCg9CYWNrdGVzdFNlcnZpY2USRwoLUnVuQmFja3Rlc3QSGy5hbGZxLnYxLlJ1bkJhY2t0ZXN0UmVxdWVzdBoZLmFsZnEudjEuQmFja3Rlc3RQcm9ncmVzczABEk4KDUxpc3RCYWNrdGVzdHMSHS5hbGZxLnYxLkxpc3RCYWNrdGVzdHNSZXF1ZXN0Gh4uYWxmcS52MS5MaXN0QmFja3Rlc3RzUmVzcG9uc2Uy/gEKDVN5bWJvbFNlcnZpY2USSAoLTGlzdFN5bWJvbHMSGy5hbGZxLnYxLkxpc3RTeW1ib2xzUmVxdWVzdBocLmFsZnEudjEuTGlzdFN5bWJvbHNSZXNwb25zZRJaChFMaXN0QnJva2VyU3ltYm9scxIhLmFsZnEudjEuTGlzdEJyb2tlclN5bWJvbHNSZXF1ZXN0GiIuYWxmcS52MS5MaXN0QnJva2VyU3ltYm9sc1Jlc3BvbnNlEkcKDExvb2t1cFN5bWJvbBIcLmFsZnEudjEuTG9va3VwU3ltYm9sUmVxdWVzdBoZLmFsZnEudjEuQnJva2VyU3ltYm9sSW5mb0IvWi1naXRodWIuY29tL2FsZnEvYmFja2VuZC9nby9nZW4vYWxmcS92MTthbGZxdjFiBnByb3RvMw");
 
 /**
  * @generated from message alfq.v1.Strategy
@@ -361,6 +361,139 @@ export const ListBacktestsResponseSchema: GenMessage<ListBacktestsResponse> = /*
   messageDesc(file_alfq_v1_strategy, 13);
 
 /**
+ * @generated from message alfq.v1.ListBrokerSymbolsRequest
+ */
+export type ListBrokerSymbolsRequest = Message<"alfq.v1.ListBrokerSymbolsRequest"> & {
+  /**
+   * @generated from field: string broker_id = 1;
+   */
+  brokerId: string;
+};
+
+/**
+ * Describes the message alfq.v1.ListBrokerSymbolsRequest.
+ * Use `create(ListBrokerSymbolsRequestSchema)` to create a new message.
+ */
+export const ListBrokerSymbolsRequestSchema: GenMessage<ListBrokerSymbolsRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_strategy, 14);
+
+/**
+ * @generated from message alfq.v1.ListBrokerSymbolsResponse
+ */
+export type ListBrokerSymbolsResponse = Message<"alfq.v1.ListBrokerSymbolsResponse"> & {
+  /**
+   * @generated from field: repeated alfq.v1.BrokerSymbolInfo symbols = 1;
+   */
+  symbols: BrokerSymbolInfo[];
+};
+
+/**
+ * Describes the message alfq.v1.ListBrokerSymbolsResponse.
+ * Use `create(ListBrokerSymbolsResponseSchema)` to create a new message.
+ */
+export const ListBrokerSymbolsResponseSchema: GenMessage<ListBrokerSymbolsResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_strategy, 15);
+
+/**
+ * @generated from message alfq.v1.LookupSymbolRequest
+ */
+export type LookupSymbolRequest = Message<"alfq.v1.LookupSymbolRequest"> & {
+  /**
+   * @generated from field: string canonical = 1;
+   */
+  canonical: string;
+
+  /**
+   * @generated from field: string broker_id = 2;
+   */
+  brokerId: string;
+};
+
+/**
+ * Describes the message alfq.v1.LookupSymbolRequest.
+ * Use `create(LookupSymbolRequestSchema)` to create a new message.
+ */
+export const LookupSymbolRequestSchema: GenMessage<LookupSymbolRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_strategy, 16);
+
+/**
+ * @generated from message alfq.v1.BrokerSymbolInfo
+ */
+export type BrokerSymbolInfo = Message<"alfq.v1.BrokerSymbolInfo"> & {
+  /**
+   * @generated from field: string broker_id = 1;
+   */
+  brokerId: string;
+
+  /**
+   * @generated from field: string symbol_raw = 2;
+   */
+  symbolRaw: string;
+
+  /**
+   * @generated from field: string canonical = 3;
+   */
+  canonical: string;
+
+  /**
+   * @generated from field: int32 digits = 4;
+   */
+  digits: number;
+
+  /**
+   * @generated from field: double point = 5;
+   */
+  point: number;
+
+  /**
+   * @generated from field: double tick_size = 6;
+   */
+  tickSize: number;
+
+  /**
+   * @generated from field: double contract_size = 7;
+   */
+  contractSize: number;
+
+  /**
+   * @generated from field: double min_lot = 8;
+   */
+  minLot: number;
+
+  /**
+   * @generated from field: double max_lot = 9;
+   */
+  maxLot: number;
+
+  /**
+   * @generated from field: double lot_step = 10;
+   */
+  lotStep: number;
+
+  /**
+   * @generated from field: double swap_long = 11;
+   */
+  swapLong: number;
+
+  /**
+   * @generated from field: double swap_short = 12;
+   */
+  swapShort: number;
+
+  /**
+   * @generated from field: string description = 13;
+   */
+  description: string;
+};
+
+/**
+ * Describes the message alfq.v1.BrokerSymbolInfo.
+ * Use `create(BrokerSymbolInfoSchema)` to create a new message.
+ */
+export const BrokerSymbolInfoSchema: GenMessage<BrokerSymbolInfo> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_strategy, 17);
+
+/**
  * @generated from message alfq.v1.Symbol
  */
 export type Symbol = Message<"alfq.v1.Symbol"> & {
@@ -395,7 +528,7 @@ export type Symbol = Message<"alfq.v1.Symbol"> & {
  * Use `create(SymbolSchema)` to create a new message.
  */
 export const SymbolSchema: GenMessage<Symbol> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_strategy, 14);
+  messageDesc(file_alfq_v1_strategy, 18);
 
 /**
  * @generated from message alfq.v1.ListSymbolsRequest
@@ -412,7 +545,7 @@ export type ListSymbolsRequest = Message<"alfq.v1.ListSymbolsRequest"> & {
  * Use `create(ListSymbolsRequestSchema)` to create a new message.
  */
 export const ListSymbolsRequestSchema: GenMessage<ListSymbolsRequest> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_strategy, 15);
+  messageDesc(file_alfq_v1_strategy, 19);
 
 /**
  * @generated from message alfq.v1.ListSymbolsResponse
@@ -429,7 +562,7 @@ export type ListSymbolsResponse = Message<"alfq.v1.ListSymbolsResponse"> & {
  * Use `create(ListSymbolsResponseSchema)` to create a new message.
  */
 export const ListSymbolsResponseSchema: GenMessage<ListSymbolsResponse> = /*@__PURE__*/
-  messageDesc(file_alfq_v1_strategy, 16);
+  messageDesc(file_alfq_v1_strategy, 20);
 
 /**
  * @generated from service alfq.v1.StrategyService
@@ -520,6 +653,22 @@ export const SymbolService: GenService<{
     methodKind: "unary";
     input: typeof ListSymbolsRequestSchema;
     output: typeof ListSymbolsResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.SymbolService.ListBrokerSymbols
+   */
+  listBrokerSymbols: {
+    methodKind: "unary";
+    input: typeof ListBrokerSymbolsRequestSchema;
+    output: typeof ListBrokerSymbolsResponseSchema;
+  },
+  /**
+   * @generated from rpc alfq.v1.SymbolService.LookupSymbol
+   */
+  lookupSymbol: {
+    methodKind: "unary";
+    input: typeof LookupSymbolRequestSchema;
+    output: typeof BrokerSymbolInfoSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_alfq_v1_strategy, 2);

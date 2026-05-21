@@ -24,12 +24,43 @@ type AuthHandler struct {
 	rdb redis.UniversalClient
 }
 
+const jwtKeySetting = "jwt_signing_key"
+
 // NewAuthHandler creates an AuthService handler backed by PG and Redis.
+// The Ed25519 key pair is persisted in system_settings so that JWT tokens
+// remain valid across server restarts.
 func NewAuthHandler(pgPool *pg.Pool, rdb redis.UniversalClient) (*AuthHandler, error) {
-	kp, err := auth.GenerateKeyPair()
-	if err != nil {
-		return nil, fmt.Errorf("auth handler: keypair: %w", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var privB64 string
+	err := pgPool.QueryRow(ctx, `
+		SELECT value FROM system_settings WHERE key = $1
+	`, jwtKeySetting).Scan(&privB64)
+
+	var kp *auth.KeyPair
+	if err == nil && privB64 != "" {
+		// Derive kid from the first 8 bytes of the public key hash for stability
+		kp, err = auth.LoadKeyPair("persisted", privB64)
+		if err != nil {
+			return nil, fmt.Errorf("auth handler: load keypair: %w", err)
+		}
+	} else {
+		// Generate new keypair and persist it
+		kp, err = auth.GenerateKeyPair()
+		if err != nil {
+			return nil, fmt.Errorf("auth handler: keypair: %w", err)
+		}
+		_, err = pgPool.Exec(ctx, `
+			INSERT INTO system_settings (key, value, description)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+		`, jwtKeySetting, kp.PrivateKeyBase64(), "JWT Ed25519 signing key (base64)")
+		if err != nil {
+			return nil, fmt.Errorf("auth handler: persist keypair: %w", err)
+		}
 	}
+
 	return &AuthHandler{kp: kp, pg: pgPool, rdb: rdb}, nil
 }
 

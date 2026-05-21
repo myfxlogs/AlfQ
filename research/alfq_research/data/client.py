@@ -130,23 +130,23 @@ class DataClient:
 
         if start:
             ts = _to_ts_ms(start)
-            where.append("ts >= {start:UInt64}")
+            where.append("open_ts_unix_ms >= {start:UInt64}")
             params["start"] = ts
         if end:
             ts = _to_ts_ms(end)
-            where.append("ts < {end:UInt64}")
+            where.append("open_ts_unix_ms < {end:UInt64}")
             params["end"] = ts
 
         query = (
             "SELECT "
-            "  {sym_col:Identifier} AS symbol, ts, open, high, low, close, volume "
+            "  {sym_col:Identifier} AS symbol, open_ts_unix_ms AS ts, open, high, low, close, volume "
             "FROM md_bars "
             "WHERE " + " AND ".join(where) + " "
             "ORDER BY symbol, ts"
         )
 
         result = self.ch.query_df(query, parameters=params)
-        df = pl.from_arrow(result.to_arrow())
+        df = pl.from_pandas(result)
 
         # Convert ts (uint64 ms) → datetime[μs, UTC]
         if "ts" in df.columns:
@@ -244,10 +244,10 @@ class DataClient:
         where.append("canonical = {sym:String}")
 
         if start:
-            where.append("ts >= {start:UInt64}")
+            where.append("open_ts_unix_ms >= {start:UInt64}")
             params["start"] = _to_ts_ms(start)
         if end:
-            where.append("ts < {end:UInt64}")
+            where.append("open_ts_unix_ms < {end:UInt64}")
             params["end"] = _to_ts_ms(end)
 
         query = (

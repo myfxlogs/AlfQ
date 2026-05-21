@@ -1,5 +1,5 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { createClient, type Interceptor } from "@connectrpc/connect";
+import { createClient, ConnectError, Code, type Interceptor } from "@connectrpc/connect";
 import { AuthService, AuditService, TenantService, UserService } from "../gen/alfq/v1/auth_pb";
 import { BrokerService, AccountService } from "../gen/alfq/v1/broker_pb";
 import { StrategyService, BacktestService } from "../gen/alfq/v1/strategy_pb";
@@ -14,7 +14,7 @@ function env(key: string, fallback: string): string {
   ] ?? fallback;
 }
 
-// Auth interceptor: attach Bearer token to every outgoing request
+// Auth interceptor: attach Bearer token to every outgoing request.
 const authInterceptor: Interceptor = (next) => async (req) => {
   const token = getToken();
   if (token) {
@@ -23,9 +23,36 @@ const authInterceptor: Interceptor = (next) => async (req) => {
   return next(req);
 };
 
+// Session-expiry interceptor: globally handle auth or server-side failures by
+// clearing the local token and redirecting to the login page. This avoids
+// every page having to duplicate the same error-handling logic.
+// We deliberately ignore Auth* endpoints so the login screen can display real
+// validation errors instead of bouncing to itself.
+const sessionExpiryInterceptor: Interceptor = (next) => async (req) => {
+  try {
+    return await next(req);
+  } catch (e) {
+    if (e instanceof ConnectError) {
+      const isAuthRpc = req.service.typeName.endsWith(".AuthService");
+      const shouldRedirect =
+        e.code === Code.Unauthenticated ||
+        e.code === Code.PermissionDenied ||
+        e.code === Code.Internal ||
+        e.code === Code.Unavailable;
+      if (shouldRedirect && !isAuthRpc) {
+        clearToken();
+        if (!window.location.hash.startsWith("#/login")) {
+          window.location.hash = "#/login";
+        }
+      }
+    }
+    throw e;
+  }
+};
+
 const transport = createConnectTransport({
   baseUrl: env("VITE_API_BASE_URL", "/api"),
-  interceptors: [authInterceptor],
+  interceptors: [authInterceptor, sessionExpiryInterceptor],
 });
 
 export const authClient = createClient(AuthService, transport);

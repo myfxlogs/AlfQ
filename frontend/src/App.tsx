@@ -16,6 +16,7 @@ import Users from "./pages/Users";
 import AdminSettings from "./pages/AdminSettings";
 import ServiceManagement from "./pages/ServiceManagement";
 import BindAccount from "./pages/BindAccount";
+import AccountDetails from "./pages/AccountDetails";
 
 const userRoutes: Record<string, () => React.ReactNode> = {
   "#/": Dashboard,
@@ -155,6 +156,11 @@ export default function App() {
   // Login page is fullscreen, no layout
   if (hash === "#/login") {
     return <Login />;
+  }
+
+  // Dynamic route: account details
+  if (hash.startsWith("#/account/")) {
+    return <AccountDetails />;
   }
 
   const Page = isAdmin ? adminRoutes[hash] || Users : userRoutes[hash] || Dashboard;

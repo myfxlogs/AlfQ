@@ -64,6 +64,12 @@ const (
 	// SymbolServiceListSymbolsProcedure is the fully-qualified name of the SymbolService's ListSymbols
 	// RPC.
 	SymbolServiceListSymbolsProcedure = "/alfq.v1.SymbolService/ListSymbols"
+	// SymbolServiceListBrokerSymbolsProcedure is the fully-qualified name of the SymbolService's
+	// ListBrokerSymbols RPC.
+	SymbolServiceListBrokerSymbolsProcedure = "/alfq.v1.SymbolService/ListBrokerSymbols"
+	// SymbolServiceLookupSymbolProcedure is the fully-qualified name of the SymbolService's
+	// LookupSymbol RPC.
+	SymbolServiceLookupSymbolProcedure = "/alfq.v1.SymbolService/LookupSymbol"
 )
 
 // StrategyServiceClient is a client for the alfq.v1.StrategyService service.
@@ -365,6 +371,8 @@ func (UnimplementedBacktestServiceHandler) ListBacktests(context.Context, *conne
 // SymbolServiceClient is a client for the alfq.v1.SymbolService service.
 type SymbolServiceClient interface {
 	ListSymbols(context.Context, *connect.Request[v1.ListSymbolsRequest]) (*connect.Response[v1.ListSymbolsResponse], error)
+	ListBrokerSymbols(context.Context, *connect.Request[v1.ListBrokerSymbolsRequest]) (*connect.Response[v1.ListBrokerSymbolsResponse], error)
+	LookupSymbol(context.Context, *connect.Request[v1.LookupSymbolRequest]) (*connect.Response[v1.BrokerSymbolInfo], error)
 }
 
 // NewSymbolServiceClient constructs a client for the alfq.v1.SymbolService service. By default, it
@@ -384,12 +392,26 @@ func NewSymbolServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(symbolServiceMethods.ByName("ListSymbols")),
 			connect.WithClientOptions(opts...),
 		),
+		listBrokerSymbols: connect.NewClient[v1.ListBrokerSymbolsRequest, v1.ListBrokerSymbolsResponse](
+			httpClient,
+			baseURL+SymbolServiceListBrokerSymbolsProcedure,
+			connect.WithSchema(symbolServiceMethods.ByName("ListBrokerSymbols")),
+			connect.WithClientOptions(opts...),
+		),
+		lookupSymbol: connect.NewClient[v1.LookupSymbolRequest, v1.BrokerSymbolInfo](
+			httpClient,
+			baseURL+SymbolServiceLookupSymbolProcedure,
+			connect.WithSchema(symbolServiceMethods.ByName("LookupSymbol")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // symbolServiceClient implements SymbolServiceClient.
 type symbolServiceClient struct {
-	listSymbols *connect.Client[v1.ListSymbolsRequest, v1.ListSymbolsResponse]
+	listSymbols       *connect.Client[v1.ListSymbolsRequest, v1.ListSymbolsResponse]
+	listBrokerSymbols *connect.Client[v1.ListBrokerSymbolsRequest, v1.ListBrokerSymbolsResponse]
+	lookupSymbol      *connect.Client[v1.LookupSymbolRequest, v1.BrokerSymbolInfo]
 }
 
 // ListSymbols calls alfq.v1.SymbolService.ListSymbols.
@@ -397,9 +419,21 @@ func (c *symbolServiceClient) ListSymbols(ctx context.Context, req *connect.Requ
 	return c.listSymbols.CallUnary(ctx, req)
 }
 
+// ListBrokerSymbols calls alfq.v1.SymbolService.ListBrokerSymbols.
+func (c *symbolServiceClient) ListBrokerSymbols(ctx context.Context, req *connect.Request[v1.ListBrokerSymbolsRequest]) (*connect.Response[v1.ListBrokerSymbolsResponse], error) {
+	return c.listBrokerSymbols.CallUnary(ctx, req)
+}
+
+// LookupSymbol calls alfq.v1.SymbolService.LookupSymbol.
+func (c *symbolServiceClient) LookupSymbol(ctx context.Context, req *connect.Request[v1.LookupSymbolRequest]) (*connect.Response[v1.BrokerSymbolInfo], error) {
+	return c.lookupSymbol.CallUnary(ctx, req)
+}
+
 // SymbolServiceHandler is an implementation of the alfq.v1.SymbolService service.
 type SymbolServiceHandler interface {
 	ListSymbols(context.Context, *connect.Request[v1.ListSymbolsRequest]) (*connect.Response[v1.ListSymbolsResponse], error)
+	ListBrokerSymbols(context.Context, *connect.Request[v1.ListBrokerSymbolsRequest]) (*connect.Response[v1.ListBrokerSymbolsResponse], error)
+	LookupSymbol(context.Context, *connect.Request[v1.LookupSymbolRequest]) (*connect.Response[v1.BrokerSymbolInfo], error)
 }
 
 // NewSymbolServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -415,10 +449,26 @@ func NewSymbolServiceHandler(svc SymbolServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(symbolServiceMethods.ByName("ListSymbols")),
 		connect.WithHandlerOptions(opts...),
 	)
+	symbolServiceListBrokerSymbolsHandler := connect.NewUnaryHandler(
+		SymbolServiceListBrokerSymbolsProcedure,
+		svc.ListBrokerSymbols,
+		connect.WithSchema(symbolServiceMethods.ByName("ListBrokerSymbols")),
+		connect.WithHandlerOptions(opts...),
+	)
+	symbolServiceLookupSymbolHandler := connect.NewUnaryHandler(
+		SymbolServiceLookupSymbolProcedure,
+		svc.LookupSymbol,
+		connect.WithSchema(symbolServiceMethods.ByName("LookupSymbol")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/alfq.v1.SymbolService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SymbolServiceListSymbolsProcedure:
 			symbolServiceListSymbolsHandler.ServeHTTP(w, r)
+		case SymbolServiceListBrokerSymbolsProcedure:
+			symbolServiceListBrokerSymbolsHandler.ServeHTTP(w, r)
+		case SymbolServiceLookupSymbolProcedure:
+			symbolServiceLookupSymbolHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -430,4 +480,12 @@ type UnimplementedSymbolServiceHandler struct{}
 
 func (UnimplementedSymbolServiceHandler) ListSymbols(context.Context, *connect.Request[v1.ListSymbolsRequest]) (*connect.Response[v1.ListSymbolsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SymbolService.ListSymbols is not implemented"))
+}
+
+func (UnimplementedSymbolServiceHandler) ListBrokerSymbols(context.Context, *connect.Request[v1.ListBrokerSymbolsRequest]) (*connect.Response[v1.ListBrokerSymbolsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SymbolService.ListBrokerSymbols is not implemented"))
+}
+
+func (UnimplementedSymbolServiceHandler) LookupSymbol(context.Context, *connect.Request[v1.LookupSymbolRequest]) (*connect.Response[v1.BrokerSymbolInfo], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SymbolService.LookupSymbol is not implemented"))
 }

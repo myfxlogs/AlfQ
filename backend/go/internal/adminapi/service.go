@@ -26,13 +26,14 @@ var ErrSessionExpired = connect.NewError(
 
 // Service holds all RPC service implementations for trading-core API layer.
 type Service struct {
-	pool        *pg.Pool
-	log         *zap.Logger
-	mt4Gateway  config.GatewayConfig
-	mt5Gateway  config.GatewayConfig
-	acctConn    AccountConnector
-	syncWorker  OrderSyncer
-	historyRepo HistoryOrderRepo
+	pool              *pg.Pool
+	log               *zap.Logger
+	mt4Gateway        config.GatewayConfig
+	mt5Gateway        config.GatewayConfig
+	acctConn          AccountConnector
+	syncWorker        OrderSyncer
+	historyRepo       HistoryOrderRepo
+	publishSyncDoneFn func(accountID string)
 }
 
 // OrderSyncer abstracts the order history sync worker.
@@ -102,6 +103,12 @@ func (s *Service) WithLog(log *zap.Logger) *Service {
 // WithAccountConnector sets the account connection manager for persistent MT links.
 func (s *Service) WithAccountConnector(ac AccountConnector) *Service {
 	s.acctConn = ac
+	return s
+}
+
+// WithSyncDonePublisher sets the function to publish sync-done SSE events.
+func (s *Service) WithSyncDonePublisher(fn func(accountID string)) *Service {
+	s.publishSyncDoneFn = fn
 	return s
 }
 

@@ -59,6 +59,14 @@ func (p *Publisher) Publish(ctx context.Context, tick *pb.Tick) error {
 	return err
 }
 
+// PublishRaw sends raw bytes to any NATS subject.
+func (p *Publisher) PublishRaw(subject string, data []byte) error {
+	if p.nc == nil {
+		return nil
+	}
+	return p.nc.Publish(subject, data)
+}
+
 // Close releases NATS resources.
 func (p *Publisher) Close() error {
 	if p.nc != nil {

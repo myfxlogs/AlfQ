@@ -18,11 +18,16 @@ type Signal struct {
 	Reason     string
 }
 
+// SignalHandler receives signals produced by strategy evaluation.
+// Implementations bridge to OMS, logging, or paper-trading backends.
+type SignalHandler func(signal *Signal)
+
 // Runner executes a single strategy deployment.
 type Runner struct {
 	mu       sync.Mutex
 	strategy Strategy
 	position map[string]float64 // symbol → current qty
+	onSignal SignalHandler      // optional: bridges signal to OMS
 }
 
 // Strategy interface (inspired by bbgo).
@@ -37,9 +42,23 @@ func NewRunner(s Strategy) *Runner {
 	return &Runner{strategy: s, position: make(map[string]float64)}
 }
 
+// SetSignalHandler sets the callback invoked when a non-flat signal is produced.
+func (r *Runner) SetSignalHandler(h SignalHandler) {
+	r.mu.Lock()
+	r.onSignal = h
+	r.mu.Unlock()
+}
+
 // Evaluate produces a signal from factor values.
 func (r *Runner) Evaluate(ctx context.Context, factor string, value float64) (*Signal, error) {
-	return r.strategy.OnFactor(ctx, factor, value)
+	sig, err := r.strategy.OnFactor(ctx, factor, value)
+	if err != nil {
+		return nil, err
+	}
+	if sig != nil && sig.TargetQty != 0 && r.onSignal != nil {
+		r.onSignal(sig)
+	}
+	return sig, nil
 }
 
 // GetPosition returns the current position for a symbol.

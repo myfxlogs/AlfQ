@@ -26,13 +26,14 @@ type Tick struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	Broker        string                 `protobuf:"bytes,2,opt,name=broker,proto3" json:"broker,omitempty"`
-	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`                                       // raw broker symbol (e.g. EURUSD.m)
 	TsUnixMs      int64                  `protobuf:"varint,4,opt,name=ts_unix_ms,json=tsUnixMs,proto3" json:"ts_unix_ms,omitempty"`                // UTC timestamp as reported by broker
 	ArrivedUnixMs int64                  `protobuf:"varint,5,opt,name=arrived_unix_ms,json=arrivedUnixMs,proto3" json:"arrived_unix_ms,omitempty"` // local timestamp when the gateway received the tick
 	Bid           *Money                 `protobuf:"bytes,6,opt,name=bid,proto3" json:"bid,omitempty"`
 	Ask           *Money                 `protobuf:"bytes,7,opt,name=ask,proto3" json:"ask,omitempty"`
 	BidVolume     float64                `protobuf:"fixed64,8,opt,name=bid_volume,json=bidVolume,proto3" json:"bid_volume,omitempty"`
 	AskVolume     float64                `protobuf:"fixed64,9,opt,name=ask_volume,json=askVolume,proto3" json:"ask_volume,omitempty"`
+	Canonical     string                 `protobuf:"bytes,10,opt,name=canonical,proto3" json:"canonical,omitempty"` // canonical symbol name (e.g. EURUSD), filled by mdgateway normalizer
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -130,6 +131,13 @@ func (x *Tick) GetAskVolume() float64 {
 	return 0
 }
 
+func (x *Tick) GetCanonical() string {
+	if x != nil {
+		return x.Canonical
+	}
+	return ""
+}
+
 // Quote is a bid/ask pair at a point in time (alias).
 // Kept as a separate type for clarity in streaming APIs.
 type Quote struct {
@@ -205,7 +213,7 @@ type Bar struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	Broker        string                 `protobuf:"bytes,2,opt,name=broker,proto3" json:"broker,omitempty"`
-	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"` // raw broker symbol
 	Period        string                 `protobuf:"bytes,4,opt,name=period,proto3" json:"period,omitempty"` // e.g. "1m", "5m", "1h", "1d"
 	OpenTsUnixMs  int64                  `protobuf:"varint,5,opt,name=open_ts_unix_ms,json=openTsUnixMs,proto3" json:"open_ts_unix_ms,omitempty"`
 	CloseTsUnixMs int64                  `protobuf:"varint,6,opt,name=close_ts_unix_ms,json=closeTsUnixMs,proto3" json:"close_ts_unix_ms,omitempty"`
@@ -215,6 +223,7 @@ type Bar struct {
 	Close         *Money                 `protobuf:"bytes,10,opt,name=close,proto3" json:"close,omitempty"`
 	Volume        float64                `protobuf:"fixed64,11,opt,name=volume,proto3" json:"volume,omitempty"`
 	TickCount     int32                  `protobuf:"varint,12,opt,name=tick_count,json=tickCount,proto3" json:"tick_count,omitempty"`
+	Canonical     string                 `protobuf:"bytes,13,opt,name=canonical,proto3" json:"canonical,omitempty"` // canonical symbol name (e.g. EURUSD)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -333,11 +342,18 @@ func (x *Bar) GetTickCount() int32 {
 	return 0
 }
 
+func (x *Bar) GetCanonical() string {
+	if x != nil {
+		return x.Canonical
+	}
+	return ""
+}
+
 var File_alfq_v1_market_data_proto protoreflect.FileDescriptor
 
 const file_alfq_v1_market_data_proto_rawDesc = "" +
 	"\n" +
-	"\x19alfq/v1/market_data.proto\x12\aalfq.v1\x1a\x14alfq/v1/common.proto\"\x9b\x02\n" +
+	"\x19alfq/v1/market_data.proto\x12\aalfq.v1\x1a\x14alfq/v1/common.proto\"\xb9\x02\n" +
 	"\x04Tick\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
 	"\x06broker\x18\x02 \x01(\tR\x06broker\x12\x16\n" +
@@ -350,13 +366,15 @@ const file_alfq_v1_market_data_proto_rawDesc = "" +
 	"\n" +
 	"bid_volume\x18\b \x01(\x01R\tbidVolume\x12\x1d\n" +
 	"\n" +
-	"ask_volume\x18\t \x01(\x01R\taskVolume\"\x81\x01\n" +
+	"ask_volume\x18\t \x01(\x01R\taskVolume\x12\x1c\n" +
+	"\tcanonical\x18\n" +
+	" \x01(\tR\tcanonical\"\x81\x01\n" +
 	"\x05Quote\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x1c\n" +
 	"\n" +
 	"ts_unix_ms\x18\x02 \x01(\x03R\btsUnixMs\x12 \n" +
 	"\x03bid\x18\x03 \x01(\v2\x0e.alfq.v1.MoneyR\x03bid\x12 \n" +
-	"\x03ask\x18\x04 \x01(\v2\x0e.alfq.v1.MoneyR\x03ask\"\x81\x03\n" +
+	"\x03ask\x18\x04 \x01(\v2\x0e.alfq.v1.MoneyR\x03ask\"\x9f\x03\n" +
 	"\x03Bar\x12\x1b\n" +
 	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
 	"\x06broker\x18\x02 \x01(\tR\x06broker\x12\x16\n" +
@@ -371,7 +389,8 @@ const file_alfq_v1_market_data_proto_rawDesc = "" +
 	" \x01(\v2\x0e.alfq.v1.MoneyR\x05close\x12\x16\n" +
 	"\x06volume\x18\v \x01(\x01R\x06volume\x12\x1d\n" +
 	"\n" +
-	"tick_count\x18\f \x01(\x05R\ttickCountB\x8a\x01\n" +
+	"tick_count\x18\f \x01(\x05R\ttickCount\x12\x1c\n" +
+	"\tcanonical\x18\r \x01(\tR\tcanonicalB\x8a\x01\n" +
 	"\vcom.alfq.v1B\x0fMarketDataProtoP\x01Z-github.com/alfq/backend/go/gen/alfq/v1;alfqv1\xa2\x02\x03AXX\xaa\x02\aAlfq.V1\xca\x02\aAlfq\\V1\xe2\x02\x13Alfq\\V1\\GPBMetadata\xea\x02\bAlfq::V1b\x06proto3"
 
 var (

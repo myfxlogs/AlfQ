@@ -31,6 +31,9 @@ type Client struct {
 	Streams       mt5pb.StreamsClient
 }
 
+// Conn returns the underlying gRPC connection.
+func (c *Client) Conn() *grpc.ClientConn { return c.cc }
+
 // Dial 连接到 MT5 mtapi gRPC 服务器（TLS）。
 func Dial(ctx context.Context, endpoint string, opts ...grpc.DialOption) (*Client, error) {
 	if endpoint == "" {

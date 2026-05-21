@@ -32,8 +32,9 @@ message SearchBrokerResponse {
   repeated BrokerMatch matches = 1;
 }
 message BrokerMatch {
-  string company = 1;
-  repeated BrokerServer servers = 2;
+  string id = 1;         // broker UUID (empty when from online gateway search)
+  string company = 2;
+  repeated BrokerServer servers = 3;
 }
 message BrokerServer {
   string name = 1;    // e.g. "Exness-Real2"
@@ -48,6 +49,10 @@ service AccountService {
   rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
   rpc ConnectAccount(ConnectAccountRequest) returns (ConnectAccountResponse);
   rpc DisconnectAccount(DisconnectAccountRequest) returns (DisconnectAccountResponse);
+  rpc ListAccountOrders(ListAccountOrdersRequest) returns (ListAccountOrdersResponse);
+  rpc ListAccountPositions(ListAccountPositionsRequest) returns (ListAccountPositionsResponse);
+  rpc SyncAccountHistory(SyncAccountHistoryRequest) returns (SyncAccountHistoryResponse);
+  rpc GetSyncStatus(GetSyncStatusRequest) returns (GetSyncStatusResponse);
 }
 
 message Account {
@@ -91,6 +96,64 @@ message ConnectAccountResponse {}
 message DisconnectAccountRequest { string id = 1; }
 message DisconnectAccountResponse {}
 
+message ListAccountOrdersRequest {
+  string account_id = 1;
+  // optional date range in ISO-8601 format; empty means all history
+  string from = 2;
+  string to = 3;
+}
+
+message ListAccountOrdersResponse {
+  repeated HistoricalOrder orders = 1;
+}
+
+message ListAccountPositionsRequest { string account_id = 1; }
+message ListAccountPositionsResponse { repeated AccountPosition positions = 1; }
+message AccountPosition {
+  int64 ticket = 1;
+  string symbol = 2;
+  string side = 3;       // "buy" | "sell"
+  double lots = 4;
+  double open_price = 5;
+  double profit = 6;
+  double swap = 7;
+  double commission = 8;
+}
+
+message SyncAccountHistoryRequest {
+  string account_id = 1;
+  string from = 2;
+  string to = 3;
+  bool full_resync = 4;
+}
+message SyncAccountHistoryResponse {
+  string sync_id = 1;
+  string status = 2;   // "started" | "in_progress" | "completed"
+}
+message GetSyncStatusRequest { string account_id = 1; }
+message GetSyncStatusResponse {
+  string account_id = 1;
+  string sync_status = 2;      // "idle" | "syncing" | "error"
+  string last_full_sync_at = 3;
+  string last_incr_sync_at = 4;
+  string last_error = 5;
+  int32 total_synced = 6;
+}
+
+message HistoricalOrder {
+  int64 ticket = 1;
+  string symbol = 2;
+  string side = 3;      // "buy" | "sell"
+  double lots = 4;
+  double open_price = 5;
+  double close_price = 6;
+  double profit = 7;
+  double swap = 8;
+  double commission = 9;
+  string open_time = 10;  // RFC3339
+  string close_time = 11; // RFC3339
+}
+
 service SystemSettingsService {
   rpc GetSystemSettings(GetSystemSettingsRequest) returns (GetSystemSettingsResponse);
   rpc UpdateSystemSetting(UpdateSystemSettingRequest) returns (UpdateSystemSettingResponse);
@@ -115,3 +178,4 @@ message RestartServiceRequest { string name = 1; }
 message RestartServiceResponse { string name = 1; bool ok = 2; }
 message GetServiceLogsRequest { string name = 1; int32 tail = 2; string since = 3; }
 message GetServiceLogsResponse { string name = 1; repeated string lines = 2; }
+

@@ -21,6 +21,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
   const [searching, setSearching] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<BrokerMatch | null>(null);
   const [selectedServer, setSelectedServer] = useState<BrokerServer | null>(null);
+  const [brokerId, setBrokerId] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,7 +65,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
 
     try {
       const res = await accountClient.createAccount({
-        tenantId: "", brokerId: "",
+        tenantId: "", brokerId,
         login, password, server: selectedServer.access, serverName: selectedServer.name, accountType: "demo",
         mtType,
       });
@@ -155,6 +156,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
                 onChange={(e) => {
                   const c = searchResults.find((m) => m.company === e.target.value);
                   setSelectedCompany(c || null); setSelectedServer(null);
+                  setBrokerId(c?.id ?? "");
                 }}>
                 <option value="">选择经纪商</option>
                 {searchResults.map((m) => (

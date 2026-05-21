@@ -11,8 +11,12 @@ import (
 )
 
 // ModelRunner executes ONNX model inference.
-// For now this is a DSL-based fallback; full ONNX runtime integration
-// (via onnxruntime-go or REST bridge to Python) is gated behind ADR.
+// Currently a DSL-based fallback per ADR 0013 (ONNX runtime strategy).
+// Full integration via assistant-svc Python ORT bridge will be triggered when:
+//  1. trainer produces .onnx files written to ai_artifacts
+//  2. at least one researcher runs ONNX on paper for ≥1 week
+//  3. model governance (drift/shadow/lifecycle) is in place
+// See docs/adr/0013-onnx-runtime-strategy.md for details.
 type ModelRunner struct {
 	spec     *stratspec.StrategySpec
 	compiler *dsl.Compiler

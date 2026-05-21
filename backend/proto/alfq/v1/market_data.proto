@@ -10,13 +10,14 @@ import "alfq/v1/common.proto";
 message Tick {
   string tenant_id = 1;
   string broker = 2;
-  string symbol = 3;
-  int64 ts_unix_ms = 4;     // UTC timestamp as reported by broker
-  int64 arrived_unix_ms = 5; // local timestamp when the gateway received the tick
+  string symbol = 3;          // raw broker symbol (e.g. EURUSD.m)
+  int64 ts_unix_ms = 4;       // UTC timestamp as reported by broker
+  int64 arrived_unix_ms = 5;  // local timestamp when the gateway received the tick
   Money bid = 6;
   Money ask = 7;
   double bid_volume = 8;
   double ask_volume = 9;
+  string canonical = 10;      // canonical symbol name (e.g. EURUSD), filled by mdgateway normalizer
 }
 
 // Quote is a bid/ask pair at a point in time (alias).
@@ -32,8 +33,8 @@ message Quote {
 message Bar {
   string tenant_id = 1;
   string broker = 2;
-  string symbol = 3;
-  string period = 4;        // e.g. "1m", "5m", "1h", "1d"
+  string symbol = 3;          // raw broker symbol
+  string period = 4;          // e.g. "1m", "5m", "1h", "1d"
   int64 open_ts_unix_ms = 5;
   int64 close_ts_unix_ms = 6;
   Money open = 7;
@@ -42,4 +43,5 @@ message Bar {
   Money close = 10;
   double volume = 11;
   int32 tick_count = 12;
+  string canonical = 13;      // canonical symbol name (e.g. EURUSD)
 }

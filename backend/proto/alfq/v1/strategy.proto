@@ -34,6 +34,19 @@ message ListBacktestsResponse { repeated BacktestTask tasks = 1; }
 
 service SymbolService {
   rpc ListSymbols(ListSymbolsRequest) returns (ListSymbolsResponse);
+  rpc ListBrokerSymbols(ListBrokerSymbolsRequest) returns (ListBrokerSymbolsResponse);
+  rpc LookupSymbol(LookupSymbolRequest) returns (BrokerSymbolInfo);
+}
+
+message ListBrokerSymbolsRequest { string broker_id = 1; }
+message ListBrokerSymbolsResponse { repeated BrokerSymbolInfo symbols = 1; }
+message LookupSymbolRequest { string canonical = 1; string broker_id = 2; }
+message BrokerSymbolInfo {
+  string broker_id = 1; string symbol_raw = 2; string canonical = 3;
+  int32 digits = 4; double point = 5; double tick_size = 6;
+  double contract_size = 7; double min_lot = 8; double max_lot = 9; double lot_step = 10;
+  double swap_long = 11; double swap_short = 12;
+  string description = 13;
 }
 
 message Symbol { string name = 1; string description = 2; int32 digits = 3; double contract_size = 4; string currency = 5; }

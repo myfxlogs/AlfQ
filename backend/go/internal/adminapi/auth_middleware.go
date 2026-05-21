@@ -16,6 +16,7 @@ func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := extractBearerToken(r)
 		if token == "" {
+			// No token — still pass through; individual handlers reject via setRLS.
 			next.ServeHTTP(w, r)
 			return
 		}

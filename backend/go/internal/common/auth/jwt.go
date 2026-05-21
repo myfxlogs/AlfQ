@@ -46,6 +46,29 @@ func GenerateKeyPair() (*KeyPair, error) {
 	}, nil
 }
 
+// PrivateKeyBase64 returns the base64-encoded private key for persistence.
+func (kp *KeyPair) PrivateKeyBase64() string {
+	return base64.StdEncoding.EncodeToString(kp.secretKey)
+}
+
+// LoadKeyPair reconstructs a KeyPair from a kid and a base64-encoded Ed25519 private key.
+// The public key is derived from the private key.
+func LoadKeyPair(kid, privateKeyBase64 string) (*KeyPair, error) {
+	privBytes, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	if err != nil {
+		return nil, fmt.Errorf("auth: decode private key: %w", err)
+	}
+	priv := ed25519.PrivateKey(privBytes)
+	if len(priv) != ed25519.PrivateKeySize {
+		return nil, fmt.Errorf("auth: invalid private key length %d", len(priv))
+	}
+	return &KeyPair{
+		Kid:       kid,
+		PublicKey: priv.Public().(ed25519.PublicKey),
+		secretKey: priv,
+	}, nil
+}
+
 // Sign creates a signed JWT string with the given claims and TTL.
 func (kp *KeyPair) Sign(claims Claims, ttl time.Duration) (string, error) {
 	now := time.Now().UTC()
