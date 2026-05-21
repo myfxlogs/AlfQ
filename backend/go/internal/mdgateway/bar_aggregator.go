@@ -70,7 +70,9 @@ type OnBar func(bar Bar)
 
 // AddTick processes a tick and returns completed bars via onBar callback.
 func (a *Aggregator) AddTick(tick *pb.Tick, onBar OnBar) {
-	ts := tick.TsUnixMs
+	// Use local arrival time for bar bucketing.
+	// Broker TsUnixMs may be stale (MT4 OnQuote Time is not real-time in some brokers).
+	ts := tick.ArrivedUnixMs
 	if ts <= 0 {
 		ts = time.Now().UnixMilli()
 	}
