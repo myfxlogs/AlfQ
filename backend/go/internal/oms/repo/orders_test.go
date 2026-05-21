@@ -10,3 +10,10 @@ func TestNewOrderRepo(t *testing.T) {
 		t.Fatal("NewOrderRepo returned nil")
 	}
 }
+
+func TestOrderRepo_Fields(t *testing.T) {
+	r := NewOrderRepo(nil)
+	if r.pool != nil {
+		t.Fatal("expected pool to be nil")
+	}
+}

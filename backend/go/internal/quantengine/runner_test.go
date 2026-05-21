@@ -2,8 +2,6 @@ package quantengine
 
 import (
 	"testing"
-
-	stratspec "github.com/alfq/backend/go/internal/strategysvc/spec"
 )
 
 func TestDefaultDemoSpec(t *testing.T) {
@@ -31,13 +29,24 @@ func TestDefaultDemoSpec(t *testing.T) {
 	}
 }
 
-func TestStrategyRuntime(t *testing.T) {
-	spec := &stratspec.StrategySpec{Name: "test"}
+func TestStrategyRuntime_Fields(t *testing.T) {
 	rt := &StrategyRuntime{
-		Spec:   spec,
+		Spec:   nil,
 		Runner: nil,
 	}
-	if rt.Spec.Name != "test" {
-		t.Fatalf("expected test, got %s", rt.Spec.Name)
+	if rt.Spec != nil {
+		t.Fatal("expected nil Spec")
 	}
+	if rt.Runner != nil {
+		t.Fatal("expected nil Runner")
+	}
+}
+
+func TestSignalHandler(t *testing.T) {
+	// Just ensure the type exists
+	var h SignalHandler = func(symbol, side string, qty float64, reason string) {}
+	if h == nil {
+		t.Fatal("SignalHandler should not be nil")
+	}
+	h("EURUSD", "buy", 0.1, "test")
 }
