@@ -52,7 +52,7 @@ func (a *MT5Adapter) Submit(ctx context.Context, req *pb.OrderRequest) (*BrokerR
 	if err != nil {
 		return nil, fmt.Errorf("mt5 adapter: dial: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	sessionID, err := mt5Connect(ctx, conn, a.login, a.password, a.server)
 	if err != nil {
@@ -123,7 +123,7 @@ func (a *MT4Adapter) Submit(ctx context.Context, req *pb.OrderRequest) (*BrokerR
 	if err != nil {
 		return nil, fmt.Errorf("mt4 adapter: dial: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	sessionID, err := mt4Connect(ctx, conn, a.login, a.password, a.server)
 	if err != nil {

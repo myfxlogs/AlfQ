@@ -127,8 +127,9 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 			}
 		} else {
 			var err error
+			//nolint:staticcheck // retained for CLI fallback (symbol-sync, md-backfill) until MH-4 wires those tools
 			orders, err = mtapi.DialAndFetchOrderHistory(ctx, mtapiAddr, platform, login, password, server,
-				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339)) //nolint:staticcheck
+				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339))
 			if err != nil {
 				w.log.Warn("full sync chunk failed",
 					zap.String("account_id", accountID),

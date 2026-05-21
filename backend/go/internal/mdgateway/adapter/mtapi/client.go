@@ -165,7 +165,7 @@ func DisconnectSession(ctx context.Context, conn *grpc.ClientConn, platform, ses
 	if conn == nil {
 		return nil
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
 	switch strings.ToUpper(platform) {
 	case "MT5":
@@ -468,7 +468,7 @@ func DialAndFetchOrderHistory(ctx context.Context, gatewayAddr, platform, login,
 	if err != nil {
 		return nil, fmt.Errorf("mtapi: dial: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	host, port := splitHostPort(server, "443")
 	sessionID, err := connectSession(ctx, conn, platform, login, password, host, port)
