@@ -63,7 +63,11 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 		}
 		return nil, false
 	}
-	hub := mthub.NewHub(lookupGW, d.Log)
+	var hubPG *pgxpool.Pool
+	if d.PG != nil {
+		hubPG = d.PG.Pool
+	}
+	hub := mthub.NewHub(lookupGW, hubPG, d.Log)
 	events := mthub.NewOrderEventBroker()
 	mtHubSvc := mthub.NewMtHubService(hub, events, d.Log)
 	mux.Handle(mthubv1connect.NewMtHubServiceHandler(mtHubSvc))
