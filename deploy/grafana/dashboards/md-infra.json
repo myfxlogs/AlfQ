@@ -1,0 +1,43 @@
+{
+  "__inputs": [],
+  "title": "ALFQ - Market Data Infrastructure",
+  "panels": [
+    {
+      "title": "Tick Rate (per second)",
+      "targets": [{ "expr": "rate(md_tick_total[1m])" }],
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 }
+    },
+    {
+      "title": "Bar Rate (per minute)",
+      "targets": [{ "expr": "rate(md_bar_total[5m])" }],
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 }
+    },
+    {
+      "title": "Data Quality - Gaps",
+      "targets": [{ "expr": "rate(md_gap_count[5m])" }],
+      "gridPos": { "x": 0, "y": 6, "w": 8, "h": 4 }
+    },
+    {
+      "title": "Data Quality - Outliers",
+      "targets": [{ "expr": "rate(md_outlier_count[5m])" }],
+      "gridPos": { "x": 8, "y": 6, "w": 8, "h": 4 }
+    },
+    {
+      "title": "Clock Skew (seconds)",
+      "targets": [{ "expr": "md_clock_skew_seconds" }],
+      "gridPos": { "x": 16, "y": 6, "w": 8, "h": 4 }
+    },
+    {
+      "title": "CH Write Success Rate",
+      "targets": [{ "expr": "rate(chwriter:write_total{status='success'}[5m]) / rate(chwriter:write_total[5m])" }],
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 4 }
+    },
+    {
+      "title": "Reconnect Count",
+      "targets": [{ "expr": "rate(md_reconnect_total[5m])" }],
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 4 }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39
+}
