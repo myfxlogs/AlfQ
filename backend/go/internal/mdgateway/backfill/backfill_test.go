@@ -29,6 +29,16 @@ func TestSplitHostPort(t *testing.T) {
 	}
 }
 
+func TestSplitHostPort_NoPort(t *testing.T) {
+	host, port := splitHostPort("example.com", "80")
+	if host != "example.com" {
+		t.Fatalf("expected example.com, got %s", host)
+	}
+	if port != "80" {
+		t.Fatalf("expected 80, got %s", port)
+	}
+}
+
 func TestParseUint(t *testing.T) {
 	tests := []struct {
 		input string
@@ -75,4 +85,21 @@ func TestSession_Close_Nil(t *testing.T) {
 	// Close on nil conn will panic, so we skip this test
 	// In practice, Session should only be created with a valid conn
 	t.Skip("Close on nil conn causes panic, skipped")
+}
+
+func TestBar_Fields(t *testing.T) {
+	bar := Bar{
+		Time:   1234567890,
+		Open:   1.1000,
+		High:   1.1050,
+		Low:    1.0990,
+		Close:  1.1040,
+		Volume: 100.0,
+	}
+	if bar.Time != 1234567890 {
+		t.Fatalf("expected 1234567890, got %d", bar.Time)
+	}
+	if bar.Open != 1.1000 {
+		t.Fatalf("expected 1.1000, got %f", bar.Open)
+	}
 }

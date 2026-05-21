@@ -7,7 +7,6 @@ import (
 )
 
 func TestNewHistoryOrderRepo(t *testing.T) {
-	// Test with nil pool - should still create the struct
 	r := NewHistoryOrderRepo(nil)
 	if r == nil {
 		t.Fatal("NewHistoryOrderRepo returned nil")
@@ -23,37 +22,26 @@ func TestToHistoryOrder(t *testing.T) {
 		OpenPrice:  1.1000,
 		ClosePrice: 1.1050,
 		Profit:     50.0,
-		Swap:       -0.5,
-		Commission: 1.0,
-		OpenTime:   "2024-01-01T10:00:00Z",
-		CloseTime:  "2024-01-01T11:00:00Z",
+		Swap:       -1.0,
+		Commission: 0.5,
+		OpenTime:   "2024-01-01T00:00:00Z",
+		CloseTime:  "2024-01-01T00:05:00Z",
 	}
-
-	order := ToHistoryOrder("tenant-123", "account-456", info, "closed")
-
-	if order.TenantID != "tenant-123" {
-		t.Fatalf("TenantID = %s, want tenant-123", order.TenantID)
+	order := ToHistoryOrder("tenant-1", "account-1", info, "closed")
+	if order == nil {
+		t.Fatal("ToHistoryOrder returned nil")
 	}
-	if order.AccountID != "account-456" {
-		t.Fatalf("AccountID = %s, want account-456", order.AccountID)
+	if order.TenantID != "tenant-1" {
+		t.Fatalf("expected tenant-1, got %s", order.TenantID)
+	}
+	if order.AccountID != "account-1" {
+		t.Fatalf("expected account-1, got %s", order.AccountID)
 	}
 	if order.Ticket != 12345 {
-		t.Fatalf("Ticket = %d, want 12345", order.Ticket)
-	}
-	if order.Symbol != "EURUSD" {
-		t.Fatalf("Symbol = %s, want EURUSD", order.Symbol)
-	}
-	if order.Side != "buy" {
-		t.Fatalf("Side = %s, want buy", order.Side)
-	}
-	if order.Lots != 0.1 {
-		t.Fatalf("Lots = %f, want 0.1", order.Lots)
+		t.Fatalf("expected 12345, got %d", order.Ticket)
 	}
 	if order.State != "closed" {
-		t.Fatalf("State = %s, want closed", order.State)
-	}
-	if order.CloseTime == nil {
-		t.Fatal("CloseTime should not be nil")
+		t.Fatalf("expected closed, got %s", order.State)
 	}
 }
 

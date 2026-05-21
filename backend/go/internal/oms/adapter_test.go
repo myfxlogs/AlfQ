@@ -89,12 +89,87 @@ func TestMT5AdapterModify(t *testing.T) {
 }
 
 func TestMT5AdapterQuery(t *testing.T) {
-	a := NewMT5Adapter("x", "user", "pass", "srv")
+	a := NewMT5Adapter("test", "123", "pass", "server")
 	order, err := a.Query(nil, "ticket")
 	if err != nil {
-		t.Fatalf("Query: %v", err)
+		t.Fatalf("Query should return nil error, got %v", err)
 	}
 	if order != nil {
-		t.Fatal("expected nil order")
+		t.Fatal("Query should return nil order")
+	}
+}
+
+func TestParseMoney_Nil(t *testing.T) {
+	v := parseMoney(nil)
+	if v != 0 {
+		t.Fatalf("expected 0, got %f", v)
+	}
+}
+
+func TestSplitHostPort(t *testing.T) {
+	host, port := splitHostPort("example.com:443", "80")
+	if host != "example.com" {
+		t.Fatalf("expected example.com, got %s", host)
+	}
+	if port != "443" {
+		t.Fatalf("expected 443, got %s", port)
+	}
+}
+
+func TestSplitHostPort_NoPort(t *testing.T) {
+	host, port := splitHostPort("example.com", "80")
+	if host != "example.com" {
+		t.Fatalf("expected example.com, got %s", host)
+	}
+	if port != "80" {
+		t.Fatalf("expected 80, got %s", port)
+	}
+}
+
+func TestParseUint(t *testing.T) {
+	n := parseUint("12345")
+	if n != 12345 {
+		t.Fatalf("expected 12345, got %d", n)
+	}
+}
+
+func TestParseUint_Empty(t *testing.T) {
+	n := parseUint("")
+	if n != 0 {
+		t.Fatalf("expected 0, got %d", n)
+	}
+}
+
+func TestParsePort(t *testing.T) {
+	n := parsePort("443")
+	if n != 443 {
+		t.Fatalf("expected 443, got %d", n)
+	}
+}
+
+func TestParsePort_Empty(t *testing.T) {
+	n := parsePort("")
+	if n != 443 {
+		t.Fatalf("expected 443, got %d", n)
+	}
+}
+
+func TestPtrUint64(t *testing.T) {
+	p := ptrUint64(123)
+	if p == nil {
+		t.Fatal("ptrUint64 returned nil")
+	}
+	if *p != 123 {
+		t.Fatalf("expected 123, got %d", *p)
+	}
+}
+
+func TestPtrString(t *testing.T) {
+	p := ptrString("test")
+	if p == nil {
+		t.Fatal("ptrString returned nil")
+	}
+	if *p != "test" {
+		t.Fatalf("expected test, got %s", *p)
 	}
 }

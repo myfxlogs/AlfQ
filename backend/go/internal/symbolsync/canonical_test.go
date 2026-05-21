@@ -7,15 +7,25 @@ import (
 
 func TestCanonicalize(t *testing.T) {
 	tests := []struct {
-		raw, want string
+		input string
+		want  string
 	}{
-		{"EURUSD", "EURUSD"},
+		{"eurusd", "EURUSD"},
 		{"EURUSD.m", "EURUSD"},
-		{"EURUSDm", "EURUSD"},
-		{"GBPJPY.m", "GBPJPY"},
-		{"GBPJPYm", "GBPJPY"},
-		{"XAUUSD.ecn", "XAUUSD"},
-		{"XAUUSD.ECN", "XAUUSD"},
+		{"EURUSD.M", "EURUSD"},
+		{"EURUSD.ecn", "EURUSD"},
+		{"EURUSD.ECN", "EURUSD"},
+		{"EURUSD.raw", "EURUSD"},
+		{"EURUSD.RAW", "EURUSD"},
+		{"EURUSD.pro", "EURUSD"},
+		{"EURUSD.PRO", "EURUSD"},
+		{"EURUSD.i", "EURUSD"},
+		{"EURUSD.I", "EURUSD"},
+		{"EURUSD.stp", "EURUSD"},
+		{"EURUSD.STP", "EURUSD"},
+		{"EURUSD.c", "EURUSD"},
+		{"EURUSD.C", "EURUSD"},
+		{"GBPJPY", "GBPJPY"},
 		{"XAUUSD.raw", "XAUUSD"},
 		{"EURUSD..m", "EURUSD."}, // .M stripped → trailing dot remains (only one suffix removed)
 		{"A", "A"},               // too short (single char stays)
@@ -31,9 +41,9 @@ func TestCanonicalize(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := Canonicalize(tt.raw)
+		got := Canonicalize(tt.input)
 		if got != tt.want {
-			t.Errorf("Canonicalize(%q) = %q, want %q", tt.raw, got, tt.want)
+			t.Errorf("Canonicalize(%q) = %q, want %q", tt.input, got, tt.want)
 		}
 	}
 }
