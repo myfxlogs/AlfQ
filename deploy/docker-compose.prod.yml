@@ -82,6 +82,7 @@ services:
     image: grafana/grafana:13.0.1
     volumes:
       - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - grafana_data:/var/lib/grafana
     environment:
       GF_SECURITY_ADMIN_USER: admin
@@ -114,12 +115,19 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: trading-core }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
     ports: ["127.0.0.1:9000:9000"]
     volumes:
       - ../configs:/app/configs:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      DATABASE_URL: ${DATABASE_URL:?err}
+      DATABASE_URL: ${DATABASE_URL:-postgres://alfq:alfq_dev@postgres:5432/alfq?sslmode=disable}
       REDIS_ADDR: "redis:6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       NATS_URL: "nats://nats:4222"
@@ -136,6 +144,13 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: quant-engine }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
     ports: ["127.0.0.1:9002:9002"]
     environment:
       LISTEN_ADDR: ":9002"
@@ -150,16 +165,25 @@ services:
     build:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
-      args: { SVC: md-gateway }
+      args: { SVC: md-gateway, CGO_ENABLED: "1" }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
     ports: ["127.0.0.1:9001:9001"]
     environment:
       LISTEN_ADDR: ":9001"
+      DATABASE_URL: ${DATABASE_URL:-postgres://alfq:alfq_dev@postgres:5432/alfq?sslmode=disable}
       NATS_URL: "nats://nats:4222"
       NATS_USER: ${NATS_USER:-}
       NATS_PASSWORD: ${NATS_PASSWORD:-}
       REDIS_ADDR: "redis:6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       CH_ADDR: "clickhouse:9000"
+      CH_PASSWORD: ${CLICKHOUSE_PASSWORD}
     depends_on:
       nats:       { condition: service_healthy }
       redis:      { condition: service_healthy }
@@ -171,6 +195,13 @@ services:
       context: ..
       dockerfile: backend/go/Dockerfile.builder
       args: { SVC: assistant-svc }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9003/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
     ports: ["127.0.0.1:9003:9003"]
     environment:
       LISTEN_ADDR: ":9003"
@@ -182,6 +213,13 @@ services:
     build:
       context: ..
       dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
     ports: ["80:80"]
     depends_on:
       trading-core: { condition: service_started }

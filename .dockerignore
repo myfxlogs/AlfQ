@@ -1,4 +1,54 @@
+# Build context optimisation — exclude everything not needed for Docker builds.
+
+# Large reference repos (3.2 GB)
+references/
+
+# Python research env (1 GB)
+research/
+
+# Documentation
+docs/
+
+# Scripts & tools
+scripts/
+tools/
+*.sh
+
+# Frontend build artifacts (already excluded but be explicit)
 frontend/node_modules
 frontend/dist
 frontend/.vite
 frontend/*.log
+
+# Go build/test artifacts
+backend/go/*.out
+backend/go/cover*.out
+backend/go/tmp/
+
+# Deploy data dirs (mounts, not needed in context)
+deploy/prometheus/data/
+deploy/grafana/data/
+deploy/loki/data/
+deploy/tempo/data/
+
+# Git (Docker excludes .git by default, but explicit)
+.git/
+.gitattributes
+.gitignore
+.gitmodules
+
+# Editor / OS files
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Markdown / config notes
+*.md
+LICENSE
+CODEOWNERS
+
+# Environment files
+.env
+.env.*

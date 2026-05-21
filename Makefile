@@ -1,5 +1,5 @@
 .PHONY: proto proto-lint proto-gen proto-mtapi-gen \
-        go-lint go-test go-build \
+        go-lint go-test go-build go-test-integration \
         py-lint py-test \
         web-lint web-build \
         build test lint \
@@ -30,8 +30,13 @@ go-lint:
 go-test:
 	cd backend/go && GOTOOLCHAIN=local go test -race -count=1 ./...
 
+SVC ?= trading-core
+CGO_ENABLED ?= 0
 go-build: proto-gen
-	cd backend/go && GOTOOLCHAIN=local go build ./cmd/trading-core ./cmd/md-gateway ./cmd/quant-engine ./cmd/assistant-svc
+	docker build --build-arg SVC=$(SVC) --build-arg CGO_ENABLED=$(CGO_ENABLED) -f backend/go/Dockerfile.builder .
+
+go-test-integration:
+	cd backend/go && GOTOOLCHAIN=local go test -tags=integration -timeout=10m ./test/integration/...
 
 # ============================================================
 # Python (Research)
