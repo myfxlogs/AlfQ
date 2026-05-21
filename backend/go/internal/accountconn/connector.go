@@ -5,6 +5,7 @@ package accountconn
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"crypto/tls"
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
@@ -261,7 +261,7 @@ func (m *Manager) run(ctx context.Context, info AccountInfo) {
 			)
 			m.updateStatus(ctx, info.ID, "error", err.Error())
 		}
-		conn.Close()
+		_ = conn.Close()
 
 	reconnect:
 		select {

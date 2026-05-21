@@ -116,6 +116,6 @@ func checkTCP(host string, port int) (string, int32) {
 	if err != nil {
 		return "down", latency
 	}
-	conn.Close()
+	_ = conn.Close()
 	return "up", latency
 }
