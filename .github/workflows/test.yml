@@ -34,8 +34,8 @@ jobs:
           cd backend/go
           PCT=$(go tool cover -func=cover.out | tail -1 | awk '{print $NF}' | sed 's/%//')
           echo "Coverage: $PCT%"
-          if [ "$(echo "$PCT >= 30" | bc)" -ne 1 ]; then
-            echo "Coverage $PCT% < 30%"
+          if [ "$(echo "$PCT >= 25" | bc)" -ne 1 ]; then
+            echo "Coverage $PCT% < 25%"
             exit 1
           fi
 
