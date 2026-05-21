@@ -9,6 +9,26 @@ description = "ALFQ 量化研究层 — Python SDK for factor DSL, backtesting, 
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "Apache-2.0"}
+dependencies = [
+    "clickhouse-connect>=1.0.1",
+    "lightgbm>=4.6.0",
+    "loguru>=0.7.3",
+    "numpy>=2.0",
+    "mypy>=2.1.0",
+    "onnx>=1.21.0",
+    "onnxmltools>=1.16.0",
+    "onnxruntime>=1.26.0",
+    "pandas>=3.0.3",
+    "polars>=1.40.1",
+    "pyarrow>=24.0.0",
+    "pydantic>=2.13.4",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.15.13",
+    "scipy>=1.17.1",
+    "skl2onnx>=1.20.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["alfq_research"]
@@ -44,3 +64,12 @@ python_version = "3.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.1.0",
+    "polars>=1.40.1",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.13",
+]
