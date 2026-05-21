@@ -99,7 +99,7 @@ func (a *MT5Adapter) Submit(ctx context.Context, req *pb.OrderRequest) (*BrokerR
 	}, nil
 }
 
-func (a *MT5Adapter) Cancel(ctx context.Context, ticket string) error  { return nil }
+func (a *MT5Adapter) Cancel(ctx context.Context, ticket string) error { return nil }
 func (a *MT5Adapter) Modify(ctx context.Context, ticket string, price, stopPrice float64) error {
 	return nil
 }
@@ -169,7 +169,7 @@ func (a *MT4Adapter) Submit(ctx context.Context, req *pb.OrderRequest) (*BrokerR
 	}, nil
 }
 
-func (a *MT4Adapter) Cancel(ctx context.Context, ticket string) error  { return nil }
+func (a *MT4Adapter) Cancel(ctx context.Context, ticket string) error { return nil }
 func (a *MT4Adapter) Modify(ctx context.Context, ticket string, price, stopPrice float64) error {
 	return nil
 }
@@ -180,9 +180,9 @@ func (a *MT4Adapter) Query(ctx context.Context, ticket string) (*pb.Order, error
 func dialMT(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	dialCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	return grpc.DialContext(dialCtx, addr,
+	return grpc.DialContext(dialCtx, addr, //nolint:staticcheck
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
-		grpc.WithBlock(),
+		grpc.WithBlock(), //nolint:staticcheck
 	)
 }
 

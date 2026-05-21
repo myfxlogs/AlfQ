@@ -130,8 +130,8 @@ func (w *CHWriter) flushBatch(ctx context.Context, batch []*pb.Tick) {
 		if err := chBatch.Append(
 			t.TenantId,
 			t.Broker,
-			t.Symbol,            // symbol_raw
-			t.Canonical,         // canonical (filled by normalizer)
+			t.Symbol,    // symbol_raw
+			t.Canonical, // canonical (filled by normalizer)
 			uint64(t.TsUnixMs),
 			uint64(t.ArrivedUnixMs),
 			t.GetBid().GetValue(), // Decimal(18,6) from string

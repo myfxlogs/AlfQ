@@ -13,17 +13,17 @@ import (
 
 // Result holds the output of a backtest run.
 type Result struct {
-	StrategyID   string             `json:"strategy_id"`
-	Status       string             `json:"status"` // "passed" | "failed"
-	Correlation  float64            `json:"correlation"`
-	DailyMADPct  float64            `json:"daily_mad_pct"`
-	VecSharpe    float64            `json:"vec_sharpe"`
-	EvSharpe     float64            `json:"ev_sharpe"`
-	VecReturn    float64            `json:"vec_return"`
-	EvReturn     float64            `json:"ev_return"`
-	OverlapDays  int                `json:"overlap_days"`
-	Error        string             `json:"error,omitempty"`
-	RawOutput    string             `json:"-"`
+	StrategyID  string  `json:"strategy_id"`
+	Status      string  `json:"status"` // "passed" | "failed"
+	Correlation float64 `json:"correlation"`
+	DailyMADPct float64 `json:"daily_mad_pct"`
+	VecSharpe   float64 `json:"vec_sharpe"`
+	EvSharpe    float64 `json:"ev_sharpe"`
+	VecReturn   float64 `json:"vec_return"`
+	EvReturn    float64 `json:"ev_return"`
+	OverlapDays int     `json:"overlap_days"`
+	Error       string  `json:"error,omitempty"`
+	RawOutput   string  `json:"-"`
 }
 
 // RunPythonBacktest executes the Python research backtest CLI for a given strategy spec.

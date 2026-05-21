@@ -12,24 +12,24 @@ import (
 
 // HistoryOrder represents a row in orders_history.
 type HistoryOrder struct {
-	ID          string
-	TenantID    string
-	AccountID   string
-	Ticket      int64
-	Symbol      string
-	Side        string
-	Lots        float64
-	OpenPrice   float64
-	ClosePrice  float64
-	Profit      float64
-	Swap        float64
-	Commission  float64
-	OpenTime    time.Time
-	CloseTime   *time.Time // nil when not closed
-	State       string
-	RawPayload  map[string]interface{}
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID         string
+	TenantID   string
+	AccountID  string
+	Ticket     int64
+	Symbol     string
+	Side       string
+	Lots       float64
+	OpenPrice  float64
+	ClosePrice float64
+	Profit     float64
+	Swap       float64
+	Commission float64
+	OpenTime   time.Time
+	CloseTime  *time.Time // nil when not closed
+	State      string
+	RawPayload map[string]interface{}
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 // UpsertResult tells whether the row was inserted (true) or updated (false).

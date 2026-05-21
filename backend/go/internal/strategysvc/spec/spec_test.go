@@ -140,5 +140,3 @@ period: 1d`), 0o644)
 		t.Errorf("got %d specs, want 2", len(specs))
 	}
 }
-
-

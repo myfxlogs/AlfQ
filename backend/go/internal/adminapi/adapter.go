@@ -193,12 +193,16 @@ func (a *Adapter) StreamSignals(ctx context.Context, req *connect.Request[pb.Str
 
 func (a *Adapter) GetSystemSettings(ctx context.Context, req *connect.Request[pb.GetSystemSettingsRequest]) (*connect.Response[pb.GetSystemSettingsResponse], error) {
 	resp, err := a.svc.GetSystemSettings(ctx, req.Msg)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(resp), nil
 }
 func (a *Adapter) UpdateSystemSetting(ctx context.Context, req *connect.Request[pb.UpdateSystemSettingRequest]) (*connect.Response[pb.UpdateSystemSettingResponse], error) {
 	resp, err := a.svc.UpdateSystemSetting(ctx, req.Msg)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(resp), nil
 }
 
@@ -206,17 +210,23 @@ func (a *Adapter) UpdateSystemSetting(ctx context.Context, req *connect.Request[
 
 func (a *Adapter) GetServiceStatus(ctx context.Context, req *connect.Request[pb.GetServiceStatusRequest]) (*connect.Response[pb.GetServiceStatusResponse], error) {
 	resp, err := a.svc.GetServiceStatus(ctx, req.Msg)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(resp), nil
 }
 func (a *Adapter) RestartService(ctx context.Context, req *connect.Request[pb.RestartServiceRequest]) (*connect.Response[pb.RestartServiceResponse], error) {
 	resp, err := a.svc.RestartService(ctx, req.Msg)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(resp), nil
 }
 func (a *Adapter) GetServiceLogs(ctx context.Context, req *connect.Request[pb.GetServiceLogsRequest]) (*connect.Response[pb.GetServiceLogsResponse], error) {
 	resp, err := a.svc.GetServiceLogs(ctx, req.Msg)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return connect.NewResponse(resp), nil
 }
 

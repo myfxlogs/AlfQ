@@ -33,14 +33,14 @@ func DefaultQualityConfig() QualityConfig {
 type Quality struct {
 	cfg QualityConfig
 
-	mu       sync.Mutex
-	lastTS   map[string]int64     // broker:symbol → last tick ts_ms
-	prices   map[string][]float64 // broker:symbol → sliding window of recent prices
+	mu     sync.Mutex
+	lastTS map[string]int64     // broker:symbol → last tick ts_ms
+	prices map[string][]float64 // broker:symbol → sliding window of recent prices
 
 	// Prometheus metrics
-	gapCount    *prometheus.CounterVec
-	outlierCnt  *prometheus.CounterVec
-	skewGauge   prometheus.Gauge
+	gapCount   *prometheus.CounterVec
+	outlierCnt *prometheus.CounterVec
+	skewGauge  prometheus.Gauge
 }
 
 // NewQuality creates a QC engine with registered prometheus metrics.
@@ -49,9 +49,9 @@ func NewQuality(cfg QualityConfig) *Quality {
 		cfg = DefaultQualityConfig()
 	}
 	q := &Quality{
-		cfg:      cfg,
-		lastTS:   make(map[string]int64),
-		prices:   make(map[string][]float64),
+		cfg:    cfg,
+		lastTS: make(map[string]int64),
+		prices: make(map[string][]float64),
 		gapCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "md_gap_count", Help: "Tick gaps > threshold detected",
 		}, []string{"broker", "symbol"}),

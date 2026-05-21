@@ -13,8 +13,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.Account, error) {
@@ -315,7 +315,7 @@ func (s *Service) ConnectAccount(ctx context.Context, req *pb.ConnectAccountRequ
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
-	s.pool.Exec(ctx, `UPDATE accounts SET status='connected', connected_at=now(), updated_at=now() WHERE id=$1`, req.Id)
+	_, _ = s.pool.Exec(ctx, `UPDATE accounts SET status='connected', connected_at=now(), updated_at=now() WHERE id=$1`, req.Id)
 	return &pb.ConnectAccountResponse{}, nil
 }
 
@@ -323,7 +323,7 @@ func (s *Service) DisconnectAccount(ctx context.Context, req *pb.DisconnectAccou
 	if err := s.setRLS(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
-	s.pool.Exec(ctx, `UPDATE accounts SET status='disconnected', updated_at=now() WHERE id=$1`, req.Id)
+	_, _ = s.pool.Exec(ctx, `UPDATE accounts SET status='disconnected', updated_at=now() WHERE id=$1`, req.Id)
 	return &pb.DisconnectAccountResponse{}, nil
 }
 
@@ -455,12 +455,12 @@ func (s *Service) GetSyncStatus(ctx context.Context, req *pb.GetSyncStatusReques
 		lastIncr = state.LastIncrSyncAt.Format(time.RFC3339)
 	}
 	return &pb.GetSyncStatusResponse{
-		AccountId:       state.AccountID,
-		SyncStatus:      state.SyncStatus,
-		LastFullSyncAt:  lastFull,
-		LastIncrSyncAt:  lastIncr,
-		LastError:       state.LastError,
-		TotalSynced:     int32(state.TotalSynced),
+		AccountId:      state.AccountID,
+		SyncStatus:     state.SyncStatus,
+		LastFullSyncAt: lastFull,
+		LastIncrSyncAt: lastIncr,
+		LastError:      state.LastError,
+		TotalSynced:    int32(state.TotalSynced),
 	}, nil
 }
 

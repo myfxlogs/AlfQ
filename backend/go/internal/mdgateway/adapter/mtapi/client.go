@@ -143,19 +143,19 @@ func ConnectSession(ctx context.Context, gw config.GatewayConfig, mtType, login,
 	case "MT5":
 		sessionID, err := mt5ConnectSession(ctx, conn, login, password, host, parsePort(port))
 		if err != nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil, "", err
 		}
 		return conn, sessionID, nil
 	case "MT4":
 		sessionID, err := mt4ConnectSession(ctx, conn, login, password, host, port)
 		if err != nil {
-			conn.Close()
+			_ = conn.Close()
 			return nil, "", err
 		}
 		return conn, sessionID, nil
 	default:
-		conn.Close()
+		_ = conn.Close()
 		return nil, "", fmt.Errorf("mtapi: unsupported platform %q", mtType)
 	}
 }
@@ -559,7 +559,13 @@ func parseUint(s string) uint64 {
 	return n
 }
 
-func parsePort(s string) int32 { n := parseUint(s); if n == 0 { return 443 }; return int32(n) }
+func parsePort(s string) int32 {
+	n := parseUint(s)
+	if n == 0 {
+		return 443
+	}
+	return int32(n)
+}
 
 // func getFloat(m map[string]interface{}, key string) float64 {
 // 	if v, ok := m[key].(float64); ok { return v }

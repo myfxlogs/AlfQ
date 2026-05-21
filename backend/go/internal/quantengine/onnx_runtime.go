@@ -16,6 +16,7 @@ import (
 //  1. trainer produces .onnx files written to ai_artifacts
 //  2. at least one researcher runs ONNX on paper for ≥1 week
 //  3. model governance (drift/shadow/lifecycle) is in place
+//
 // See docs/adr/0013-onnx-runtime-strategy.md for details.
 type ModelRunner struct {
 	spec     *stratspec.StrategySpec

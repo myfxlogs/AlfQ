@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 	mthubv1 "github.com/alfq/backend/go/gen/alfq/mthub/v1"
+	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 	"go.uber.org/zap"
 )
 

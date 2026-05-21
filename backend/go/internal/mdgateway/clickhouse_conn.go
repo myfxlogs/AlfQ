@@ -30,8 +30,8 @@ func DefaultCHConnConfig() CHConnConfig {
 
 // CHConn wraps a native ClickHouse connection with auto-reconnect.
 type CHConn struct {
-	cfg CHConnConfig
-	log *zap.Logger
+	cfg  CHConnConfig
+	log  *zap.Logger
 	conn clickhouse.Conn
 }
 

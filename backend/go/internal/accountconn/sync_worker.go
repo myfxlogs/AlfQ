@@ -58,12 +58,12 @@ func (w *SyncWorker) SetManager(m *Manager) {
 
 // SyncState holds per-account sync bookkeeping.
 type SyncState struct {
-	AccountID       string
-	LastFullSyncAt  *time.Time
-	LastIncrSyncAt  *time.Time
-	SyncStatus      string
-	LastError       string
-	TotalSynced     int
+	AccountID      string
+	LastFullSyncAt *time.Time
+	LastIncrSyncAt *time.Time
+	SyncStatus     string
+	LastError      string
+	TotalSynced    int
 }
 
 // FullSync performs a full historical order sync for the given account.
@@ -219,7 +219,7 @@ func (w *SyncWorker) IncrSync(ctx context.Context, accountID string, from, to ti
 		return err
 	})
 	if err != nil {
-		w.setSyncStatus(ctx, accountID, "error", err.Error())
+		_ = w.setSyncStatus(ctx, accountID, "error", err.Error())
 		return nil, err
 	}
 

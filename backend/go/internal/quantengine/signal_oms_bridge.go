@@ -96,5 +96,3 @@ func PGSymbolResolver(brokerID string, queryRow func(ctx context.Context, query 
 		)
 	}
 }
-
-

@@ -1,9 +1,10 @@
 // Package adminapi — BacktestService handler implementation (LP-1).
 //
 // Flow:
-//   RunBacktest → load strategy → call Python research CLI →
-//   vectorized + event backtest → consistency gate →
-//   update strategy status (draft→ready) → stream progress.
+//
+//	RunBacktest → load strategy → call Python research CLI →
+//	vectorized + event backtest → consistency gate →
+//	update strategy status (draft→ready) → stream progress.
 package adminapi
 
 import (

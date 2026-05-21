@@ -20,36 +20,36 @@ var periods = []int64{
 
 // periodName maps period ms to string.
 var periodNames = map[int64]string{
-	1 * 60 * 1000:        "1m",
-	5 * 60 * 1000:        "5m",
-	15 * 60 * 1000:       "15m",
-	60 * 60 * 1000:       "1h",
-	4 * 60 * 60 * 1000:   "4h",
-	24 * 60 * 60 * 1000:  "1d",
+	1 * 60 * 1000:       "1m",
+	5 * 60 * 1000:       "5m",
+	15 * 60 * 1000:      "15m",
+	60 * 60 * 1000:      "1h",
+	4 * 60 * 60 * 1000:  "4h",
+	24 * 60 * 60 * 1000: "1d",
 }
 
 // Bar is a completed OHLCV bar.
 type Bar struct {
-	TenantID       string
-	Broker         string
-	SymbolRaw      string
-	Canonical      string
-	Period         string
-	OpenTsUnixMs   int64
-	CloseTsUnixMs  int64
-	Open           float64
-	High           float64
-	Low            float64
-	Close          float64
-	Volume         float64
-	TickCount      uint32
+	TenantID      string
+	Broker        string
+	SymbolRaw     string
+	Canonical     string
+	Period        string
+	OpenTsUnixMs  int64
+	CloseTsUnixMs int64
+	Open          float64
+	High          float64
+	Low           float64
+	Close         float64
+	Volume        float64
+	TickCount     uint32
 }
 
 // openBar is an in-progress bar.
 type openBar struct {
-	bar      Bar
-	startMs  int64
-	endMs    int64
+	bar     Bar
+	startMs int64
+	endMs   int64
 }
 
 // Aggregator accumulates ticks into bars.

@@ -7,8 +7,8 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/alfq/backend/go/gen/alfq/v1/alfqv1connect"
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
+	"github.com/alfq/backend/go/gen/alfq/v1/alfqv1connect"
 )
 
 // symbolServiceHandler implements alfqv1connect.SymbolServiceHandler.

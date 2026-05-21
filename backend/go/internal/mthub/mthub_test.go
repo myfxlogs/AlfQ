@@ -18,10 +18,10 @@ type mockGateway struct {
 	brokerID  string
 }
 
-func (m *mockGateway) Platform() string      { return m.platform }
-func (m *mockGateway) Conn() *grpc.ClientConn  { return m.conn }
-func (m *mockGateway) SessionID() string       { return m.sessionID }
-func (m *mockGateway) BrokerID() string        { return m.brokerID }
+func (m *mockGateway) Platform() string       { return m.platform }
+func (m *mockGateway) Conn() *grpc.ClientConn { return m.conn }
+func (m *mockGateway) SessionID() string      { return m.sessionID }
+func (m *mockGateway) BrokerID() string       { return m.brokerID }
 
 func TestSession(t *testing.T) {
 	gw := &mockGateway{platform: "mt5", sessionID: "sess-1", brokerID: "broker-1"}

@@ -8,10 +8,10 @@ import (
 
 // Hub manages the registry of MT sessions keyed by account ID.
 type Hub struct {
-	mu        sync.RWMutex
-	sessions  map[string]*Session
-	lookupGW  func(brokerID string) (Gateway, bool)
-	log       *zap.Logger
+	mu       sync.RWMutex
+	sessions map[string]*Session
+	lookupGW func(brokerID string) (Gateway, bool)
+	log      *zap.Logger
 }
 
 // NewHub creates a Hub. lookupGW resolves a broker ID to a connected Gateway.

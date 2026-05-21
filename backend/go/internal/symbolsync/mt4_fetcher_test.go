@@ -19,9 +19,9 @@ func TestConvertMT4SymbolEURUSD(t *testing.T) {
 			SwapShort:    1.2,
 		},
 		GroupParams: &mt4pb.ConGroupSec{
-			MinLot:   0.01,
-			MaxLot:   100,
-			LotStep:  0.01,
+			MinLot:  0.01,
+			MaxLot:  100,
+			LotStep: 0.01,
 		},
 	}
 

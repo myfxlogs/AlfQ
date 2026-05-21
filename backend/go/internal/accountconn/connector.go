@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"crypto/tls"
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
@@ -20,7 +21,6 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"crypto/tls"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -240,9 +240,9 @@ func (m *Manager) run(ctx context.Context, info AccountInfo) {
 		} else {
 			creds = insecure.NewCredentials()
 		}
-		conn, err := grpc.DialContext(dialCtx, gw.Addr,
+		conn, err := grpc.DialContext(dialCtx, gw.Addr, //nolint:staticcheck
 			grpc.WithTransportCredentials(creds),
-			grpc.WithBlock(),
+			grpc.WithBlock(), //nolint:staticcheck
 		)
 		dialCancel()
 		if err != nil {
@@ -659,7 +659,9 @@ func subscribeProfitStream(ctx context.Context, conn *grpc.ClientConn, platform,
 	return nil, fmt.Errorf("unknown platform: %s", platform)
 }
 
-type mt5Stream struct{ s mt5pb.Streams_OnOrderProfitClient }
+type mt5Stream struct {
+	s mt5pb.Streams_OnOrderProfitClient
+}
 type mt5Upd struct{ *mt5pb.OnOrderProfitReply }
 type mt5Res struct{ *mt5pb.ProfitUpdate }
 
@@ -679,7 +681,9 @@ func (u *mt5Upd) GetResult() profitResult {
 func (r *mt5Res) GetBalance() float64 { return r.ProfitUpdate.GetBalance() }
 func (r *mt5Res) GetEquity() float64  { return r.ProfitUpdate.GetEquity() }
 
-type mt4Stream struct{ s mt4pb.Streams_OnOrderProfitClient }
+type mt4Stream struct {
+	s mt4pb.Streams_OnOrderProfitClient
+}
 type mt4Upd struct{ *mt4pb.OnOrderProfitReply }
 type mt4Res struct{ *mt4pb.ProfitUpdate }
 
@@ -727,11 +731,15 @@ func subscribeOrderUpdateStream(ctx context.Context, conn *grpc.ClientConn, plat
 	return nil, fmt.Errorf("unknown platform: %s", platform)
 }
 
-type mt5OrderStream struct{ s mt5pb.Streams_OnOrderUpdateClient }
+type mt5OrderStream struct {
+	s mt5pb.Streams_OnOrderUpdateClient
+}
 
 func (s *mt5OrderStream) Recv() error { _, e := s.s.Recv(); return e }
 
-type mt4OrderStream struct{ s mt4pb.Streams_OnOrderUpdateClient }
+type mt4OrderStream struct {
+	s mt4pb.Streams_OnOrderUpdateClient
+}
 
 func (s *mt4OrderStream) Recv() error { _, e := s.s.Recv(); return e }
 
@@ -847,7 +855,7 @@ func (m *Manager) publishOrderDelta(accountID string, changed []*repo.HistoryOrd
 		"changes":   changes,
 	}
 	data, _ := json.Marshal(payload)
-	m.nc.Publish(subject, data)
+	_ = m.nc.Publish(subject, data)
 }
 
 func (m *Manager) updateDB(ctx context.Context, accountID string, info *mtapi.AccountInfo) {

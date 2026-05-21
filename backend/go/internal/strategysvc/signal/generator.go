@@ -12,7 +12,7 @@ import (
 
 // Generator produces trading signals from factor values.
 type Generator struct {
-	spec    *stratspec.StrategySpec
+	spec     *stratspec.StrategySpec
 	compiler *dsl.Compiler
 }
 
@@ -22,7 +22,7 @@ func NewGenerator(spec *stratspec.StrategySpec) (*Generator, error) {
 		"close": 0, "open": 1, "high": 2, "low": 3, "volume": 4,
 	}}
 	return &Generator{
-		spec:    spec,
+		spec:     spec,
 		compiler: dsl.NewCompiler(fields, nil),
 	}, nil
 }

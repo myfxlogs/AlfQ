@@ -4,7 +4,7 @@
 //   - draft→ready: automatic via BacktestService consistency gate (see backtest_handler.go)
 //   - ready→paper: researcher self-serve via DeployStrategy
 //   - paper→live: requires tenant_admin + risk_officer approval + Sharpe>1.0
-//     + N days paper trading without P0/P1 risk events.
+//   - N days paper trading without P0/P1 risk events.
 package adminapi
 
 import (
@@ -137,7 +137,7 @@ func (s *Service) PromoteToLive(ctx context.Context, req *PromoteStrategyRequest
 	}
 
 	if st.Status != "paper" {
-		return nil, newPromoteError("strategy must be in paper status, current: "+st.Status), nil
+		return nil, newPromoteError("strategy must be in paper status, current: " + st.Status), nil
 	}
 
 	// Double sign-off check

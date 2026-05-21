@@ -8,12 +8,12 @@ import (
 	"os"
 	"time"
 
+	mthubv1connect "github.com/alfq/backend/go/gen/alfq/mthub/v1/mthubv1connect"
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/common/db/redis"
 	"github.com/alfq/backend/go/internal/mdgateway/chmigrate"
 	"github.com/alfq/backend/go/internal/mthub"
 	"github.com/alfq/backend/go/internal/symbolsync"
-	mthubv1connect "github.com/alfq/backend/go/gen/alfq/mthub/v1/mthubv1connect"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 

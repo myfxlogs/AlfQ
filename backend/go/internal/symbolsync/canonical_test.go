@@ -17,17 +17,17 @@ func TestCanonicalize(t *testing.T) {
 		{"XAUUSD.ecn", "XAUUSD"},
 		{"XAUUSD.ECN", "XAUUSD"},
 		{"XAUUSD.raw", "XAUUSD"},
-		{"EURUSD..m", "EURUSD."},     // .M stripped → trailing dot remains (only one suffix removed)
-		{"A", "A"},                   // too short (single char stays)
-		{"AB", "AB"},                 // too short
-		{"ABCDEF.m", "ABCDEF"},       // len 9 > len(".M")+5=7 → strip ✓
-		{"abcdef.m", "ABCDEF"},       // uppercase + strip
+		{"EURUSD..m", "EURUSD."}, // .M stripped → trailing dot remains (only one suffix removed)
+		{"A", "A"},               // too short (single char stays)
+		{"AB", "AB"},             // too short
+		{"ABCDEF.m", "ABCDEF"},   // len 9 > len(".M")+5=7 → strip ✓
+		{"abcdef.m", "ABCDEF"},   // uppercase + strip
 		// Shorter symbols: len(raw) ≤ len(suffix)+5 → no strip
-		{"US30.PRO", "US30.PRO"},     // 8 ≤ 9 → no strip
-		{"US30.I", "US30.I"},         // 6 ≤ 7 → no strip
-		{"US30I", "US30I"},           // 5 ≤ 6 → no strip
-		{"US30.STP", "US30.STP"},     // 8 ≤ 10 → no strip
-		{"BRENT.C", "BRENT.C"},       // 7 ≤ 7 → no strip
+		{"US30.PRO", "US30.PRO"}, // 8 ≤ 9 → no strip
+		{"US30.I", "US30.I"},     // 6 ≤ 7 → no strip
+		{"US30I", "US30I"},       // 5 ≤ 6 → no strip
+		{"US30.STP", "US30.STP"}, // 8 ≤ 10 → no strip
+		{"BRENT.C", "BRENT.C"},   // 7 ≤ 7 → no strip
 	}
 
 	for _, tt := range tests {

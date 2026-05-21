@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	mt4Concurrency   = 10
+	mt4Concurrency    = 10
 	mt4PerCallTimeout = 10 * time.Second
 )
 

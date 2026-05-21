@@ -93,12 +93,10 @@ func checkHealth(host string, port int) (string, int32) {
 	if err != nil {
 		return "down", latency
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == 200 {
-		_ = resp.Body.Close()
 		return "up", latency
 	}
-	_ = resp.Body.Close()
 	return "degraded", latency
 }
 

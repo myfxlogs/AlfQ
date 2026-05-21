@@ -19,7 +19,7 @@ type Deps struct {
 	PG         *pg.Pool
 	RDB        redis.UniversalClient
 	NATS       interface{ Close() error }
-	CH         *pgxpool.Pool // ClickHouse uses pgx protocol compatibility
+	CH         *pgxpool.Pool                   // ClickHouse uses pgx protocol compatibility
 	Middleware func(http.Handler) http.Handler // optional: set by registrars that create auth
 }
 

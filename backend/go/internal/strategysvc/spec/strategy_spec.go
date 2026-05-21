@@ -5,17 +5,17 @@ package spec
 // StrategySpec defines a complete trading strategy: canonical symbols, factor
 // expressions, model reference, signal rule, and sizing.
 type StrategySpec struct {
-	Name             string            `json:"name" yaml:"name"`
-	Version          string            `json:"version" yaml:"version"`
-	CanonicalSymbols []string          `json:"canonical_symbols" yaml:"canonical_symbols"`
-	Period           string            `json:"period" yaml:"period"`
-	Factors          map[string]string `json:"factors" yaml:"factors"`
-	SignalRule       string            `json:"signal_rule" yaml:"signal_rule"`
-	ModelURI         string            `json:"model_uri,omitempty" yaml:"model_uri,omitempty"`
-	ModelInputs      []string          `json:"model_inputs,omitempty" yaml:"model_inputs,omitempty"`
-	Sizing           map[string]any    `json:"sizing,omitempty" yaml:"sizing,omitempty"`
+	Name             string             `json:"name" yaml:"name"`
+	Version          string             `json:"version" yaml:"version"`
+	CanonicalSymbols []string           `json:"canonical_symbols" yaml:"canonical_symbols"`
+	Period           string             `json:"period" yaml:"period"`
+	Factors          map[string]string  `json:"factors" yaml:"factors"`
+	SignalRule       string             `json:"signal_rule" yaml:"signal_rule"`
+	ModelURI         string             `json:"model_uri,omitempty" yaml:"model_uri,omitempty"`
+	ModelInputs      []string           `json:"model_inputs,omitempty" yaml:"model_inputs,omitempty"`
+	Sizing           map[string]any     `json:"sizing,omitempty" yaml:"sizing,omitempty"`
 	RiskLimits       map[string]float64 `json:"risk_limits,omitempty" yaml:"risk_limits,omitempty"`
-	Description      string            `json:"description,omitempty" yaml:"description,omitempty"`
+	Description      string             `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 // Validate checks the spec and returns a list of issues (empty = valid).
