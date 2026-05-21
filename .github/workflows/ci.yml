@@ -54,7 +54,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@main
-      - run: make py-test
+      - run: cd research && uv sync --extra dev
+      - run: cd research && uv run pytest
 
   web-build:
     runs-on: ubuntu-latest
