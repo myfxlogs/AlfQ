@@ -75,7 +75,7 @@ func main() {
 		if err != nil {
 			log.Fatal("mt connect failed", zap.Error(err))
 		}
-		defer mtapi.DisconnectSession(context.Background(), conn, platform, sessionID)
+		defer func() { _ = mtapi.DisconnectSession(context.Background(), conn, platform, sessionID) }()
 
 		if err := svc.Sync(ctx, symbolsync.SyncParams{
 			BrokerID: brokerID, Platform: platform, SessionID: sessionID, Conn: conn,

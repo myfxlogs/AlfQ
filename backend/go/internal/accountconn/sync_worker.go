@@ -29,10 +29,10 @@ var (
 		Name: "order_sync_delta_count",
 		Help: "Number of orders changed in the most recent sync.",
 	})
-	orderSyncLagSeconds = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "order_sync_lag_seconds",
-		Help: "Seconds between OnOrderUpdate event timestamp and DB write completion.",
-	})
+	// orderSyncLagSeconds = promauto.NewGauge(prometheus.GaugeOpts{
+	// 	Name: "order_sync_lag_seconds",
+	// 	Help: "Seconds between OnOrderUpdate event timestamp and DB write completion.",
+	// })
 )
 
 // SyncWorker orchestrates full and incremental order history sync.
@@ -80,14 +80,14 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 		`SELECT tenant_id, platform, login, password, server FROM accounts WHERE id = $1`, accountID,
 	).Scan(&tenantID, &platform, &login, &password, &server)
 	if err != nil {
-		w.setSyncStatus(ctx, accountID, "error", err.Error())
+		_ = w.setSyncStatus(ctx, accountID, "error", err.Error())
 		return fmt.Errorf("lookup account: %w", err)
 	}
 
 	// Resolve mtapi gateway address: try live Manager first, fallback to defaults.
 	mtapiAddr := w.resolveGatewayAddr(platform)
 	if mtapiAddr == "" {
-		w.setSyncStatus(ctx, accountID, "error", "no gateway address for platform "+platform)
+		_ = w.setSyncStatus(ctx, accountID, "error", "no gateway address for platform "+platform)
 		return fmt.Errorf("sync worker: no gateway addr for %s", platform)
 	}
 
@@ -128,7 +128,7 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 		} else {
 			var err error
 			orders, err = mtapi.DialAndFetchOrderHistory(ctx, mtapiAddr, platform, login, password, server,
-				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339)) //nolint
+				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339)) //nolint:staticcheck
 			if err != nil {
 				w.log.Warn("full sync chunk failed",
 					zap.String("account_id", accountID),
@@ -155,7 +155,7 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 		// Throttle between chunks to avoid hammering the gateway
 		select {
 		case <-ctx.Done():
-			w.setSyncStatus(ctx, accountID, "error", ctx.Err().Error())
+			_ = w.setSyncStatus(ctx, accountID, "error", ctx.Err().Error())
 			return ctx.Err()
 		case <-time.After(200 * time.Millisecond):
 		}

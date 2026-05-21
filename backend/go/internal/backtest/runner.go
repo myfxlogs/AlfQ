@@ -102,5 +102,5 @@ func writeTempSpec(data []byte) (string, error) {
 }
 
 func cleanupTemp(path string) {
-	os.Remove(path)
+	_ = os.Remove(path)
 }

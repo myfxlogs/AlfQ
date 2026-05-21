@@ -47,7 +47,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// Send initial connected event so client knows the stream is alive
-	fmt.Fprintf(w, "data: {\"type\":\"connected\"}\n\n")
+	_, _ = fmt.Fprintf(w, "data: {\"type\":\"connected\"}\n\n")
 	flusher.Flush()
 
 	ctx := r.Context()
@@ -59,7 +59,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				return
 			}
-			fmt.Fprintf(w, "data: %s\n\n", data)
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()
 		}
 	}

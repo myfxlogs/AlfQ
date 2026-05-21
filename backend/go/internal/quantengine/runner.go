@@ -6,7 +6,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/alfq/backend/go/internal/common/bootstrap"
@@ -20,7 +19,7 @@ import (
 type StrategyRuntime struct {
 	Spec   *stratspec.StrategySpec
 	Runner *ModelRunner
-	mu     sync.Mutex
+	// mu     sync.Mutex // reserved for future concurrent access
 }
 
 // SignalHandler receives signals and routes them to OMS.

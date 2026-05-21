@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alfq/backend/go/internal/common/config"
 	mt5pb "github.com/alfq/backend/go/gen/mt5"
+	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -56,9 +56,9 @@ func Connect(ctx context.Context, gw config.GatewayConfig, login, password, serv
 	} else {
 		creds = insecure.NewCredentials()
 	}
-	conn, err := grpc.DialContext(dialCtx, gw.Addr,
+	conn, err := grpc.DialContext(dialCtx, gw.Addr, //nolint:staticcheck
 		grpc.WithTransportCredentials(creds),
-		grpc.WithBlock(),
+		grpc.WithBlock(), //nolint:staticcheck
 	)
 	if err != nil {
 		return nil, fmt.Errorf("backfill: dial: %w", err)
@@ -76,11 +76,11 @@ func Connect(ctx context.Context, gw config.GatewayConfig, login, password, serv
 		Port:     int32(parsePort(port)),
 	})
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("backfill: connect: %w", err)
 	}
 	if e := resp.GetError(); e != nil && e.GetMessage() != "" {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("backfill: mt5 error: %s", e.GetMessage())
 	}
 
@@ -96,7 +96,7 @@ func (s *Session) Close() error { return s.conn.Close() }
 
 // Bar is a single OHLCV bar returned from MT5.
 type Bar struct {
-	Time   int64   // unix_ms
+	Time   int64 // unix_ms
 	Open   float64
 	High   float64
 	Low    float64

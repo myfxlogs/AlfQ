@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alfq/backend/go/internal/common/config"
-	"github.com/google/uuid"
 	mt4pb "github.com/alfq/backend/go/gen/mt4"
 	mt5pb "github.com/alfq/backend/go/gen/mt5"
+	"github.com/alfq/backend/go/internal/common/config"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -45,17 +45,17 @@ type PositionInfo struct {
 
 // HistoryOrderInfo is a unified historical order record from MT4/MT5.
 type HistoryOrderInfo struct {
-	Ticket      int64
-	Symbol      string
-	Type        string // "buy" | "sell"
-	Lots        float64
-	OpenPrice   float64
-	ClosePrice  float64
-	Profit      float64
-	Swap        float64
-	Commission  float64
-	OpenTime    string // RFC3339 or empty
-	CloseTime   string // RFC3339 or empty
+	Ticket     int64
+	Symbol     string
+	Type       string // "buy" | "sell"
+	Lots       float64
+	OpenPrice  float64
+	ClosePrice float64
+	Profit     float64
+	Swap       float64
+	Commission float64
+	OpenTime   string // RFC3339 or empty
+	CloseTime  string // RFC3339 or empty
 }
 
 // BrokerMatch from online broker search.
@@ -77,7 +77,7 @@ func SearchBrokersOnline(ctx context.Context, gw config.GatewayConfig, mtType, c
 	if err != nil {
 		return nil, fmt.Errorf("mtapi: dial %s gateway: %w", mtType, err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	switch strings.ToUpper(mtType) {
 	case "MT5":
@@ -186,7 +186,7 @@ func TestConnect(ctx context.Context, gw config.GatewayConfig, mtType, login, pa
 	if err != nil {
 		return nil, err
 	}
-	defer DisconnectSession(ctx, conn, mtType, sessionID)
+	defer func() { _ = DisconnectSession(ctx, conn, mtType, sessionID) }()
 
 	switch strings.ToUpper(mtType) {
 	case "MT5":
@@ -203,7 +203,7 @@ func mt5ConnectSession(ctx context.Context, conn *grpc.ClientConn, login, passwo
 	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", tempID)
 	connClient := mt5pb.NewConnectionClient(conn)
 	resp, err := connClient.Connect(ctxWithID, &mt5pb.ConnectRequest{
-		User:     parseUint(login), Password: password, Host: host, Port: port,
+		User: parseUint(login), Password: password, Host: host, Port: port,
 	})
 	if err != nil {
 		return "", fmt.Errorf("mtapi: mt5 connect: %w", err)
@@ -483,9 +483,9 @@ func DialAndFetchOrderHistory(ctx context.Context, gatewayAddr, platform, login,
 func dialAddr(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	dialCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	return grpc.DialContext(dialCtx, addr,
+	return grpc.DialContext(dialCtx, addr, //nolint:staticcheck
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
-		grpc.WithBlock(),
+		grpc.WithBlock(), //nolint:staticcheck
 	)
 }
 
@@ -508,35 +508,37 @@ func timestampToRFC3339(ts *timestamppb.Timestamp) string {
 	return ts.AsTime().UTC().Format(time.RFC3339)
 }
 
-func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string) (*AccountInfo, error) {
-	summary := make(map[string]interface{})
-	conn.Invoke(ctx, method, map[string]interface{}{}, summary)
-	result, _ := summary["result"].(map[string]interface{})
-	if result == nil {
-		return &AccountInfo{}, nil
-	}
-	return &AccountInfo{
-		Balance:     getFloat(result, "balance"),
-		Equity:      getFloat(result, "equity"),
-		Margin:      getFloat(result, "margin"),
-		FreeMargin:  getFloat(result, "freeMargin"),
-		MarginLevel: getFloat(result, "marginLevel"),
-		Profit:      getFloat(result, "profit"),
-		Currency:    getString(result, "currency"),
-		Leverage:    int32(getFloat(result, "leverage")),
-	}, nil
-}
+// // getAccountSummary is a legacy helper for reflection-based RPC calls.
+// // Deprecated: use typed FetchAccountSummary instead.
+// func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string) (*AccountInfo, error) {
+// 	summary := make(map[string]interface{})
+// 	_ = conn.Invoke(ctx, method, map[string]interface{}{}, summary)
+// 	result, _ := summary["result"].(map[string]interface{})
+// 	if result == nil {
+// 		return &AccountInfo{}, nil
+// 	}
+// 	return &AccountInfo{
+// 		Balance:     getFloat(result, "balance"),
+// 		Equity:      getFloat(result, "equity"),
+// 		Margin:      getFloat(result, "margin"),
+// 		FreeMargin:  getFloat(result, "freeMargin"),
+// 		MarginLevel: getFloat(result, "marginLevel"),
+// 		Profit:      getFloat(result, "profit"),
+// 		Currency:    getString(result, "currency"),
+// 		Leverage:    int32(getFloat(result, "leverage")),
+// 	}, nil
+// }
 
 // ── internal ──
 
 func dial(ctx context.Context, gw config.GatewayConfig) (*grpc.ClientConn, error) {
-	dialOpts := []grpc.DialOption{grpc.WithBlock(), grpc.WithTimeout(gw.Timeout)}
+	dialOpts := []grpc.DialOption{grpc.WithBlock(), grpc.WithTimeout(gw.Timeout)} //nolint:staticcheck
 	if gw.UseTLS {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
 	} else {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
-	return grpc.DialContext(ctx, gw.Addr, dialOpts...)
+	return grpc.DialContext(ctx, gw.Addr, dialOpts...) //nolint:staticcheck
 }
 
 func splitHostPort(hostPort, defaultPort string) (string, string) {
@@ -559,11 +561,11 @@ func parseUint(s string) uint64 {
 
 func parsePort(s string) int32 { n := parseUint(s); if n == 0 { return 443 }; return int32(n) }
 
-func getFloat(m map[string]interface{}, key string) float64 {
-	if v, ok := m[key].(float64); ok { return v }
-	return 0
-}
-func getString(m map[string]interface{}, key string) string {
-	s, _ := m[key].(string)
-	return s
-}
+// func getFloat(m map[string]interface{}, key string) float64 {
+// 	if v, ok := m[key].(float64); ok { return v }
+// 	return 0
+// }
+// func getString(m map[string]interface{}, key string) string {
+// 	s, _ := m[key].(string)
+// 	return s
+// }

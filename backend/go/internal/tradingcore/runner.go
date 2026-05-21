@@ -35,7 +35,7 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	// Config
 	cfg := config.Defaults()
 	if cfgPath := os.Getenv("ALFQ_CONFIG"); cfgPath != "" {
-		config.Load(cfgPath, cfg)
+		_, _ = config.Load(cfgPath, cfg)
 	}
 
 	// NATS
@@ -119,29 +119,26 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	go func() {
 		ticker := time.NewTicker(10 * time.Minute)
 		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				rows, err := d.PG.Query(context.Background(), `SELECT id FROM accounts WHERE status='connected' AND is_disabled=false`)
-				if err != nil {
-					d.Log.Warn("reconcile query failed", zap.Error(err))
-					continue
+		for range ticker.C {
+			rows, err := d.PG.Query(context.Background(), `SELECT id FROM accounts WHERE status='connected' AND is_disabled=false`)
+			if err != nil {
+				d.Log.Warn("reconcile query failed", zap.Error(err))
+				continue
+			}
+			var ids []string
+			for rows.Next() {
+				var id string
+				if err := rows.Scan(&id); err == nil {
+					ids = append(ids, id)
 				}
-				var ids []string
-				for rows.Next() {
-					var id string
-					if err := rows.Scan(&id); err == nil {
-						ids = append(ids, id)
-					}
+			}
+			rows.Close()
+			for _, id := range ids {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				if _, err := syncWorker.RecentSync(ctx, id); err != nil {
+					d.Log.Warn("reconcile sync failed", zap.String("account_id", id), zap.Error(err))
 				}
-				rows.Close()
-				for _, id := range ids {
-					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-					if _, err := syncWorker.RecentSync(ctx, id); err != nil {
-						d.Log.Warn("reconcile sync failed", zap.String("account_id", id), zap.Error(err))
-					}
-					cancel()
-				}
+				cancel()
 			}
 		}
 	}()

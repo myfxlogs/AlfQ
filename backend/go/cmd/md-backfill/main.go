@@ -71,7 +71,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "connect failed: %v\n", err)
 			os.Exit(1)
 		}
-		defer sess.Close()
+		defer func() { _ = sess.Close() }()
 
 		runBackfill(sess, symList, perList, fromDate, toDate, log)
 	} else {

@@ -13,10 +13,10 @@ import (
 
 // Config holds the application configuration.
 type Config struct {
-	Server     ServerConfig     `mapstructure:"server"`
-	Log        LogConfig        `mapstructure:"log"`
-	MT4Gateway GatewayConfig    `mapstructure:"mt4_gateway"`
-	MT5Gateway GatewayConfig    `mapstructure:"mt5_gateway"`
+	Server     ServerConfig  `mapstructure:"server"`
+	Log        LogConfig     `mapstructure:"log"`
+	MT4Gateway GatewayConfig `mapstructure:"mt4_gateway"`
+	MT5Gateway GatewayConfig `mapstructure:"mt5_gateway"`
 }
 
 type ServerConfig struct {

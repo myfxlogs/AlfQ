@@ -133,7 +133,7 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 
 		if err != nil {
 			// 验证失败 → 彻底删除数据库记录 + 返回友好错误
-			s.pool.Exec(context.Background(),
+			_, _ = s.pool.Exec(context.Background(),
 				`DELETE FROM accounts WHERE id = $1`, a.Id,
 			)
 			// 日志中不记录密码
@@ -148,7 +148,7 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 
 		// 连接成功 → 更新账户信息
 		connectedAt := timestamppb.Now()
-		s.pool.Exec(ctx, `
+		_, _ = s.pool.Exec(ctx, `
 			UPDATE accounts SET status='connected', balance=$1, equity=$2, margin=$3,
 				free_margin=$4, margin_level=$5, profit=$6, currency=$7, leverage=$8,
 				connected_at=now(), updated_at=now()
@@ -188,7 +188,7 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 		}
 	} else {
 		// No broker endpoint — leave as disconnected (manual setup)
-		s.pool.Exec(ctx,
+		_, _ = s.pool.Exec(ctx,
 			`UPDATE accounts SET status='disconnected', updated_at=now() WHERE id=$1`, a.Id,
 		)
 		a.Status = "disconnected"
@@ -294,7 +294,7 @@ func (s *Service) UpdateAccount(ctx context.Context, req *pb.Account) (*pb.Accou
 		WHERE id=$8
 		RETURNING id, tenant_id, user_id, broker_id, login, server, server_name, account_type, currency, leverage,
 			status, balance, equity, margin, free_margin, margin_level, profit, profit_percent,
-			is_disabled, last_error, alias, connected_at, created_at
+			is_disabled, last_error, alias, platform, connected_at, created_at
 	`, req.Login, req.Server, req.AccountType, req.Currency, req.Leverage,
 		req.Alias, req.IsDisabled, req.Id,
 	)

@@ -171,11 +171,11 @@ func (m *Manager) Connect(ctx context.Context, info AccountInfo) {
 	if s, ok := m.sessions[info.ID]; ok {
 		s.cancel()
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	m.sessions[info.ID] = &session{info: info, cancel: cancel}
 	m.mu.Unlock()
 
-	go m.run(ctx, info)
+	go m.run(runCtx, info)
 	m.log.Info("account connector started",
 		zap.String("account_id", info.ID),
 		zap.String("login", info.Login),
@@ -790,7 +790,7 @@ func (m *Manager) publishEvent(accountID string, info *mtapi.AccountInfo, positi
 	}
 
 	data, _ := json.Marshal(payload)
-	m.nc.Publish(subject, data)
+	_ = m.nc.Publish(subject, data)
 }
 
 // PublishSyncDone pushes a sync-complete SSE event for the given account.
@@ -851,7 +851,7 @@ func (m *Manager) publishOrderDelta(accountID string, changed []*repo.HistoryOrd
 }
 
 func (m *Manager) updateDB(ctx context.Context, accountID string, info *mtapi.AccountInfo) {
-	m.pool.Exec(ctx, `
+	_, _ = m.pool.Exec(ctx, `
 		UPDATE accounts
 		SET status='connected', balance=$1, equity=$2, margin=$3,
 		    free_margin=$4, margin_level=$5, profit=$6,
@@ -872,7 +872,7 @@ func (m *Manager) updateDB(ctx context.Context, accountID string, info *mtapi.Ac
 }
 
 func (m *Manager) updateStatus(ctx context.Context, accountID, status, lastError string) {
-	m.pool.Exec(ctx, `
+	_, _ = m.pool.Exec(ctx, `
 		UPDATE accounts SET status=$1, last_error=$2, updated_at=now() WHERE id=$3
 	`, status, lastError, accountID)
 }

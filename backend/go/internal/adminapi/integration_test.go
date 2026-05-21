@@ -15,9 +15,10 @@ import (
 
 const testTenantID = "00000000-0000-0000-0000-000000000099"
 
-// testCtx returns a context with the test tenant injected (required by setRLS).
+// testCtx returns a context with the test tenant and user injected (required by setRLS and auth).
 func testCtx() context.Context {
-	return auth.WithTenant(context.Background(), testTenantID)
+	ctx := auth.WithTenant(context.Background(), testTenantID)
+	return auth.WithUser(ctx, "00000000-0000-0000-0000-000000000001")
 }
 
 func setupDB(t *testing.T) *pg.Pool {
@@ -138,7 +139,7 @@ func TestIntegrationAccountCRUD(t *testing.T) {
 	}
 
 	a, err := svc.CreateAccount(testCtx(), &pb.CreateAccountRequest{
-		TenantId: tid, BrokerId: brk.Id, Login: "99999", Password: "secret",
+		TenantId: tid, BrokerId: brk.Id, Login: "99999", Password: "secret", Server: "demo.mt5.com:443", MtType: "MT5",
 	})
 	if err != nil {
 		t.Fatalf("CreateAccount: %v", err)
@@ -273,7 +274,7 @@ func TestIntegrationAdapterAccount(t *testing.T) {
 	}))
 
 	a, err := adp.CreateAccount(testCtx(), connect.NewRequest(&pb.CreateAccountRequest{
-		TenantId: tid, BrokerId: brk.Msg.Id, Login: "adp-1", Password: "x",
+		TenantId: tid, BrokerId: brk.Msg.Id, Login: "adp-1", Password: "x", Server: "demo.mt5.com:443", MtType: "MT5",
 	}))
 	if err != nil {
 		t.Fatalf("adapter CreateAccount: %v", err)
