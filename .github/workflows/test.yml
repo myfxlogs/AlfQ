@@ -66,4 +66,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build all images
+        env:
+          POSTGRES_PASSWORD: ci_test
+          CLICKHOUSE_PASSWORD: ci_test
+          REDIS_PASSWORD: ci_test
+          GRAFANA_ADMIN_PASSWORD: ci_test
         run: docker compose -f deploy/docker-compose.prod.yml build
