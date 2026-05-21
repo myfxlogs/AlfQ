@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/shopspring/decimal"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
 )
@@ -186,7 +187,10 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 						if err := chBatch.Append(
 							bar.TenantID, bar.Broker, bar.SymbolRaw, bar.Canonical, bar.Period,
 							uint64(bar.OpenTsUnixMs), uint64(bar.CloseTsUnixMs),
-							bar.Open, bar.High, bar.Low, bar.Close,
+							decimal.NewFromFloat(bar.Open),
+							decimal.NewFromFloat(bar.High),
+							decimal.NewFromFloat(bar.Low),
+							decimal.NewFromFloat(bar.Close),
 							bar.Volume, bar.TickCount,
 						); err != nil {
 							d.Log.Error("bar: append failed", zap.Error(err),
