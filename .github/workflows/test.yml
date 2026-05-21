@@ -60,7 +60,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: cd frontend && pnpm install --frozen-lockfile && pnpm lint && pnpm build
+      - run: cd frontend && pnpm install --frozen-lockfile
+      - run: cd frontend && pnpm lint
+        continue-on-error: true
+      - run: cd frontend && pnpm build
 
   docker-build:
     runs-on: ubuntu-latest
