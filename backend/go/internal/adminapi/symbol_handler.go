@@ -22,7 +22,7 @@ func NewSymbolServiceHandler(svc *Service) (string, http.Handler) {
 }
 
 func (h *symbolServiceHandler) ListSymbols(ctx context.Context, req *connect.Request[pb.ListSymbolsRequest]) (*connect.Response[pb.ListSymbolsResponse], error) {
-	if err := h.svc.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, err
 	}
 	// ListSymbols returns canonical symbol names from broker_symbols
@@ -49,7 +49,7 @@ func (h *symbolServiceHandler) ListSymbols(ctx context.Context, req *connect.Req
 }
 
 func (h *symbolServiceHandler) ListBrokerSymbols(ctx context.Context, req *connect.Request[pb.ListBrokerSymbolsRequest]) (*connect.Response[pb.ListBrokerSymbolsResponse], error) {
-	if err := h.svc.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +86,7 @@ func (h *symbolServiceHandler) ListBrokerSymbols(ctx context.Context, req *conne
 }
 
 func (h *symbolServiceHandler) LookupSymbol(ctx context.Context, req *connect.Request[pb.LookupSymbolRequest]) (*connect.Response[pb.BrokerSymbolInfo], error) {
-	if err := h.svc.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, err
 	}
 

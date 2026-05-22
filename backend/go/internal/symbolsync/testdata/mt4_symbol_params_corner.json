@@ -1,0 +1,62 @@
+// fixture: MT4 SymbolParamsReply corner cases (edge conditions)
+// proto: gprc/mt4.proto SymbolParams, SymbolInfo, ConGroupSec
+// docs: docs/29-MT4-MT5-差异参考.md
+// Covers: Digits=0, ContractSize=0, no SymbolInfo, no GroupParams, LongOnly=1
+
+// Case 1: All fields nil → partial
+{
+  "SymbolName": "BROKEN"
+}
+
+// Case 2: ContractSize=0 only → partial
+{
+  "SymbolName": "NO_CONTRACT",
+  "Symbol": {
+    "Digits": 5,
+    "Point": 1e-5,
+    "ContractSize": 0
+  },
+  "GroupParams": {
+    "MinLot": 0.01,
+    "MaxLot": 100,
+    "LotStep": 0.01
+  }
+}
+
+// Case 3: Digits=0 only → partial
+{
+  "SymbolName": "NO_DIGITS",
+  "Symbol": {
+    "Digits": 0,
+    "Point": 1e-5,
+    "ContractSize": 100000
+  }
+}
+
+// Case 4: LongOnly via SymbolInfoEx.long_only (MT4 only, not in MT5)
+{
+  "SymbolName": "LONG_ONLY_MT4",
+  "Symbol": {
+    "Digits": 5,
+    "Point": 1e-5,
+    "ContractSize": 100000,
+    "Ex": {
+      "longOnly": 1
+    }
+  },
+  "GroupParams": {
+    "MinLot": 0.01,
+    "MaxLot": 100,
+    "LotStep": 0.01
+  }
+}
+
+// Case 5: No GroupParams → partial (missing min_lot/max_lot/lot_step)
+{
+  "SymbolName": "NO_GROUP",
+  "Symbol": {
+    "Digits": 2,
+    "Point": 0.01,
+    "ContractSize": 1
+  }
+}

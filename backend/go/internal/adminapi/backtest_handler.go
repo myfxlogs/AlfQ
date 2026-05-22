@@ -51,9 +51,21 @@ func (a *Adapter) RunBacktest(
 
 	sendProgress(stream, strategyID, "running", "{}", 10)
 
-	// 3. Run Python backtest CLI
-	result, err := backtest.RunPythonBacktest(ctx, []byte(strategy.SpecJson), "research", 5*time.Minute)
+	// 3. Run backtest via backtest-runner HTTP service (RC09).
+	// Falls back to local exec.Command if the service is unavailable.
+	specMap := map[string]any{
+		"name":              specObj.Name,
+		"canonical_symbols": specObj.CanonicalSymbols,
+		"period":            specObj.Period,
+		"factors":           specObj.Factors,
+		"signal_rule":       specObj.SignalRule,
+	}
+	result, err := backtest.RunViaService(ctx, specMap)
 	if err != nil {
+		// Fallback to local exec
+		result, err = backtest.RunPythonBacktest(ctx, []byte(strategy.SpecJson), "research", 5*time.Minute)
+	}
+	if err != nil || result == nil {
 		sendProgress(stream, strategyID, "error", `{"error":"backtest failed"}`, 0)
 		return nil
 	}

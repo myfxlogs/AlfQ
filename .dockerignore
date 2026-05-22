@@ -5,6 +5,11 @@ references/
 
 # Python research env (1 GB)
 research/
+# backtest-runner needs research/ (RC09)
+!research/pyproject.toml
+!research/uv.lock
+!research/alfq_research/
+!research/tests/
 
 # Documentation
 docs/

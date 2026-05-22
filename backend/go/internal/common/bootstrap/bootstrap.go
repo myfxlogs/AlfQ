@@ -34,7 +34,7 @@ func Run(svcName string, register Registrar, opts ...Option) error {
 	if !cfg.skipPG {
 		dsn := os.Getenv("DATABASE_URL")
 		if dsn == "" {
-			dsn = "postgres://alfq:alfq_dev@localhost:5432/alfq?sslmode=disable"
+			return fmt.Errorf("bootstrap: DATABASE_URL must be set (no hard-coded credentials allowed)")
 		}
 		pool, err := pg.Connect(context.Background(), dsn)
 		if err != nil {

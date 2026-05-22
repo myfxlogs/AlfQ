@@ -5,7 +5,7 @@ services:
     image: postgres:18-alpine
     environment:
       POSTGRES_USER: alfq
-      POSTGRES_PASSWORD: alfq_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in .env}
       POSTGRES_DB: alfq
     ports:
       - "5432:5432"
@@ -20,10 +20,10 @@ services:
       - alfq-net
 
   clickhouse:
-    image: clickhouse/clickhouse-server:26.1-alpine
+    image: clickhouse/clickhouse-server:26.4-alpine
     environment:
       CLICKHOUSE_USER: alfq
-      CLICKHOUSE_PASSWORD: alfq_dev
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD required in .env}
       CLICKHOUSE_DB: alfq
     ports:
       - "8123:8123"
@@ -31,7 +31,7 @@ services:
     volumes:
       - ch_data:/var/lib/clickhouse
     healthcheck:
-      test: ["CMD-SHELL", "clickhouse-client -u alfq --password alfq_dev -q 'SELECT 1'"]
+      test: ["CMD-SHELL", "clickhouse-client -u alfq --password $$CLICKHOUSE_PASSWORD -q 'SELECT 1'"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -73,7 +73,7 @@ services:
     cap_add:
       - IPC_LOCK
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: alfq_dev_root
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:?VAULT_ROOT_TOKEN required in .env}
       VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
     ports:
       - "8200:8200"
@@ -91,7 +91,7 @@ services:
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: alfqadmin
-      MINIO_ROOT_PASSWORD: alfq_dev_minio
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required in .env}
     ports:
       - "9002:9000"
       - "9001:9001"

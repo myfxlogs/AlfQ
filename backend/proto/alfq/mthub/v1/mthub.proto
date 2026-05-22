@@ -106,6 +106,8 @@ message OrderRecord {
   string open_time = 10;   // RFC 3339
   string close_time = 11;  // RFC 3339
   string state = 12;
+  int64 open_time_ms = 13;     // Unix milliseconds
+  double current_price = 14;   // latest bid/ask
 }
 
 // ── Symbol + price ──

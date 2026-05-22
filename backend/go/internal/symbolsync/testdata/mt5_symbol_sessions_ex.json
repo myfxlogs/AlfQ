@@ -1,0 +1,27 @@
+// fixture: MT5 SymbolSessionsExManyReply for EURUSD
+// proto: gprc/mt5.proto SymbolSessionsEx (line 1676), SessionsForDay (line 1686), Session (line 1692)
+// docs: docs/29-MT4-MT5-差异参考.md §2.2
+// 7 days (Sun-Sat), Quotes 24h, Trades 1h-23h, Fri no trades, Sat no trades
+[
+  {
+    "Symbol": "EURUSD",
+    "Quotes": [
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]},
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]},
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]},
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]},
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]},
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]},
+      {"Sessions": [{"StartTime": 0, "EndTime": 86400}]}
+    ],
+    "Trades": [
+      {"Sessions": [{"StartTime": 3600, "EndTime": 82800}]},
+      {"Sessions": [{"StartTime": 3600, "EndTime": 82800}]},
+      {"Sessions": [{"StartTime": 3600, "EndTime": 82800}]},
+      {"Sessions": [{"StartTime": 3600, "EndTime": 82800}]},
+      {"Sessions": [{"StartTime": 3600, "EndTime": 82800}]},
+      {"Sessions": []},
+      {"Sessions": []}
+    ]
+  }
+]

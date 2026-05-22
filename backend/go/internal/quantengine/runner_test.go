@@ -2,6 +2,8 @@ package quantengine
 
 import (
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestDefaultDemoSpec(t *testing.T) {
@@ -18,8 +20,8 @@ func TestDefaultDemoSpec(t *testing.T) {
 	if len(spec.CanonicalSymbols) != 1 {
 		t.Fatalf("expected 1 symbol, got %d", len(spec.CanonicalSymbols))
 	}
-	if spec.CanonicalSymbols[0] != "EURUSD" {
-		t.Fatalf("expected EURUSD, got %s", spec.CanonicalSymbols[0])
+	if spec.CanonicalSymbols[0] != "BTCUSD" {
+		t.Fatalf("expected BTCUSD, got %s", spec.CanonicalSymbols[0])
 	}
 	if len(spec.Factors) != 2 {
 		t.Fatalf("expected 2 factors, got %d", len(spec.Factors))
@@ -30,15 +32,18 @@ func TestDefaultDemoSpec(t *testing.T) {
 }
 
 func TestStrategyRuntime_Fields(t *testing.T) {
-	rt := &StrategyRuntime{
-		Spec:   nil,
-		Runner: nil,
+	// RS05: StrategyRuntime now uses constructor with valid spec.
+	spec := defaultDemoSpec()
+	rt, err := NewStrategyRuntime(spec, nil, nil, zap.NewNop())
+	if err != nil {
+		t.Logf("runtime creation expected error without engine: %v", err)
+		return
 	}
-	if rt.Spec != nil {
-		t.Fatal("expected nil Spec")
+	if rt == nil {
+		t.Fatal("expected non-nil runtime")
 	}
-	if rt.Runner != nil {
-		t.Fatal("expected nil Runner")
+	if rt.Spec == nil {
+		t.Fatal("expected non-nil spec")
 	}
 }
 

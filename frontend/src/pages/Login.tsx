@@ -1,6 +1,6 @@
 // Login page — ALFQ authentication.
 import { useState } from "react";
-import { authClient, setToken } from "../api/client";
+import { authClient, saveAuth } from "../api/client";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -14,7 +14,7 @@ export default function Login() {
     try {
       const res = await authClient.login({ email, password });
       if (res.accessToken) {
-        setToken(res.accessToken);
+        saveAuth(res.accessToken, res.refreshToken, Number(res.expiresIn));
         localStorage.setItem("alfq_email", email);
         window.location.href = "/";
       } else {

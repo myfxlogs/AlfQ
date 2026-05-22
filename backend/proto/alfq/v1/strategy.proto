@@ -8,16 +8,19 @@ service StrategyService {
   rpc ListStrategies(ListStrategiesRequest) returns (ListStrategiesResponse);
   rpc DeployStrategy(DeployStrategyRequest) returns (Strategy);
   rpc StopStrategy(StopStrategyRequest) returns (Strategy);
+  rpc PromoteToLive(PromoteToLiveRequest) returns (PromoteToLiveResponse);
   rpc StreamSignals(StreamSignalsRequest) returns (stream Signal);
 }
 
 message Strategy { string id = 1; string tenant_id = 2; string name = 3; string description = 4; string spec_json = 5; string status = 6; }
 message CreateStrategyRequest { string tenant_id = 1; string name = 2; string description = 3; string spec_json = 4; }
 message GetStrategyRequest { string id = 1; }
-message ListStrategiesRequest { string tenant_id = 1; }
-message ListStrategiesResponse { repeated Strategy strategies = 1; }
+message ListStrategiesRequest { string tenant_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListStrategiesResponse { repeated Strategy strategies = 1; string next_page_token = 2; }
 message DeployStrategyRequest { string id = 1; string account_id = 2; }
 message StopStrategyRequest { string id = 1; }
+message PromoteToLiveRequest { string id = 1; string tenant_admin_id = 2; string risk_officer_id = 3; }
+message PromoteToLiveResponse { Strategy strategy = 1; bool approved = 2; string reason = 3; }
 message StreamSignalsRequest { string strategy_id = 1; }
 message Signal { string strategy_id = 1; string symbol = 2; string side = 3; double qty = 4; double confidence = 5; int64 ts_unix_ms = 6; }
 
@@ -29,8 +32,8 @@ service BacktestService {
 message BacktestTask { string id = 1; string strategy_id = 2; string status = 3; string result_json = 4; }
 message RunBacktestRequest { string strategy_id = 1; int64 start_ts_ms = 2; int64 end_ts_ms = 3; }
 message BacktestProgress { string task_id = 1; double progress = 2; string status = 3; string result_json = 4; }
-message ListBacktestsRequest { string strategy_id = 1; }
-message ListBacktestsResponse { repeated BacktestTask tasks = 1; }
+message ListBacktestsRequest { string strategy_id = 1; int32 page_size = 2; string page_token = 3; }
+message ListBacktestsResponse { repeated BacktestTask tasks = 1; string next_page_token = 2; }
 
 service SymbolService {
   rpc ListSymbols(ListSymbolsRequest) returns (ListSymbolsResponse);

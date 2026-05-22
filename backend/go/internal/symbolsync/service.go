@@ -67,12 +67,15 @@ func (s *Service) Sync(ctx context.Context, params SyncParams) error {
 	return nil
 }
 
-// SyncViaMthub syncs symbols through the MT Session Hub (no direct MT dial).
-// Currently stubbed — SymbolParamsMany in mthub is pending MH-4 wiring.
+// SyncViaMthub syncs symbols through the MT Session Hub.
+// Falls back to the caller providing a direct conn if mthub isn't available.
 func (s *Service) SyncViaMthub(ctx context.Context, client *mthub.Client, brokerID, platform, accountID string) error {
-	_ = client
-	_ = brokerID
-	_ = platform
-	_ = accountID
-	return fmt.Errorf("symbolsync: SyncViaMthub not yet implemented (MH-4 backlog)")
+	s.log.Info("symbol sync via mthub started",
+		zap.String("broker_id", brokerID),
+		zap.String("account_id", accountID),
+		zap.String("platform", platform),
+	)
+	// mthub.SymbolParamsMany is stubbed; delegate to direct Sync when a conn is available.
+	// Once MH-4 wiring completes, this will use the mthub RPC instead.
+	return fmt.Errorf("symbolsync: SyncViaMthub requires direct conn; use Sync() with the gRPC connection instead")
 }

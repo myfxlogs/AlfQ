@@ -2,7 +2,10 @@
 // Provides natural language interface for strategy creation, factor explanation, and risk analysis.
 package assistantsvc
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 // Tool defines a callable assistant tool.
 type Tool struct {
@@ -61,7 +64,7 @@ func (r *Registry) SetKB(kb *KnowledgeBase) {
 		Name:        "search_docs",
 		Description: "搜索 ALFQ 文档知识库。输入：自然语言查询",
 		Handler: func(input string) (string, error) {
-			results := kb.Search(input)
+			results := kb.Search(context.Background(), input)
 			if len(results) == 0 {
 				return "未找到相关文档。", nil
 			}

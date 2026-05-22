@@ -2,8 +2,6 @@ package repo
 
 import (
 	"testing"
-
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 )
 
 func TestNewHistoryOrderRepo(t *testing.T) {
@@ -14,7 +12,7 @@ func TestNewHistoryOrderRepo(t *testing.T) {
 }
 
 func TestToHistoryOrder(t *testing.T) {
-	info := &mtapi.HistoryOrderInfo{
+	info := &HistoryOrderInput{
 		Ticket:     12345,
 		Symbol:     "EURUSD",
 		Type:       "buy",
@@ -46,7 +44,7 @@ func TestToHistoryOrder(t *testing.T) {
 }
 
 func TestToHistoryOrder_EmptyCloseTime(t *testing.T) {
-	info := &mtapi.HistoryOrderInfo{
+	info := &HistoryOrderInput{
 		Ticket:    12345,
 		Symbol:    "EURUSD",
 		Type:      "buy",
@@ -64,7 +62,7 @@ func TestToHistoryOrder_EmptyCloseTime(t *testing.T) {
 }
 
 func TestToHistoryOrder_DefaultState(t *testing.T) {
-	info := &mtapi.HistoryOrderInfo{
+	info := &HistoryOrderInput{
 		Ticket:    12345,
 		Symbol:    "EURUSD",
 		Type:      "buy",
@@ -81,7 +79,7 @@ func TestToHistoryOrder_DefaultState(t *testing.T) {
 }
 
 func TestToHistoryOrder_InvalidTimeFormat(t *testing.T) {
-	info := &mtapi.HistoryOrderInfo{
+	info := &HistoryOrderInput{
 		Ticket:    12345,
 		Symbol:    "EURUSD",
 		Type:      "buy",
@@ -100,7 +98,7 @@ func TestToHistoryOrder_InvalidTimeFormat(t *testing.T) {
 }
 
 func TestToHistoryOrder_RawPayload(t *testing.T) {
-	info := &mtapi.HistoryOrderInfo{
+	info := &HistoryOrderInput{
 		Ticket:    12345,
 		Symbol:    "EURUSD",
 		Type:      "buy",

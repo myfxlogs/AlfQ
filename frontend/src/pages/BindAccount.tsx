@@ -66,7 +66,7 @@ export default function BindAccount({ onDone }: { onDone?: () => void }) {
     try {
       const res = await accountClient.createAccount({
         tenantId: "", brokerId,
-        login, password, server: selectedServer.access, serverName: selectedServer.name, accountType: "demo",
+        login, password, server: selectedServer.access, serverName: selectedServer.name, accountType: "",
         mtType,
       });
       clearTimeout(timer);

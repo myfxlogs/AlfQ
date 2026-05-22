@@ -43,7 +43,8 @@ func main() {
 	// Connect to PG
 	pgDSN := os.Getenv("PG_DSN")
 	if pgDSN == "" {
-		pgDSN = "postgres://alfq:alfq_dev@localhost:5432/alfq?sslmode=disable"
+		fmt.Fprintln(os.Stderr, "PG_DSN must be set")
+		os.Exit(2)
 	}
 	pool, err := pg.Connect(ctx, pgDSN)
 	if err != nil {

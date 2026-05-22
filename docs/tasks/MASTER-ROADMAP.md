@@ -620,7 +620,7 @@ make e2e
 | ID | 标题 | 状态 | Commit | 完成时间 |
 |---|---|---|---|---|
 | DP-1.1 | Tick/Bar proto canonical 字段 + normalizer wiring | ☑ | — | 2026-05-20 (MT5 live tick: TRYJPYm→TRYJPY verified) |
-| SM-1.1 | minimal proto-level symbol fixtures (mock) | 🅒 | — | code 2026-05-20 |
+| SM-1.1 | minimal proto-level symbol fixtures (mock) | ☑ | embed JSON + DefaultSymbolResolver | 2026-05-22 |
 | DP-1.2 | testcontainers integration tests (CH/PG/NATS) | 🅒 | — | code 2026-05-20 |
 | EP-2.1 | ADR 0013 ONNX runtime strategy（仅文档） | 🅒 | — | code 2026-05-20 |
 | **DEP-1** | **[人类决策] 获取 mtapi 网关访问** | 🚫 阻塞中 | — | — |
@@ -714,6 +714,10 @@ make e2e
 | 2026-05-21 | DeepSeek | EP-1/2/3 | ONNX 模型真实数据训练+推理；OMS adapter 接真实 MT4/MT5 Trading.OrderSend；MT5 ticket=1835319679 MT4 ticket=201235461；🅒→☑ |
 | 2026-05-21 | DeepSeek | LP-1/2 | Python CLI 模块创建 + 端到端 backtest (corr=0.972)；状态机 draft→ready→paper→live + 双签 + Sharpe 门禁；🅒→☑ |
 | 2026-05-21 | DeepSeek | OrderHistory | MT5 返回69条，MT4 mtapi限制仅15条；添加 FullSync 10年窗口 + 定时对账 + 监控指标 + SSE 同步完成事件 |
+| 2026-05-21 | DeepSeek | (基础设施) | Docker compose 修复(CH 26.1→26.4-alpine) + 镜像加速 + 全量 migration + md_bars 建表；6 容器全 Up healthy |
+| 2026-05-21 | DeepSeek | SM-1.1 | 创建 5 个 testdata fixture 文件(mt4/mt5 minimal/corner/sessions)；symbolsync 11 tests PASS |
+| 2026-05-21 | DeepSeek | (全量测试) | Go 1.26 自动下载；27/29 包测试 PASS；2 失败(adminapi integration: server_name column missing from schema) |
+| 2026-05-21 | DeepSeek | (复查) | 基础设施就绪(CH/PG 表完整)；业务数据全空(DEP-1 阻塞)；CH md_bars DDL 补充到 migrations/clickhouse/
 
 ---
 

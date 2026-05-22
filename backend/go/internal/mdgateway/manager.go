@@ -47,6 +47,8 @@ type AccountConfig struct {
 	Port       string
 	MtapiToken string
 	TenantID   string
+	Status     string
+	IsDisabled bool
 }
 
 // Config holds the md-gateway service configuration.

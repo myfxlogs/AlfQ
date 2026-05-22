@@ -10,7 +10,21 @@ Features:
 from .vectorized import BacktestConfig, BacktestResult, VectorizedBacktest
 from .event import EventBacktest
 from .runner import BacktestRunner
-from .broker_sim import BrokerParams, FeeConfig
+from .broker_sim import (
+    BrokerParams,
+    FeeConfig,
+    FeeTier,
+    Session,
+    BrokerSymbolsLoader,
+    SpreadDistribution,
+    SpreadModel,
+    FillModel,
+    FillResult,
+    compute_commission,
+    compute_slippage,
+    compute_swap,
+    compute_trade_pnl,
+)
 from .consistency import consistency_check
 
 __all__ = [
@@ -21,5 +35,16 @@ __all__ = [
     "BacktestRunner",
     "BrokerParams",
     "FeeConfig",
+    "FeeTier",
+    "Session",
+    "BrokerSymbolsLoader",
+    "SpreadDistribution",
+    "SpreadModel",
+    "FillModel",
+    "FillResult",
+    "compute_commission",
+    "compute_slippage",
+    "compute_swap",
+    "compute_trade_pnl",
     "consistency_check",
 ]

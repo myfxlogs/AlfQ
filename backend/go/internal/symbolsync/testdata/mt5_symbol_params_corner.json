@@ -1,0 +1,66 @@
+// fixture: MT5 SymbolParamsManyReply corner cases (edge conditions)
+// proto: gprc/mt5.proto SymbolParams, SymbolInfo, SymGroup
+// docs: docs/29-MT4-MT5-差异参考.md
+// Covers: Digits=0, ContractSize=0, empty SymbolInfo, empty SymbolGroup, Sessions=nil
+
+// Case 1: All fields zero → partial
+{
+  "Symbol": "BROKEN",
+  "SymbolInfo": {
+    "Digits": 0,
+    "Points": 0,
+    "ContractSize": 0
+  }
+}
+
+// Case 2: ContractSize=0 only → partial (core field missing)
+{
+  "Symbol": "NO_CONTRACT",
+  "SymbolInfo": {
+    "Digits": 5,
+    "Points": 1e-5,
+    "ContractSize": 0
+  },
+  "SymbolGroup": {
+    "MinLots": 0.01,
+    "MaxLots": 100,
+    "LotsStep": 0.01,
+    "TradeMode": 4
+  }
+}
+
+// Case 3: Digits=0 only → partial
+{
+  "Symbol": "NO_DIGITS",
+  "SymbolInfo": {
+    "Digits": 0,
+    "Points": 1e-5,
+    "ContractSize": 100000
+  }
+}
+
+// Case 4: LongOnly trade mode (valid, not partial)
+{
+  "Symbol": "LONG_ONLY",
+  "SymbolInfo": {
+    "Digits": 5,
+    "Points": 1e-5,
+    "ContractSize": 100000
+  },
+  "SymbolGroup": {
+    "TradeMode": 1
+  }
+}
+
+// Case 5: Disabled symbol (disabled but data valid)
+{
+  "Symbol": "DISABLED",
+  "SymbolInfo": {
+    "Digits": 5,
+    "Points": 1e-5,
+    "ContractSize": 100000
+  },
+  "SymbolGroup": {
+    "TradeMode": 0
+  }
+}

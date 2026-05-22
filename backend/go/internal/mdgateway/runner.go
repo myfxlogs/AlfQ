@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	mthubv1connect "github.com/alfq/backend/go/gen/alfq/mthub/v1/mthubv1connect"
@@ -44,6 +45,9 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 	manager := NewEmptyManager()
 	manager.SetNormalizer(normalizer)
 	if d.PG != nil {
+		// Set gateway role for cross-tenant account/symbol metadata access.
+		_ = d.PG.SetRole(ctx, "gateway")
+
 		accounts, err := loadAccounts(d.PG.Pool)
 		if err != nil {
 			d.Log.Warn("load accounts failed", zap.Error(err))
@@ -77,6 +81,9 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 	publisher := NewPublisher(d.Log, natsURL)
 	if err := publisher.Connect(ctx); err != nil {
 		d.Log.Warn("nats connect failed", zap.Error(err))
+	} else {
+		// Ensure JetStream streams for tick + bar persistence.
+		publisher.EnsureStreams(d.Log)
 	}
 
 	// ClickHouse connection + migration + writer
@@ -123,38 +130,9 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 	}, []string{"broker", "symbol"})
 	prometheus.MustRegister(tickTotal)
 
-	connStates := make(map[string]bool)
-	for key, gw := range manager.Connections() {
-		connStates[key] = false
-		if err := gw.Connect(ctx); err != nil {
-			d.Log.Error("connect failed", zap.String("key", key), zap.Error(err))
-			continue
-		}
-		connStates[key] = true
-		d.Log.Info("broker connected", zap.String("key", key))
-
-		// Trigger async symbol sync to refresh broker_symbols from the MT server
-		go func(gw Gateway) {
-			syncCtx, syncCancel := context.WithTimeout(context.Background(), 120*time.Second)
-			defer syncCancel()
-			svc := symbolsync.NewService(d.PG.Pool, d.Log)
-			if err := svc.Sync(syncCtx, symbolsync.SyncParams{
-				BrokerID:  gw.BrokerID(),
-				Platform:  gw.Platform(),
-				SessionID: gw.SessionID(),
-				Conn:      gw.Conn(),
-			}); err != nil {
-				d.Log.Warn("symbol sync failed", zap.String("key", key), zap.Error(err))
-			}
-		}(gw)
-
-		handler := func(key string, gw Gateway, tick *pb.Tick) {
+	// Shared tick handler for both initial connect and hot-join.
+	tickHandler := func(key string, gw Gateway, tick *pb.Tick) {
 			tickTotal.WithLabelValues(tick.Broker, tick.Symbol).Inc()
-			d.Log.Debug("tick received",
-				zap.String("broker", tick.Broker),
-				zap.String("symbol", tick.Symbol),
-				zap.String("canonical", tick.Canonical),
-			)
 			// Quality check — log outlier, still write to CH for completeness
 			qr := qc.Check(tick)
 			if qr.Dropped {
@@ -164,10 +142,19 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 				)
 				return
 			}
-			_ = publisher.Publish(ctx, tick)
+			if err := publisher.Publish(ctx, tick); err != nil {
+			d.Log.Warn("tick publish error", zap.Error(err), zap.String("symbol", tick.Symbol))
+		}
 			chWriter.Write(tick)
 			if d.RDB != nil {
 				_ = d.RDB.Set(ctx, "quote:"+tick.Broker+":"+tick.Symbol, tick.GetBid().GetValue(), 60*time.Second)
+			}
+			// RS03: feed live price to hub for position current-price display
+			if tick.Canonical != "" {
+				if bid, err := strconv.ParseFloat(tick.GetBid().GetValue(), 64); err == nil {
+					ask, _ := strconv.ParseFloat(tick.GetAsk().GetValue(), 64)
+					hub.UpdatePrice(tick.Canonical, bid, ask)
+				}
 			}
 			// Feed bar aggregator — completed bars written to CH + NATS
 			agg.AddTick(tick, func(bar Bar) {
@@ -203,18 +190,36 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 					}
 					cancel()
 				}
-				// Publish bar to NATS
-				subject := "md.bar." + bar.Broker + "." + bar.Canonical + "." + bar.Period
-				data := fmt.Sprintf(`{"broker":"%s","canonical":"%s","period":"%s","open":%.5f,"high":%.5f,"low":%.5f,"close":%.5f,"volume":%.2f}`,
-					bar.Broker, bar.Canonical, bar.Period, bar.Open, bar.High, bar.Low, bar.Close, bar.Volume,
-				)
-				_ = publisher.PublishRaw(subject, []byte(data))
+			// Publish bar to NATS JetStream as protobuf (consumed by quant-engine factorsvc.Subscriber)
+			if err := publisher.PublishBar(bar); err != nil {
+				d.Log.Warn("bar publish failed", zap.Error(err),
+					zap.String("canonical", bar.Canonical), zap.String("period", bar.Period))
+			}
 			})
 		}
 
+	connStates := make(map[string]bool)
+	for key, gw := range manager.Connections() {
+		connStates[key] = false
+		if err := gw.Connect(ctx); err != nil {
+			d.Log.Error("connect failed", zap.String("key", key), zap.Error(err))
+			continue
+		}
+		connStates[key] = true
+		d.Log.Info("broker connected", zap.String("key", key))
+
+		go func(gw Gateway) {
+			syncCtx, syncCancel := context.WithTimeout(context.Background(), 120*time.Second)
+			defer syncCancel()
+			svc := symbolsync.NewService(d.PG.Pool, d.Log)
+			_ = svc.Sync(syncCtx, symbolsync.SyncParams{
+				BrokerID: gw.BrokerID(), Platform: gw.Platform(),
+				SessionID: gw.SessionID(), Conn: gw.Conn(),
+			})
+		}(gw)
+
 		// Load broker-specific symbol names from broker_symbols;
-		// each broker uses its own naming (e.g. EURUSDm vs EURUSD).
-		brokerID, _ := extractBrokerID(key) // key format: "brokerID-login"
+		brokerID, _ := extractBrokerID(key)
 		symbols := loadBrokerSymbols(d.PG.Pool, brokerID)
 		if len(symbols) == 0 {
 			d.Log.Error("no tradable symbols found for broker, skipping subscription",
@@ -229,9 +234,110 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 			zap.Strings("sample", firstN(symbols, 5)),
 		)
 		go func(key string, gw Gateway) {
-			_ = gw.Subscribe(ctx, symbols, func(tick *pb.Tick) { handler(key, gw, tick) })
+			_ = gw.Subscribe(ctx, symbols, func(tick *pb.Tick) { tickHandler(key, gw, tick) })
 		}(key, gw)
 	}
+
+	// Hot-join: event-driven via PG LISTEN/NOTIFY for new/removed accounts.
+	// Uses trigger trg_account_change (011_account_notify_trigger.sql).
+	// Falls back to 30s polling if PG is unavailable.
+	go func() {
+		knownKeys := make(map[string]bool)
+		for k := range connStates {
+			knownKeys[k] = true
+		}
+
+		connectAccount := func(a AccountConfig) {
+			key := a.Broker + "-" + a.Login
+			if knownKeys[key] {
+				return
+			}
+			manager.AddGateway(a)
+			gw := manager.Connections()[key]
+			if gw == nil {
+				return
+			}
+			if err := gw.Connect(ctx); err != nil {
+				d.Log.Error("hotjoin: connect failed", zap.String("key", key), zap.Error(err))
+				return
+			}
+			connStates[key] = true
+			knownKeys[key] = true
+			d.Log.Info("hotjoin: broker connected", zap.String("key", key))
+
+			go func(gw Gateway) {
+				syncCtx, syncCancel := context.WithTimeout(context.Background(), 120*time.Second)
+				defer syncCancel()
+				svc := symbolsync.NewService(d.PG.Pool, d.Log)
+				_ = svc.Sync(syncCtx, symbolsync.SyncParams{
+					BrokerID: gw.BrokerID(), Platform: gw.Platform(),
+					SessionID: gw.SessionID(), Conn: gw.Conn(),
+				})
+			}(gw)
+
+			symbols := loadBrokerSymbols(d.PG.Pool, gw.BrokerID())
+			if len(symbols) > 0 {
+				go func(key string, gw Gateway) {
+					_ = gw.Subscribe(ctx, symbols, func(tick *pb.Tick) { tickHandler(key, gw, tick) })
+				}(key, gw)
+			}
+		}
+
+		// Try PG LISTEN; fall back to polling if unavailable.
+		if d.PG != nil {
+			conn, err := d.PG.Pool.Acquire(ctx)
+			if err == nil {
+				_, err = conn.Exec(ctx, "LISTEN account_changes")
+				if err == nil {
+					d.Log.Info("hotjoin: listening on PG account_changes")
+					for {
+						notif, waitErr := conn.Conn().WaitForNotification(ctx)
+						if waitErr != nil {
+							d.Log.Warn("hotjoin: listen lost, falling back to poll", zap.Error(waitErr))
+							break
+						}
+						accountID := notif.Payload
+						// Load the specific account that changed
+						a, loadErr := loadAccountByID(d.PG.Pool, accountID)
+						if loadErr != nil || a == nil {
+							d.Log.Warn("hotjoin: load changed account failed",
+								zap.String("account_id", accountID), zap.Error(loadErr))
+							continue
+						}
+						if a.Status != "connected" || a.IsDisabled {
+							continue
+						}
+						connectAccount(*a)
+					}
+					conn.Release()
+				} else {
+					conn.Release()
+				}
+			}
+		}
+
+		// Fallback polling (runs if LISTEN failed, or after listen loss)
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if d.PG == nil {
+					continue
+				}
+				accounts, err := loadAccounts(d.PG.Pool)
+				if err != nil {
+					d.Log.Warn("hotjoin: load accounts failed", zap.Error(err))
+					continue
+				}
+				for _, a := range accounts {
+					connectAccount(a)
+				}
+			}
+		}
+	}()
 
 	// Heartbeat loop
 	go func() {
@@ -281,6 +387,22 @@ func RunGateway(mux *http.ServeMux, d *bootstrap.Deps, natsURL, redisAddr string
 }
 
 // loadAccounts reads active accounts from PG and converts to AccountConfig.
+// loadAccountByID loads a single account by UUID.
+func loadAccountByID(pool *pgxpool.Pool, id string) (*AccountConfig, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	row := pool.QueryRow(ctx,
+		`SELECT a.broker_id::text, a.login, a.password, a.server, a.platform, a.tenant_id::text, a.status, a.is_disabled
+		 FROM accounts a WHERE a.id = $1`, id)
+	var ac AccountConfig
+	err := row.Scan(&ac.Broker, &ac.Login, &ac.Password, &ac.Server, &ac.Platform, &ac.TenantID, &ac.Status, &ac.IsDisabled)
+	if err != nil {
+		return nil, err
+	}
+	ac.Host, ac.Port = splitHostPort(ac.Server, "443")
+	return &ac, nil
+}
+
 func loadAccounts(pool *pgxpool.Pool) ([]AccountConfig, error) {
 	rows, err := pool.Query(context.Background(), `
 		SELECT a.broker_id::text, a.login, a.password, a.server, a.platform, a.tenant_id::text

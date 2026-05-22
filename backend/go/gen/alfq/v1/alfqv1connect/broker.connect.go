@@ -95,6 +95,12 @@ const (
 	// SystemSettingsServiceUpdateSystemSettingProcedure is the fully-qualified name of the
 	// SystemSettingsService's UpdateSystemSetting RPC.
 	SystemSettingsServiceUpdateSystemSettingProcedure = "/alfq.v1.SystemSettingsService/UpdateSystemSetting"
+	// SystemSettingsServiceGetAIUsageStatsProcedure is the fully-qualified name of the
+	// SystemSettingsService's GetAIUsageStats RPC.
+	SystemSettingsServiceGetAIUsageStatsProcedure = "/alfq.v1.SystemSettingsService/GetAIUsageStats"
+	// SystemSettingsServiceTestAPIKeyProcedure is the fully-qualified name of the
+	// SystemSettingsService's TestAPIKey RPC.
+	SystemSettingsServiceTestAPIKeyProcedure = "/alfq.v1.SystemSettingsService/TestAPIKey"
 	// ServiceManagementServiceGetServiceStatusProcedure is the fully-qualified name of the
 	// ServiceManagementService's GetServiceStatus RPC.
 	ServiceManagementServiceGetServiceStatusProcedure = "/alfq.v1.ServiceManagementService/GetServiceStatus"
@@ -640,6 +646,8 @@ func (UnimplementedAccountServiceHandler) GetSyncStatus(context.Context, *connec
 type SystemSettingsServiceClient interface {
 	GetSystemSettings(context.Context, *connect.Request[v1.GetSystemSettingsRequest]) (*connect.Response[v1.GetSystemSettingsResponse], error)
 	UpdateSystemSetting(context.Context, *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error)
+	GetAIUsageStats(context.Context, *connect.Request[v1.GetAIUsageStatsRequest]) (*connect.Response[v1.GetAIUsageStatsResponse], error)
+	TestAPIKey(context.Context, *connect.Request[v1.TestAPIKeyRequest]) (*connect.Response[v1.TestAPIKeyResponse], error)
 }
 
 // NewSystemSettingsServiceClient constructs a client for the alfq.v1.SystemSettingsService service.
@@ -665,6 +673,18 @@ func NewSystemSettingsServiceClient(httpClient connect.HTTPClient, baseURL strin
 			connect.WithSchema(systemSettingsServiceMethods.ByName("UpdateSystemSetting")),
 			connect.WithClientOptions(opts...),
 		),
+		getAIUsageStats: connect.NewClient[v1.GetAIUsageStatsRequest, v1.GetAIUsageStatsResponse](
+			httpClient,
+			baseURL+SystemSettingsServiceGetAIUsageStatsProcedure,
+			connect.WithSchema(systemSettingsServiceMethods.ByName("GetAIUsageStats")),
+			connect.WithClientOptions(opts...),
+		),
+		testAPIKey: connect.NewClient[v1.TestAPIKeyRequest, v1.TestAPIKeyResponse](
+			httpClient,
+			baseURL+SystemSettingsServiceTestAPIKeyProcedure,
+			connect.WithSchema(systemSettingsServiceMethods.ByName("TestAPIKey")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -672,6 +692,8 @@ func NewSystemSettingsServiceClient(httpClient connect.HTTPClient, baseURL strin
 type systemSettingsServiceClient struct {
 	getSystemSettings   *connect.Client[v1.GetSystemSettingsRequest, v1.GetSystemSettingsResponse]
 	updateSystemSetting *connect.Client[v1.UpdateSystemSettingRequest, v1.UpdateSystemSettingResponse]
+	getAIUsageStats     *connect.Client[v1.GetAIUsageStatsRequest, v1.GetAIUsageStatsResponse]
+	testAPIKey          *connect.Client[v1.TestAPIKeyRequest, v1.TestAPIKeyResponse]
 }
 
 // GetSystemSettings calls alfq.v1.SystemSettingsService.GetSystemSettings.
@@ -684,10 +706,22 @@ func (c *systemSettingsServiceClient) UpdateSystemSetting(ctx context.Context, r
 	return c.updateSystemSetting.CallUnary(ctx, req)
 }
 
+// GetAIUsageStats calls alfq.v1.SystemSettingsService.GetAIUsageStats.
+func (c *systemSettingsServiceClient) GetAIUsageStats(ctx context.Context, req *connect.Request[v1.GetAIUsageStatsRequest]) (*connect.Response[v1.GetAIUsageStatsResponse], error) {
+	return c.getAIUsageStats.CallUnary(ctx, req)
+}
+
+// TestAPIKey calls alfq.v1.SystemSettingsService.TestAPIKey.
+func (c *systemSettingsServiceClient) TestAPIKey(ctx context.Context, req *connect.Request[v1.TestAPIKeyRequest]) (*connect.Response[v1.TestAPIKeyResponse], error) {
+	return c.testAPIKey.CallUnary(ctx, req)
+}
+
 // SystemSettingsServiceHandler is an implementation of the alfq.v1.SystemSettingsService service.
 type SystemSettingsServiceHandler interface {
 	GetSystemSettings(context.Context, *connect.Request[v1.GetSystemSettingsRequest]) (*connect.Response[v1.GetSystemSettingsResponse], error)
 	UpdateSystemSetting(context.Context, *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error)
+	GetAIUsageStats(context.Context, *connect.Request[v1.GetAIUsageStatsRequest]) (*connect.Response[v1.GetAIUsageStatsResponse], error)
+	TestAPIKey(context.Context, *connect.Request[v1.TestAPIKeyRequest]) (*connect.Response[v1.TestAPIKeyResponse], error)
 }
 
 // NewSystemSettingsServiceHandler builds an HTTP handler from the service implementation. It
@@ -709,12 +743,28 @@ func NewSystemSettingsServiceHandler(svc SystemSettingsServiceHandler, opts ...c
 		connect.WithSchema(systemSettingsServiceMethods.ByName("UpdateSystemSetting")),
 		connect.WithHandlerOptions(opts...),
 	)
+	systemSettingsServiceGetAIUsageStatsHandler := connect.NewUnaryHandler(
+		SystemSettingsServiceGetAIUsageStatsProcedure,
+		svc.GetAIUsageStats,
+		connect.WithSchema(systemSettingsServiceMethods.ByName("GetAIUsageStats")),
+		connect.WithHandlerOptions(opts...),
+	)
+	systemSettingsServiceTestAPIKeyHandler := connect.NewUnaryHandler(
+		SystemSettingsServiceTestAPIKeyProcedure,
+		svc.TestAPIKey,
+		connect.WithSchema(systemSettingsServiceMethods.ByName("TestAPIKey")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/alfq.v1.SystemSettingsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case SystemSettingsServiceGetSystemSettingsProcedure:
 			systemSettingsServiceGetSystemSettingsHandler.ServeHTTP(w, r)
 		case SystemSettingsServiceUpdateSystemSettingProcedure:
 			systemSettingsServiceUpdateSystemSettingHandler.ServeHTTP(w, r)
+		case SystemSettingsServiceGetAIUsageStatsProcedure:
+			systemSettingsServiceGetAIUsageStatsHandler.ServeHTTP(w, r)
+		case SystemSettingsServiceTestAPIKeyProcedure:
+			systemSettingsServiceTestAPIKeyHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -730,6 +780,14 @@ func (UnimplementedSystemSettingsServiceHandler) GetSystemSettings(context.Conte
 
 func (UnimplementedSystemSettingsServiceHandler) UpdateSystemSetting(context.Context, *connect.Request[v1.UpdateSystemSettingRequest]) (*connect.Response[v1.UpdateSystemSettingResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SystemSettingsService.UpdateSystemSetting is not implemented"))
+}
+
+func (UnimplementedSystemSettingsServiceHandler) GetAIUsageStats(context.Context, *connect.Request[v1.GetAIUsageStatsRequest]) (*connect.Response[v1.GetAIUsageStatsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SystemSettingsService.GetAIUsageStats is not implemented"))
+}
+
+func (UnimplementedSystemSettingsServiceHandler) TestAPIKey(context.Context, *connect.Request[v1.TestAPIKeyRequest]) (*connect.Response[v1.TestAPIKeyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SystemSettingsService.TestAPIKey is not implemented"))
 }
 
 // ServiceManagementServiceClient is a client for the alfq.v1.ServiceManagementService service.

@@ -57,18 +57,20 @@ func (c *Client) CloseSession(ctx context.Context, accountID string) error {
 
 // OrderRecord is a flat order struct used by callers.
 type OrderRecord struct {
-	Ticket     int64
-	Symbol     string
-	Side       string
-	Lots       float64
-	OpenPrice  float64
-	ClosePrice float64
-	Profit     float64
-	Swap       float64
-	Commission float64
-	OpenTime   string
-	CloseTime  string
-	State      string
+	Ticket       int64
+	Symbol       string
+	Side         string
+	Lots         float64
+	OpenPrice    float64
+	ClosePrice   float64
+	Profit       float64
+	Swap         float64
+	Commission   float64
+	OpenTime     string
+	CloseTime    string
+	State        string
+	OpenTimeMs   int64
+	CurrentPrice float64
 }
 
 // OrderHistory fetches closed orders in the given time window.
@@ -106,6 +108,7 @@ func (c *Client) OpenedOrders(ctx context.Context, accountID string) ([]*OrderRe
 		out = append(out, &OrderRecord{
 			Ticket: o.Ticket, Symbol: o.Symbol, Side: o.Side, Lots: o.Lots,
 			OpenPrice: o.OpenPrice, Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+			OpenTimeMs: o.OpenTimeMs, CurrentPrice: o.CurrentPrice,
 		})
 	}
 	return out, nil

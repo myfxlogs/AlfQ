@@ -675,6 +675,8 @@ type OrderRecord struct {
 	OpenTime      string                 `protobuf:"bytes,10,opt,name=open_time,json=openTime,proto3" json:"open_time,omitempty"`    // RFC 3339
 	CloseTime     string                 `protobuf:"bytes,11,opt,name=close_time,json=closeTime,proto3" json:"close_time,omitempty"` // RFC 3339
 	State         string                 `protobuf:"bytes,12,opt,name=state,proto3" json:"state,omitempty"`
+	OpenTimeMs    int64                  `protobuf:"varint,13,opt,name=open_time_ms,json=openTimeMs,proto3" json:"open_time_ms,omitempty"`      // Unix milliseconds
+	CurrentPrice  float64                `protobuf:"fixed64,14,opt,name=current_price,json=currentPrice,proto3" json:"current_price,omitempty"` // latest bid/ask
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -791,6 +793,20 @@ func (x *OrderRecord) GetState() string {
 		return x.State
 	}
 	return ""
+}
+
+func (x *OrderRecord) GetOpenTimeMs() int64 {
+	if x != nil {
+		return x.OpenTimeMs
+	}
+	return 0
+}
+
+func (x *OrderRecord) GetCurrentPrice() float64 {
+	if x != nil {
+		return x.CurrentPrice
+	}
+	return 0
 }
 
 type SymbolParamsManyRequest struct {
@@ -1346,7 +1362,7 @@ const file_alfq_mthub_v1_mthub_proto_rawDesc = "" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\"J\n" +
 	"\x14OpenedOrdersResponse\x122\n" +
-	"\x06orders\x18\x01 \x03(\v2\x1a.alfq.mthub.v1.OrderRecordR\x06orders\"\xc3\x02\n" +
+	"\x06orders\x18\x01 \x03(\v2\x1a.alfq.mthub.v1.OrderRecordR\x06orders\"\x8a\x03\n" +
 	"\vOrderRecord\x12\x16\n" +
 	"\x06ticket\x18\x01 \x01(\x03R\x06ticket\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x12\n" +
@@ -1365,7 +1381,10 @@ const file_alfq_mthub_v1_mthub_proto_rawDesc = "" +
 	" \x01(\tR\bopenTime\x12\x1d\n" +
 	"\n" +
 	"close_time\x18\v \x01(\tR\tcloseTime\x12\x14\n" +
-	"\x05state\x18\f \x01(\tR\x05state\"R\n" +
+	"\x05state\x18\f \x01(\tR\x05state\x12 \n" +
+	"\fopen_time_ms\x18\r \x01(\x03R\n" +
+	"openTimeMs\x12#\n" +
+	"\rcurrent_price\x18\x0e \x01(\x01R\fcurrentPrice\"R\n" +
 	"\x17SymbolParamsManyRequest\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\x01 \x01(\tR\taccountId\x12\x18\n" +

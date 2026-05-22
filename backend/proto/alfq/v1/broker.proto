@@ -118,6 +118,8 @@ message AccountPosition {
   double profit = 6;
   double swap = 7;
   double commission = 8;
+  int64 open_time_ms = 9;      // position open timestamp (UTC ms)
+  double current_price = 10;   // latest bid/ask (live quote)
 }
 
 message SyncAccountHistoryRequest {
@@ -157,6 +159,8 @@ message HistoricalOrder {
 service SystemSettingsService {
   rpc GetSystemSettings(GetSystemSettingsRequest) returns (GetSystemSettingsResponse);
   rpc UpdateSystemSetting(UpdateSystemSettingRequest) returns (UpdateSystemSettingResponse);
+  rpc GetAIUsageStats(GetAIUsageStatsRequest) returns (GetAIUsageStatsResponse);
+  rpc TestAPIKey(TestAPIKeyRequest) returns (TestAPIKeyResponse);
 }
 
 message SystemSetting { string key = 1; string value = 2; string description = 3; }
@@ -164,6 +168,24 @@ message GetSystemSettingsRequest {}
 message GetSystemSettingsResponse { repeated SystemSetting settings = 1; }
 message UpdateSystemSettingRequest { string key = 1; string value = 2; }
 message UpdateSystemSettingResponse {}
+
+// R10: AI usage stats
+message AIUsageStats {
+  int32 today_tokens = 1;
+  int32 month_tokens = 2;
+  int32 month_cost_cents = 3;
+  int32 quota_limit_cents = 4;
+}
+message GetAIUsageStatsRequest {}
+message GetAIUsageStatsResponse { AIUsageStats stats = 1; }
+
+// R10: API key connectivity test
+message TestAPIKeyRequest { string provider = 1; }
+message TestAPIKeyResponse {
+  string status = 1;
+  int32 latency_ms = 2;
+  string error = 3;
+}
 
 service ServiceManagementService {
   rpc GetServiceStatus(GetServiceStatusRequest) returns (GetServiceStatusResponse);

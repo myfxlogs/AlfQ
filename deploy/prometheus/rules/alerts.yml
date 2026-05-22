@@ -1,0 +1,63 @@
+groups:
+  - name: alfq_slo
+    rules:
+      # ── 延迟 ──
+      - alert: HighOrderLatency
+        expr: histogram_quantile(0.95, rate(order_submit_latency_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels: { severity: warning, slo: latency }
+        annotations:
+          summary: "订单提交 P95 延迟 > 500ms"
+          description: "{{ $labels.account_id }} P95={{ $value }}s"
+
+      - alert: HighTickLatency
+        expr: rate(tick_publish_latency_seconds_sum[5m]) / rate(tick_publish_latency_seconds_count[5m]) > 0.1
+        for: 3m
+        labels: { severity: warning, slo: latency }
+        annotations:
+          summary: "Tick 发布平均延迟 > 100ms"
+
+      # ── 可用性 ──
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.job }} 服务不可达"
+
+      - alert: MTConnectionLost
+        expr: mt_connection_state == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "MT 连接断开 {{ $labels.account_id }}"
+
+      # ── 错误率 ──
+      - alert: HighOrderRejectRate
+        expr: rate(order_rejected_total[10m]) / rate(order_submitted_total[10m]) > 0.3
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "订单拒绝率 > 30%"
+
+      - alert: HighPublishFailureRate
+        expr: rate(tick_publish_failed_total[5m]) > 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Tick 发布失败数 > 0"
+
+      # ── 数据完整性 ──
+      - alert: FactorNaN
+        expr: factor_values_null_ratio > 0.5
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "因子值 NaN 比例 > 50%，{{ $labels.factor_name }}"
+
+      - alert: GapDetected
+        expr: rate(md_gap_count[10m]) > 1
+        for: 5m
+        labels: { severity: info }
+        annotations:
+          summary: "行情缺口 {{ $labels.symbol }} count={{ $value }}"

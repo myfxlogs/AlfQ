@@ -94,7 +94,8 @@ func TestServiceListBacktests(t *testing.T) {
 
 func TestServiceListAuditLogs(t *testing.T) {
 	svc := NewService(nil)
-	resp, err := svc.ListAuditLogs(context.Background(), &pb.ListAuditLogsRequest{})
+	ctx := auth.WithTenant(context.Background(), "test-tenant")
+	resp, err := svc.ListAuditLogs(ctx, &pb.ListAuditLogsRequest{})
 	if err != nil {
 		t.Fatalf("ListAuditLogs: %v", err)
 	}
@@ -131,7 +132,8 @@ func TestAdapterStreamAuditLogs(t *testing.T) {
 	adp := NewAdapter(NewService(nil))
 	req := connect.NewRequest(&pb.StreamAuditLogsRequest{})
 	stream := &connect.ServerStream[pb.AuditLog]{}
-	err := adp.StreamAuditLogs(context.Background(), req, stream)
+	ctx := auth.WithTenant(context.Background(), "test-tenant")
+	err := adp.StreamAuditLogs(ctx, req, stream)
 	if err != nil {
 		t.Fatalf("StreamAuditLogs: %v", err)
 	}
@@ -152,7 +154,8 @@ func TestAdapterListBacktests(t *testing.T) {
 func TestAdapterListAuditLogs(t *testing.T) {
 	adp := NewAdapter(NewService(nil))
 	req := connect.NewRequest(&pb.ListAuditLogsRequest{})
-	resp, err := adp.ListAuditLogs(context.Background(), req)
+	ctx := auth.WithTenant(context.Background(), "test-tenant")
+	resp, err := adp.ListAuditLogs(ctx, req)
 	if err != nil {
 		t.Fatalf("ListAuditLogs: %v", err)
 	}

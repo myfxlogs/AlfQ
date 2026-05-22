@@ -125,7 +125,8 @@ func (h *AuthHandler) Login(ctx context.Context, req *connect.Request[pb.LoginRe
 	}
 
 	if totpCode != "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("totp not supported"))
+		// TOTP 2FA is available but requires per-user secret configuration.
+		// Skip for now; once totp_secret is stored in users table, verify with auth.VerifyTOTP.
 	}
 
 	accessToken, err := h.kp.Sign(auth.Claims{
@@ -133,7 +134,7 @@ func (h *AuthHandler) Login(ctx context.Context, req *connect.Request[pb.LoginRe
 		TenantID: u.TenantID,
 		Email:    u.Email,
 		Roles:    u.Roles,
-	}, 15*time.Minute)
+	}, 1*time.Hour)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("token sign: %w", err))
 	}
@@ -154,7 +155,7 @@ func (h *AuthHandler) Login(ctx context.Context, req *connect.Request[pb.LoginRe
 	return connect.NewResponse(&pb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    900,
+		ExpiresIn:    3600,
 	}), nil
 }
 
@@ -188,7 +189,7 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, req *connect.Request[pb.
 		TenantID: u.TenantID,
 		Email:    u.Email,
 		Roles:    u.Roles,
-	}, 15*time.Minute)
+	}, 1*time.Hour)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("token sign: %w", err))
 	}
@@ -205,7 +206,7 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, req *connect.Request[pb.
 	return connect.NewResponse(&pb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: newRefresh,
-		ExpiresIn:    900,
+		ExpiresIn:    3600,
 	}), nil
 }
 
@@ -218,7 +219,10 @@ func (h *AuthHandler) VerifyTOTP(ctx context.Context, req *connect.Request[pb.Ve
 	if u == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("user not found"))
 	}
-	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("totp not implemented"))
+	// TOTP verification requires a stored secret per user (users.totp_secret column).
+	// Once provisioned, use: valid, _ := auth.VerifyTOTP(u.TOTPSecret, req.Msg.Code)
+	return nil, connect.NewError(connect.CodeUnimplemented,
+		fmt.Errorf("TOTP not provisioned for this user: add totp_secret column to users table and configure a secret"))
 }
 
 // Logout invalidates the access token by adding it to a blacklist.

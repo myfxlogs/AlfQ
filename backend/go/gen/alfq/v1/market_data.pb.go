@@ -349,6 +349,259 @@ func (x *Bar) GetCanonical() string {
 	return ""
 }
 
+// BarView is a simplified bar for factor computation (double fields, no Money).
+type BarView struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Period        string                 `protobuf:"bytes,3,opt,name=period,proto3" json:"period,omitempty"`
+	TsUnixMs      int64                  `protobuf:"varint,4,opt,name=ts_unix_ms,json=tsUnixMs,proto3" json:"ts_unix_ms,omitempty"`
+	Open          float64                `protobuf:"fixed64,5,opt,name=open,proto3" json:"open,omitempty"`
+	High          float64                `protobuf:"fixed64,6,opt,name=high,proto3" json:"high,omitempty"`
+	Low           float64                `protobuf:"fixed64,7,opt,name=low,proto3" json:"low,omitempty"`
+	Close         float64                `protobuf:"fixed64,8,opt,name=close,proto3" json:"close,omitempty"`
+	Volume        float64                `protobuf:"fixed64,9,opt,name=volume,proto3" json:"volume,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BarView) Reset() {
+	*x = BarView{}
+	mi := &file_alfq_v1_market_data_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BarView) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BarView) ProtoMessage() {}
+
+func (x *BarView) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_market_data_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BarView.ProtoReflect.Descriptor instead.
+func (*BarView) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_market_data_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BarView) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *BarView) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *BarView) GetPeriod() string {
+	if x != nil {
+		return x.Period
+	}
+	return ""
+}
+
+func (x *BarView) GetTsUnixMs() int64 {
+	if x != nil {
+		return x.TsUnixMs
+	}
+	return 0
+}
+
+func (x *BarView) GetOpen() float64 {
+	if x != nil {
+		return x.Open
+	}
+	return 0
+}
+
+func (x *BarView) GetHigh() float64 {
+	if x != nil {
+		return x.High
+	}
+	return 0
+}
+
+func (x *BarView) GetLow() float64 {
+	if x != nil {
+		return x.Low
+	}
+	return 0
+}
+
+func (x *BarView) GetClose() float64 {
+	if x != nil {
+		return x.Close
+	}
+	return 0
+}
+
+func (x *BarView) GetVolume() float64 {
+	if x != nil {
+		return x.Volume
+	}
+	return 0
+}
+
+type BarQuery struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Period        string                 `protobuf:"bytes,3,opt,name=period,proto3" json:"period,omitempty"`
+	FromMs        int64                  `protobuf:"varint,4,opt,name=from_ms,json=fromMs,proto3" json:"from_ms,omitempty"`
+	ToMs          int64                  `protobuf:"varint,5,opt,name=to_ms,json=toMs,proto3" json:"to_ms,omitempty"`
+	Limit         int32                  `protobuf:"varint,6,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BarQuery) Reset() {
+	*x = BarQuery{}
+	mi := &file_alfq_v1_market_data_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BarQuery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BarQuery) ProtoMessage() {}
+
+func (x *BarQuery) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_market_data_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BarQuery.ProtoReflect.Descriptor instead.
+func (*BarQuery) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_market_data_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BarQuery) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *BarQuery) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *BarQuery) GetPeriod() string {
+	if x != nil {
+		return x.Period
+	}
+	return ""
+}
+
+func (x *BarQuery) GetFromMs() int64 {
+	if x != nil {
+		return x.FromMs
+	}
+	return 0
+}
+
+func (x *BarQuery) GetToMs() int64 {
+	if x != nil {
+		return x.ToMs
+	}
+	return 0
+}
+
+func (x *BarQuery) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type BarLookup struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Period        string                 `protobuf:"bytes,3,opt,name=period,proto3" json:"period,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BarLookup) Reset() {
+	*x = BarLookup{}
+	mi := &file_alfq_v1_market_data_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BarLookup) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BarLookup) ProtoMessage() {}
+
+func (x *BarLookup) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_market_data_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BarLookup.ProtoReflect.Descriptor instead.
+func (*BarLookup) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_market_data_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *BarLookup) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *BarLookup) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *BarLookup) GetPeriod() string {
+	if x != nil {
+		return x.Period
+	}
+	return ""
+}
+
 var File_alfq_v1_market_data_proto protoreflect.FileDescriptor
 
 const file_alfq_v1_market_data_proto_rawDesc = "" +
@@ -390,7 +643,32 @@ const file_alfq_v1_market_data_proto_rawDesc = "" +
 	"\x06volume\x18\v \x01(\x01R\x06volume\x12\x1d\n" +
 	"\n" +
 	"tick_count\x18\f \x01(\x05R\ttickCount\x12\x1c\n" +
-	"\tcanonical\x18\r \x01(\tR\tcanonicalB\x8a\x01\n" +
+	"\tcanonical\x18\r \x01(\tR\tcanonical\"\xdc\x01\n" +
+	"\aBarView\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
+	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x16\n" +
+	"\x06period\x18\x03 \x01(\tR\x06period\x12\x1c\n" +
+	"\n" +
+	"ts_unix_ms\x18\x04 \x01(\x03R\btsUnixMs\x12\x12\n" +
+	"\x04open\x18\x05 \x01(\x01R\x04open\x12\x12\n" +
+	"\x04high\x18\x06 \x01(\x01R\x04high\x12\x10\n" +
+	"\x03low\x18\a \x01(\x01R\x03low\x12\x14\n" +
+	"\x05close\x18\b \x01(\x01R\x05close\x12\x16\n" +
+	"\x06volume\x18\t \x01(\x01R\x06volume\"\x9b\x01\n" +
+	"\bBarQuery\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
+	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x16\n" +
+	"\x06period\x18\x03 \x01(\tR\x06period\x12\x17\n" +
+	"\afrom_ms\x18\x04 \x01(\x03R\x06fromMs\x12\x13\n" +
+	"\x05to_ms\x18\x05 \x01(\x03R\x04toMs\x12\x14\n" +
+	"\x05limit\x18\x06 \x01(\x05R\x05limit\"X\n" +
+	"\tBarLookup\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x16\n" +
+	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x16\n" +
+	"\x06period\x18\x03 \x01(\tR\x06period2y\n" +
+	"\x15MarketDataViewService\x12-\n" +
+	"\x04Bars\x12\x11.alfq.v1.BarQuery\x1a\x10.alfq.v1.BarView0\x01\x121\n" +
+	"\tLatestBar\x12\x12.alfq.v1.BarLookup\x1a\x10.alfq.v1.BarViewB\x8a\x01\n" +
 	"\vcom.alfq.v1B\x0fMarketDataProtoP\x01Z-github.com/alfq/backend/go/gen/alfq/v1;alfqv1\xa2\x02\x03AXX\xaa\x02\aAlfq.V1\xca\x02\aAlfq\\V1\xe2\x02\x13Alfq\\V1\\GPBMetadata\xea\x02\bAlfq::V1b\x06proto3"
 
 var (
@@ -405,27 +683,34 @@ func file_alfq_v1_market_data_proto_rawDescGZIP() []byte {
 	return file_alfq_v1_market_data_proto_rawDescData
 }
 
-var file_alfq_v1_market_data_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_alfq_v1_market_data_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_alfq_v1_market_data_proto_goTypes = []any{
-	(*Tick)(nil),  // 0: alfq.v1.Tick
-	(*Quote)(nil), // 1: alfq.v1.Quote
-	(*Bar)(nil),   // 2: alfq.v1.Bar
-	(*Money)(nil), // 3: alfq.v1.Money
+	(*Tick)(nil),      // 0: alfq.v1.Tick
+	(*Quote)(nil),     // 1: alfq.v1.Quote
+	(*Bar)(nil),       // 2: alfq.v1.Bar
+	(*BarView)(nil),   // 3: alfq.v1.BarView
+	(*BarQuery)(nil),  // 4: alfq.v1.BarQuery
+	(*BarLookup)(nil), // 5: alfq.v1.BarLookup
+	(*Money)(nil),     // 6: alfq.v1.Money
 }
 var file_alfq_v1_market_data_proto_depIdxs = []int32{
-	3, // 0: alfq.v1.Tick.bid:type_name -> alfq.v1.Money
-	3, // 1: alfq.v1.Tick.ask:type_name -> alfq.v1.Money
-	3, // 2: alfq.v1.Quote.bid:type_name -> alfq.v1.Money
-	3, // 3: alfq.v1.Quote.ask:type_name -> alfq.v1.Money
-	3, // 4: alfq.v1.Bar.open:type_name -> alfq.v1.Money
-	3, // 5: alfq.v1.Bar.high:type_name -> alfq.v1.Money
-	3, // 6: alfq.v1.Bar.low:type_name -> alfq.v1.Money
-	3, // 7: alfq.v1.Bar.close:type_name -> alfq.v1.Money
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	6,  // 0: alfq.v1.Tick.bid:type_name -> alfq.v1.Money
+	6,  // 1: alfq.v1.Tick.ask:type_name -> alfq.v1.Money
+	6,  // 2: alfq.v1.Quote.bid:type_name -> alfq.v1.Money
+	6,  // 3: alfq.v1.Quote.ask:type_name -> alfq.v1.Money
+	6,  // 4: alfq.v1.Bar.open:type_name -> alfq.v1.Money
+	6,  // 5: alfq.v1.Bar.high:type_name -> alfq.v1.Money
+	6,  // 6: alfq.v1.Bar.low:type_name -> alfq.v1.Money
+	6,  // 7: alfq.v1.Bar.close:type_name -> alfq.v1.Money
+	4,  // 8: alfq.v1.MarketDataViewService.Bars:input_type -> alfq.v1.BarQuery
+	5,  // 9: alfq.v1.MarketDataViewService.LatestBar:input_type -> alfq.v1.BarLookup
+	3,  // 10: alfq.v1.MarketDataViewService.Bars:output_type -> alfq.v1.BarView
+	3,  // 11: alfq.v1.MarketDataViewService.LatestBar:output_type -> alfq.v1.BarView
+	10, // [10:12] is the sub-list for method output_type
+	8,  // [8:10] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_alfq_v1_market_data_proto_init() }
@@ -440,9 +725,9 @@ func file_alfq_v1_market_data_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_alfq_v1_market_data_proto_rawDesc), len(file_alfq_v1_market_data_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   6,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_alfq_v1_market_data_proto_goTypes,
 		DependencyIndexes: file_alfq_v1_market_data_proto_depIdxs,

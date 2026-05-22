@@ -769,6 +769,16 @@ export type AccountPosition = Message<"alfq.v1.AccountPosition"> & {
    * @generated from field: double commission = 8;
    */
   commission: number;
+
+  /**
+   * @generated from field: int64 open_time_ms = 9;
+   */
+  openTimeMs: bigint;
+
+  /**
+   * @generated from field: double current_price = 10;
+   */
+  currentPrice: number;
 };
 
 /**
@@ -1059,6 +1069,41 @@ export type UpdateSystemSettingResponse = Message<"alfq.v1.UpdateSystemSettingRe
  */
 export const UpdateSystemSettingResponseSchema: GenMessage<UpdateSystemSettingResponse> = /*@__PURE__*/
   messageDesc(file_alfq_v1_broker, 37);
+
+// -- R10: AI usage stats + key test --
+
+export type AIUsageStats = Message<"alfq.v1.AIUsageStats"> & {
+  todayTokens: number;
+  monthTokens: number;
+  monthCostCents: number;
+  quotaLimitCents: number;
+};
+export const AIUsageStatsSchema: GenMessage<AIUsageStats> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 38) as GenMessage<AIUsageStats>;
+
+export type GetAIUsageStatsRequest = Message<"alfq.v1.GetAIUsageStatsRequest"> & {};
+export const GetAIUsageStatsRequestSchema: GenMessage<GetAIUsageStatsRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 39) as GenMessage<GetAIUsageStatsRequest>;
+
+export type GetAIUsageStatsResponse = Message<"alfq.v1.GetAIUsageStatsResponse"> & {
+  stats?: AIUsageStats;
+};
+export const GetAIUsageStatsResponseSchema: GenMessage<GetAIUsageStatsResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 40) as GenMessage<GetAIUsageStatsResponse>;
+
+export type TestAPIKeyRequest = Message<"alfq.v1.TestAPIKeyRequest"> & {
+  provider: string;
+};
+export const TestAPIKeyRequestSchema: GenMessage<TestAPIKeyRequest> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 41) as GenMessage<TestAPIKeyRequest>;
+
+export type TestAPIKeyResponse = Message<"alfq.v1.TestAPIKeyResponse"> & {
+  status: string;
+  latencyMs: number;
+  error: string;
+};
+export const TestAPIKeyResponseSchema: GenMessage<TestAPIKeyResponse> = /*@__PURE__*/
+  messageDesc(file_alfq_v1_broker, 42) as GenMessage<TestAPIKeyResponse>;
 
 /**
  * @generated from message alfq.v1.ServiceStatus
@@ -1379,6 +1424,16 @@ export const SystemSettingsService: GenService<{
     methodKind: "unary";
     input: typeof UpdateSystemSettingRequestSchema;
     output: typeof UpdateSystemSettingResponseSchema;
+  },
+  getAIUsageStats: {
+    methodKind: "unary";
+    input: typeof GetAIUsageStatsRequestSchema;
+    output: typeof GetAIUsageStatsResponseSchema;
+  },
+  testAPIKey: {
+    methodKind: "unary";
+    input: typeof TestAPIKeyRequestSchema;
+    output: typeof TestAPIKeyResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_alfq_v1_broker, 2);

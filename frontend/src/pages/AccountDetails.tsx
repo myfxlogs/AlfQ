@@ -3,6 +3,11 @@ import { useEffect, useState, useRef } from "react";
 import { accountClient } from "../api/client";
 import type { Account } from "../gen/alfq/v1/broker_pb";
 
+const fmtPrice = (v: number | undefined | null, d = 5) => {
+  if (v == null || v === 0) return "—";
+  return v.toFixed(d).replace(/0+$/, "").replace(/\.$/, "");
+};
+
 export default function AccountDetails() {
   const [accountId] = useState(() => {
     const match = window.location.hash.match(/#\/account\/([^/]+)/);
@@ -14,7 +19,9 @@ export default function AccountDetails() {
   const [activeTab, setActiveTab] = useState("positions"); // positions | history | settings
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
-  const [positions, setPositions] = useState<any[]>([]);
+  // null = 未加载完成（显示"加载中"）; [] = 已加载且无持仓; [...] = 真实持仓数据
+  // REST 初始拉取的可能是陈旧缓存（openTimeMs=0/currentPrice=0），需等 SSE 流帧推真值
+  const [positions, setPositions] = useState<any[] | null>(null);
   // Incremented every time the server pushes an `orderEvent` via SSE so child
   // tabs (e.g. HistoryTab) can re-fetch on demand.
   const [orderEventTick, setOrderEventTick] = useState(0);
@@ -42,14 +49,23 @@ export default function AccountDetails() {
     load();
   }, [accountId]);
 
-  // Fetch latest positions immediately on page open (cached server-side from
-  // the live MT session; returns in <100ms typically). SSE keeps them updated.
+  // Fetch latest positions immediately on page open. The server-side cache may
+  // be stale (openTimeMs=0 / currentPrice=0) right after process restart — in
+  // that case we keep positions=null ("加载中") and wait for the SSE stream
+  // to push the authoritative snapshot, avoiding flashing wrong values.
   useEffect(() => {
     if (!accountId) return;
     (async () => {
       try {
         const res = await accountClient.listAccountPositions({ accountId });
-        setPositions(res.positions);
+        const rows = res.positions || [];
+        const complete = rows.length === 0 || rows.every(
+          (p: any) => (p.openTimeMs ?? 0) > 0 && (p.currentPrice ?? 0) > 0,
+        );
+        if (complete) {
+          setPositions(rows);
+        }
+        // else: leave positions=null; SSE will deliver real data shortly.
       } catch (e) {
         console.error("加载持仓失败", e);
       }
@@ -70,6 +86,7 @@ export default function AccountDetails() {
             ticket: number; symbol: string; type: string;
             lots: number; openPrice: number; profit: number;
             swap: number; commission: number;
+            openTimeMs: number; currentPrice: number;
           }>;
           orderEvent?: boolean;
         };
@@ -91,6 +108,7 @@ export default function AccountDetails() {
               : prev
           );
           if (u.positions !== undefined) {
+            // SSE is the authoritative source — unconditionally replace.
             setPositions(u.positions);
           }
           if (u.orderEvent) {
@@ -290,6 +308,7 @@ export default function AccountDetails() {
             ))}
           </div>
           {activeTab === "positions" && <PositionsTab accountId={accountId} positions={positions} />}
+
           {activeTab === "history" && <HistoryTab accountId={accountId} orderDeltas={orderDeltas} setOrderDeltas={setOrderDeltas} />}
         </div>
 
@@ -388,7 +407,15 @@ function SmallInfoCard({ label, value, loading, valueColor }: { label: string; v
 }
 
 // Positions Tab — table with fixed header
-function PositionsTab({ accountId, positions }: { accountId: string; positions: any[] }) {
+function PositionsTab({ accountId, positions }: { accountId: string; positions: any[] | null }) {
+  if (positions === null) {
+    return (
+      <div className="glass-card" style={{ padding: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>持仓订单</h3>
+        <p style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>持仓加载中…</p>
+      </div>
+    );
+  }
   if (positions.length === 0) {
     return (
       <div className="glass-card" style={{ padding: 24 }}>
@@ -409,6 +436,8 @@ function PositionsTab({ accountId, positions }: { accountId: string; positions: 
             <th>方向</th>
             <th>手数</th>
             <th>开仓价</th>
+            <th>当前价</th>
+            <th>开仓时间</th>
             <th>利息</th>
             <th>手续费</th>
             <th>浮动盈亏</th>
@@ -429,7 +458,9 @@ function PositionsTab({ accountId, positions }: { accountId: string; positions: 
                 </span>
               </td>
               <td>{p.lots?.toFixed(2) ?? "—"}</td>
-              <td>{p.openPrice?.toFixed(5) ?? "—"}</td>
+              <td>{fmtPrice(p.openPrice)}</td>
+              <td>{fmtPrice(p.currentPrice)}</td>
+              <td>{p.openTimeMs > 0 ? new Date(p.openTimeMs).toLocaleString("zh-CN") : "—"}</td>
               <td>{p.swap?.toFixed(2) ?? "0.00"}</td>
               <td>{p.commission?.toFixed(2) ?? "0.00"}</td>
               <td style={{ color: (p.profit ?? 0) >= 0 ? "#00A651" : "#E53935", fontWeight: 600 }}>
@@ -574,8 +605,8 @@ function HistoryTab({ accountId, orderDeltas, setOrderDeltas }: { accountId: str
                   </td>
                   <td style={{ fontWeight: 600 }}>{o.symbol}</td>
                   <td>{o.lots?.toFixed(2) ?? "—"}</td>
-                  <td>{o.openPrice?.toFixed(5) ?? "—"}</td>
-                  <td>{o.closePrice?.toFixed(5) ?? "—"}</td>
+                  <td>{fmtPrice(o.openPrice)}</td>
+                  <td>{fmtPrice(o.closePrice)}</td>
                   <td style={{ color: (o.profit ?? 0) >= 0 ? "#00A651" : "#E53935", fontWeight: 600 }}>
                     {(o.profit ?? 0) >= 0 ? "+" : ""}{o.profit?.toFixed(2) ?? "0.00"}
                   </td>

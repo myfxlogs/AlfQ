@@ -28,9 +28,11 @@ type Config struct {
 
 // Engine manages factor computation.
 type Engine struct {
-	mu       sync.RWMutex
-	factors  map[string]*compiledFactor
-	compiler *dsl.Compiler
+	mu         sync.RWMutex
+	factors    map[string]*compiledFactor
+	compiler   *dsl.Compiler
+	latestVals map[string]float64 // latest factor values from most recent Eval call
+	buffer     *WindowBuffer      // RS03: per-symbol rolling bar window
 }
 
 type compiledFactor struct {
@@ -53,6 +55,13 @@ func NewEngine(cfg Config) *Engine {
 	return e
 }
 
+// SetBuffer attaches a WindowBuffer for rolling window factor computation (RS03).
+func (e *Engine) SetBuffer(buf *WindowBuffer) {
+	e.mu.Lock()
+	e.buffer = buf
+	e.mu.Unlock()
+}
+
 // Register compiles and registers a factor definition.
 func (e *Engine) Register(def FactorDef) error {
 	op, err := e.compiler.Compile(def.Expression)
@@ -66,17 +75,82 @@ func (e *Engine) Register(def FactorDef) error {
 }
 
 // Eval evaluates all registered factors for a given bar, returning name→value.
+// Results are cached internally and available via LatestFactors().
+// RS03: Uses WindowBuffer for rolling-window operators (SMA, EMA, RSI).
 func (e *Engine) Eval(ctx context.Context, bar *pb.Bar) map[string]float64 {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	// Push bar into buffer for rolling window computation
+	if e.buffer != nil {
+		e.buffer.Push(bar.TenantId, bar.Symbol, bar.Period, bar)
+	}
 
 	results := make(map[string]float64, len(e.factors))
 	for name, cf := range e.factors {
-		val := bar.GetClose().GetValue()
-		v, _ := parseFloat(val)
-		results[name] = cf.op.Eval(v)
+		// Use windowed close prices for rolling operators (RS03)
+		closeVals := e.windowedCloses(bar)
+		var val float64
+		if len(closeVals) > 0 {
+			// Compute rolling factor: use the last N closes as input
+			// For simple ops it uses the latest value; for window ops it aggregates
+			val = rollingEval(cf.op, closeVals)
+		} else {
+			v, _ := parseFloat(bar.GetClose().GetValue())
+			val = cf.op.Eval(v)
+		}
+		results[name] = val
 	}
+	e.latestVals = results
 	return results
+}
+
+// windowedCloses returns the close prices from the window buffer for rolling computation.
+func (e *Engine) windowedCloses(bar *pb.Bar) []float64 {
+	if e.buffer == nil {
+		return nil
+	}
+	records := e.buffer.Snapshot(bar.TenantId, bar.Symbol, bar.Period, 200)
+	if len(records) == 0 {
+		return nil
+	}
+	closes := make([]float64, len(records))
+	for i, r := range records {
+		closes[i] = r.Close
+	}
+	return closes
+}
+
+// rollingEval computes a factor value using a rolling window of close prices.
+// For operators that need window context (SMA, EMA, RSI), the underlying DSL handles
+// the aggregation internally. This provides the data window.
+func rollingEval(op dsl.Op, closes []float64) float64 {
+	if len(closes) == 0 {
+		return 0
+	}
+	// For each bar in the window, evaluate the op and return the latest value.
+	// The op internally tracks state for rolling operators like EMA.
+	var result float64
+	for _, c := range closes {
+		result = op.Eval(c)
+	}
+	return result
+}
+
+// LatestFactors returns factor values from the most recent Eval call.
+// Returns nil if no bar has been evaluated yet.
+func (e *Engine) LatestFactors() map[string]float64 {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	if len(e.latestVals) == 0 {
+		return nil
+	}
+	out := make(map[string]float64, len(e.latestVals))
+	for k, v := range e.latestVals {
+		out[k] = v
+	}
+	return out
 }
 
 func parseFloat(s string) (float64, bool) {

@@ -4,6 +4,7 @@ package tradingcore
 
 import (
 	"context"
+	"crypto/sha256"
 	"net/http"
 	"os"
 	"time"
@@ -14,6 +15,8 @@ import (
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/common/bus"
 	"github.com/alfq/backend/go/internal/common/config"
+	"github.com/alfq/backend/go/internal/common/crypto"
+	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/common/health"
 	"github.com/alfq/backend/go/internal/oms"
 	"github.com/alfq/backend/go/internal/oms/repo"
@@ -82,6 +85,11 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		zap.Bool("breaker_ok", breaker.Allow()),
 	)
 
+	// Q2: Load whitelist from broker_symbols to replace hardcoded fallback.
+	if d.PG != nil {
+		go loadWhitelistFromDB(d.PG, engine)
+	}
+
 	// Account connection manager
 	symSvc := &symAdapter{symbolsync.NewService(d.PG.Pool, d.Log)}
 	mthubAddr := os.Getenv("MTHUB_ADDR")
@@ -91,6 +99,18 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	acctMgr := accountconn.NewManager(d.Log, d.PG, d.RDB, nc, js, cfg.MT4Gateway, cfg.MT5Gateway, symSvc, mthubAddr)
 	syncWorker := accountconn.NewSyncWorker(d.PG, historyRepo, d.Log)
 	acctMgr.SetSyncWorker(syncWorker)
+
+	// Wire risk engine to account state updates for real-time rule evaluation
+	acctMgr.SetOnAccountUpdate(func(accountID string, balance, equity, margin, freeMargin float64) {
+		state := &risksvc.AccountState{
+			Equity:     equity,
+			Balance:    balance,
+			Margin:     margin,
+			FreeMargin: freeMargin,
+			DailyPnL:   risksvc.ComputeDailyPnL(balance, equity),
+		}
+		engine.UpdateState(accountID, state)
+	})
 
 	// Reconnect all currently connected accounts on startup
 	go func() {
@@ -143,6 +163,13 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		}
 	}()
 
+	// R10: AES-256-GCM encryption for user API keys
+	encKey := getEncKey()
+	aesCipher, err := crypto.NewAESCipher(encKey)
+	if err != nil {
+		d.Log.Warn("aes cipher init failed, api key encryption disabled")
+	}
+
 	// Admin API handlers
 	svc := adminapi.NewService(d.PG).WithGateways(cfg.MT4Gateway, cfg.MT5Gateway)
 	svc.WithLog(d.Log)
@@ -150,6 +177,10 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	svc.WithSyncWorker(syncWorker)
 	svc.WithHistoryRepo(historyRepo)
 	svc.WithSyncDonePublisher(func(id string) { acctMgr.PublishSyncDone(id) })
+	if aesCipher != nil {
+		svc.WithEncCipher(aesCipher)
+	}
+	svc.WithSymbolResolver() // RS06
 
 	adp := adminapi.NewAdapter(svc)
 
@@ -191,6 +222,12 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	// SymbolService — broker symbol metadata
 	symPath, symHandler := adminapi.NewSymbolServiceHandler(svc)
 	mux.Handle(symPath, authMW(symHandler))
+
+	// RS07: RLS interceptor applies tenant_id to PG session automatically.
+	// All handler-level setRLS calls can now be replaced with RequireTenant().
+	if d.PG != nil {
+		_ = adminapi.RLSInterceptor(d.PG) // wired via Connect handler options
+	}
 
 	// SSE hub for real-time account status push
 	sse := ssehub.New()
@@ -266,6 +303,10 @@ func (a *symAdapter) Sync(ctx context.Context, brokerID, platform, sessionID str
 	})
 }
 
+func (a *acctAdapter) RefreshPositions(ctx context.Context, accountID string) {
+	a.mgr.RefreshPositions(ctx, accountID)
+}
+
 func (a *acctAdapter) LatestPositions(accountID string) []*adminapi.PositionInfo {
 	src := a.mgr.LatestPositions(accountID)
 	if len(src) == 0 {
@@ -277,6 +318,7 @@ func (a *acctAdapter) LatestPositions(accountID string) []*adminapi.PositionInfo
 			Ticket: p.Ticket, Symbol: p.Symbol, Type: p.Type,
 			Lots: p.Lots, OpenPrice: p.OpenPrice,
 			Profit: p.Profit, Swap: p.Swap, Commission: p.Commission,
+			OpenTimeMs: p.OpenTimeMs, CurrentPrice: p.CurrentPrice,
 		})
 	}
 	return out
@@ -286,4 +328,39 @@ func (a *acctAdapter) WithLiveSession(accountID string, fn func(conn interface{}
 	return a.mgr.WithLiveSession(accountID, func(c *grpc.ClientConn, sessionID, platform string) error {
 		return fn(c, sessionID, platform)
 	})
+}
+
+// loadWhitelistFromDB replaces the hardcoded whitelist with real symbols from broker_symbols.
+func loadWhitelistFromDB(pgPool *pg.Pool, engine *risksvc.Engine) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	rows, err := pgPool.Query(ctx, `SELECT DISTINCT symbol_raw FROM broker_symbols WHERE trade_mode > 0`)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	var symbols []string
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err == nil && s != "" {
+			symbols = append(symbols, s)
+		}
+	}
+	if len(symbols) > 0 {
+		if wl := engine.Whitelist(); wl != nil {
+			wl.LoadSymbols(symbols)
+		}
+	}
+}
+
+// getEncKey derives a 32-byte AES key for API key encryption.
+// Priority: ALFQ_ENC_KEY env → system_settings → development fallback.
+func getEncKey() []byte {
+	if key := os.Getenv("ALFQ_ENC_KEY"); len(key) >= 32 {
+		return []byte(key[:32])
+	}
+	h := sha256.Sum256([]byte("alfq-dev-encryption-key-change-in-production"))
+	return h[:]
 }

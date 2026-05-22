@@ -3,7 +3,7 @@ server:
   # tls: {cert_file: "/certs/server.crt", key_file: "/certs/server.key"}  # 生产从 Vault PKI 注入
 
 log:
-  level: info
+  level: warn
 
 # JWT 签发配置（EdDSA Ed25519，kid 轮换）
 jwt:
@@ -15,8 +15,8 @@ jwt:
 
 # Cookie 刷新令牌
 cookie:
-  domain: localhost
-  secure: false        # 生产 true（HTTPS）
+  domain: .example.com
+  secure: true        # 生产 true（HTTPS）
   same_site: strict
 
 # PostgreSQL 主库（交易/账户/审计）
@@ -34,13 +34,13 @@ pg:
 
 # Redis（缓存/会话/分布式锁/限流）
 redis:
-  addr: localhost:6379
+  addr: redis:6379
   db: 0
-  # password_env: REDIS_PASSWORD
+  password_env: REDIS_PASSWORD
 
 # NATS JetStream（消息总线）
 nats:
-  url: nats://localhost:4222
+  url: nats://nats:4222
 
 # MT4/MT5 gRPC 网关（经纪商搜索、账户连接）
 mt4_gateway:

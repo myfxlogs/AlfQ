@@ -1,0 +1,126 @@
+// fixture: MT5 SymbolParamsManyReply with 5 core symbols
+// proto: gprc/mt5.proto SymbolParams (line 1539), SymbolInfo (line 1351), SymGroup (line 1549)
+// docs: docs/29-MT4-MT5-差异参考.md §2.2
+// broker: MetaQuotes-Demo (typical values from public demo accounts)
+[
+  {
+    "Symbol": "EURUSD",
+    "SymbolInfo": {
+      "Digits": 5,
+      "Points": 1e-5,
+      "TickSize": 1e-5,
+      "TickValue": 1.0,
+      "ContractSize": 100000,
+      "Description": "Euro vs US Dollar",
+      "MarginCurrency": "USD",
+      "ProfitCurrency": "USD"
+    },
+    "SymbolGroup": {
+      "MinLots": 0.01,
+      "MaxLots": 100,
+      "LotsStep": 0.01,
+      "InitialMargin": 1000,
+      "SwapLong": -3.5,
+      "SwapShort": 1.2,
+      "TradeMode": 4,
+      "SwapType": 1,
+      "ThreeDaysSwap": 3
+    }
+  },
+  {
+    "Symbol": "EURUSD.m",
+    "SymbolInfo": {
+      "Digits": 5,
+      "Points": 1e-5,
+      "TickSize": 1e-5,
+      "TickValue": 1.0,
+      "ContractSize": 100000,
+      "Description": "Euro vs US Dollar (micro)",
+      "MarginCurrency": "USD",
+      "ProfitCurrency": "USD"
+    },
+    "SymbolGroup": {
+      "MinLots": 0.01,
+      "MaxLots": 100,
+      "LotsStep": 0.01,
+      "InitialMargin": 100,
+      "SwapLong": -0.35,
+      "SwapShort": 0.12,
+      "TradeMode": 4,
+      "SwapType": 1,
+      "ThreeDaysSwap": 3
+    }
+  },
+  {
+    "Symbol": "GBPUSD",
+    "SymbolInfo": {
+      "Digits": 5,
+      "Points": 1e-5,
+      "TickSize": 1e-5,
+      "TickValue": 1.0,
+      "ContractSize": 100000,
+      "Description": "Great Britain Pound vs US Dollar",
+      "MarginCurrency": "USD",
+      "ProfitCurrency": "USD"
+    },
+    "SymbolGroup": {
+      "MinLots": 0.01,
+      "MaxLots": 100,
+      "LotsStep": 0.01,
+      "InitialMargin": 1000,
+      "SwapLong": -2.8,
+      "SwapShort": 0.8,
+      "TradeMode": 4,
+      "SwapType": 1,
+      "ThreeDaysSwap": 3
+    }
+  },
+  {
+    "Symbol": "XAUUSD",
+    "SymbolInfo": {
+      "Digits": 2,
+      "Points": 0.01,
+      "TickSize": 0.01,
+      "TickValue": 1.0,
+      "ContractSize": 100,
+      "Description": "Gold vs US Dollar",
+      "MarginCurrency": "USD",
+      "ProfitCurrency": "USD"
+    },
+    "SymbolGroup": {
+      "MinLots": 0.01,
+      "MaxLots": 50,
+      "LotsStep": 0.01,
+      "InitialMargin": 2000,
+      "SwapLong": -25.0,
+      "SwapShort": 5.0,
+      "TradeMode": 4,
+      "SwapType": 1,
+      "ThreeDaysSwap": 3
+    }
+  },
+  {
+    "Symbol": "US500.cash",
+    "SymbolInfo": {
+      "Digits": 1,
+      "Points": 0.1,
+      "TickSize": 0.1,
+      "TickValue": 1.0,
+      "ContractSize": 1,
+      "Description": "S&P 500 Index (cash)",
+      "MarginCurrency": "USD",
+      "ProfitCurrency": "USD"
+    },
+    "SymbolGroup": {
+      "MinLots": 0.01,
+      "MaxLots": 100,
+      "LotsStep": 0.01,
+      "InitialMargin": 5000,
+      "SwapLong": -10.0,
+      "SwapShort": -5.0,
+      "TradeMode": 4,
+      "SwapType": 1,
+      "ThreeDaysSwap": 3
+    }
+  }
+]

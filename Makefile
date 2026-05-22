@@ -80,20 +80,23 @@ dev-logs:
 # ============================================================
 # Database
 # ============================================================
+# Requires PGPASSWORD env var (or ~/.pgpass). Never hardcode credentials.
 db-migrate:
+	@test -n "$$PGPASSWORD" || (echo "ERROR: PGPASSWORD env var required" && exit 1)
 	@echo "Running migrations..."
-	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d alfq -f backend/go/migrations/001_initial_schema.sql
-	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d alfq -f backend/go/migrations/002_operational_tables.sql
+	psql -h $${PGHOST:-localhost} -U $${PGUSER:-alfq} -d $${PGDATABASE:-alfq} -f backend/go/migrations/001_initial_schema.sql
+	psql -h $${PGHOST:-localhost} -U $${PGUSER:-alfq} -d $${PGDATABASE:-alfq} -f backend/go/migrations/002_operational_tables.sql
 	@echo "Migrations complete."
 
 db-reset:
+	@test -n "$$PGPASSWORD" || (echo "ERROR: PGPASSWORD env var required" && exit 1)
 	@echo "Resetting database..."
-	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d postgres -c "DROP DATABASE IF EXISTS alfq"
-	PGPASSWORD=alfq_dev psql -h localhost -U alfq -d postgres -c "CREATE DATABASE alfq"
+	psql -h $${PGHOST:-localhost} -U $${PGUSER:-alfq} -d postgres -c "DROP DATABASE IF EXISTS alfq"
+	psql -h $${PGHOST:-localhost} -U $${PGUSER:-alfq} -d postgres -c "CREATE DATABASE alfq"
 	$(MAKE) db-migrate
 
 # ============================================================
 # Security
 # ============================================================
 sec-scan:
-	govulncheck ./backend/go/... || true
+	govulncheck ./backend/go/...

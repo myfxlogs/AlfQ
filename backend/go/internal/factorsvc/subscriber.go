@@ -14,16 +14,22 @@ import (
 
 // Subscriber receives bar events from NATS and evaluates factors.
 type Subscriber struct {
-	engine  *Engine
-	natsURL string
-	nc      *nats.Conn
-	js      nats.JetStreamContext
-	log     *zap.Logger
+	engine   *Engine
+	natsURL  string
+	nc       *nats.Conn
+	js       nats.JetStreamContext
+	log      *zap.Logger
+	chWriter *FactorCHWriter // R18: CH writer for factor values
 }
 
 // NewSubscriber creates a Subscriber.
 func NewSubscriber(engine *Engine, natsURL string, log *zap.Logger) *Subscriber {
 	return &Subscriber{engine: engine, natsURL: natsURL, log: log}
+}
+
+// SetCHWriter attaches a ClickHouse writer for persisting factor values (R18).
+func (s *Subscriber) SetCHWriter(w *FactorCHWriter) {
+	s.chWriter = w
 }
 
 // Start connects to NATS, subscribes to bar topics, and publishes factor values.
@@ -48,7 +54,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 			return
 		}
 		s.onBar(ctx, &bar)
-	}, nats.DeliverAll())
+	}, nats.DeliverNew())
 	if err != nil {
 		return fmt.Errorf("subscribe md.bar: %w", err)
 	}
@@ -61,6 +67,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 }
 
 // onBar evaluates all factors and publishes results.
+// RS03: Uses engine's WindowBuffer for rolling window computation.
 func (s *Subscriber) onBar(ctx context.Context, bar *pb.Bar) {
 	results := s.engine.Eval(ctx, bar)
 
@@ -79,6 +86,17 @@ func (s *Subscriber) onBar(ctx context.Context, bar *pb.Bar) {
 		}
 		if _, err := s.js.Publish(subject, data); err != nil {
 			s.log.Warn("factor publish failed", zap.String("subject", subject), zap.Error(err))
+		}
+
+		// R18: Write factor values to ClickHouse
+		if s.chWriter != nil {
+			tenantID := bar.TenantId
+			if tenantID == "" {
+				tenantID = "00000000-0000-0000-0000-000000000001"
+			}
+			s.chWriter.Write(ctx, tenantID, name, bar.Symbol, bar.CloseTsUnixMs, value)
+		} else {
+			s.log.Debug("factor_ch_writer: nil writer, skipping")
 		}
 	}
 }

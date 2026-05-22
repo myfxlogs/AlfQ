@@ -1,0 +1,81 @@
+// fixture: MT4 SymbolParamsManyReply with 5 core symbols (GroupParams path)
+// proto: gprc/mt4.proto SymbolParams (line 782), SymbolInfo (line 794), ConGroupSec (line 982+)
+// docs: docs/29-MT4-MT5-差异参考.md §2.2
+// broker: MetaQuotes-Demo (typical values from public demo accounts)
+[
+  {
+    "SymbolName": "EURUSD",
+    "Symbol": {
+      "Digits": 5,
+      "Point": 1e-5,
+      "ContractSize": 100000,
+      "SwapLong": -3.5,
+      "SwapShort": 1.2
+    },
+    "GroupParams": {
+      "MinLot": 0.01,
+      "MaxLot": 100,
+      "LotStep": 0.01
+    }
+  },
+  {
+    "SymbolName": "EURUSDm",
+    "Symbol": {
+      "Digits": 5,
+      "Point": 1e-5,
+      "ContractSize": 100000,
+      "SwapLong": -0.35,
+      "SwapShort": 0.12
+    },
+    "GroupParams": {
+      "MinLot": 0.01,
+      "MaxLot": 100,
+      "LotStep": 0.01
+    }
+  },
+  {
+    "SymbolName": "GBPUSD",
+    "Symbol": {
+      "Digits": 5,
+      "Point": 1e-5,
+      "ContractSize": 100000,
+      "SwapLong": -2.8,
+      "SwapShort": 0.8
+    },
+    "GroupParams": {
+      "MinLot": 0.01,
+      "MaxLot": 100,
+      "LotStep": 0.01
+    }
+  },
+  {
+    "SymbolName": "XAUUSD",
+    "Symbol": {
+      "Digits": 2,
+      "Point": 0.01,
+      "ContractSize": 100,
+      "SwapLong": -25.0,
+      "SwapShort": 5.0
+    },
+    "GroupParams": {
+      "MinLot": 0.01,
+      "MaxLot": 50,
+      "LotStep": 0.01
+    }
+  },
+  {
+    "SymbolName": "US30",
+    "Symbol": {
+      "Digits": 2,
+      "Point": 0.01,
+      "ContractSize": 1,
+      "SwapLong": -10.0,
+      "SwapShort": -5.0
+    },
+    "GroupParams": {
+      "MinLot": 0.01,
+      "MaxLot": 100,
+      "LotStep": 0.01
+    }
+  }
+]

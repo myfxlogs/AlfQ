@@ -9,13 +9,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"math"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/db/pg"
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 	"github.com/alfq/backend/go/internal/mthub"
 	"github.com/alfq/backend/go/internal/oms/repo"
 	"github.com/nats-io/nats.go"
@@ -57,6 +58,10 @@ type Manager struct {
 	closed      bool
 	syncWorker  *SyncWorker
 	mthubClient *mthub.Client
+
+	// onAccountUpdate is called when balance/equity/margin changes.
+	// Set via SetOnAccountUpdate to wire risk engine state updates.
+	onAccountUpdate func(accountID string, balance, equity, margin, freeMargin float64)
 }
 
 type session struct {
@@ -68,7 +73,7 @@ type session struct {
 	liveMu       sync.RWMutex
 	liveConn     *grpc.ClientConn
 	liveSession  string
-	livePosition []*mtapi.PositionInfo
+	livePosition []*PositionInfo
 }
 
 func (s *session) setLive(conn *grpc.ClientConn, sessionID string) {
@@ -85,7 +90,7 @@ func (s *session) clearLive() {
 	s.liveMu.Unlock()
 }
 
-func (s *session) setPositions(p []*mtapi.PositionInfo) {
+func (s *session) setPositions(p []*PositionInfo) {
 	s.liveMu.Lock()
 	s.livePosition = p
 	s.liveMu.Unlock()
@@ -97,7 +102,7 @@ func (s *session) getLive() (*grpc.ClientConn, string, string) {
 	return s.liveConn, s.liveSession, s.info.Platform
 }
 
-func (s *session) getPositions() []*mtapi.PositionInfo {
+func (s *session) getPositions() []*PositionInfo {
 	s.liveMu.RLock()
 	defer s.liveMu.RUnlock()
 	return s.livePosition
@@ -105,7 +110,19 @@ func (s *session) getPositions() []*mtapi.PositionInfo {
 
 // LatestPositions returns the most-recently fetched positions for the account.
 // Returns nil if the account has no live session or no positions have been fetched yet.
-func (m *Manager) LatestPositions(accountID string) []*mtapi.PositionInfo {
+// RefreshPositions fetches fresh positions from the broker via mthub (RS03).
+func (m *Manager) RefreshPositions(ctx context.Context, accountID string) {
+	positions := fetchPositionsViaMthub(ctx, m.mthubClient, accountID)
+	if len(positions) > 0 {
+		m.mu.Lock()
+		if s, ok := m.sessions[accountID]; ok {
+			s.setPositions(positions)
+		}
+		m.mu.Unlock()
+	}
+}
+
+func (m *Manager) LatestPositions(accountID string) []*PositionInfo {
 	m.mu.Lock()
 	s, ok := m.sessions[accountID]
 	m.mu.Unlock()
@@ -151,6 +168,14 @@ func NewManager(log *zap.Logger, pool *pg.Pool, rdb redis.UniversalClient, nc *n
 		symSvc:      symSvc,
 		mthubClient: mthub.NewClient(mthubAddr),
 	}
+}
+
+// SetOnAccountUpdate registers a callback invoked when account balance/equity/margin changes.
+// Used by risk engine to maintain real-time AccountState for risk rule evaluation.
+func (m *Manager) SetOnAccountUpdate(fn func(accountID string, balance, equity, margin, freeMargin float64)) {
+	m.mu.Lock()
+	m.onAccountUpdate = fn
+	m.mu.Unlock()
 }
 
 // SetSyncWorker binds the sync worker for order history persistence.
@@ -293,7 +318,7 @@ func (m *Manager) streamLoop(ctx context.Context, conn *grpc.ClientConn, info Ac
 	}
 
 	// Fetch initial full account summary + positions
-	acct, err := mtapi.FetchAccountSummary(ctx, conn, info.Platform, sessionID)
+	acct, err := fetchAccountSummary(ctx, conn, info.Platform, sessionID)
 	if err != nil {
 		m.log.Warn("initial summary failed",
 			zap.String("account_id", info.ID),
@@ -428,7 +453,7 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				acct, err := mtapi.FetchAccountSummary(ctx, conn, info.Platform, sessionID)
+				acct, err := fetchAccountSummary(ctx, conn, info.Platform, sessionID)
 				if err != nil {
 					m.log.Warn("full poll failed",
 						zap.String("account_id", info.ID),
@@ -473,7 +498,7 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 				return
 			}
 			// Order event received — refresh positions+summary and broadcast.
-			acct, err := mtapi.FetchAccountSummary(ctx, conn, info.Platform, sessionID)
+			acct, err := fetchAccountSummary(ctx, conn, info.Platform, sessionID)
 			if err != nil {
 				m.log.Warn("post-order-event summary fetch failed",
 					zap.String("account_id", info.ID),
@@ -511,6 +536,7 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 	defer func() { <-orderEvtDone }()
 
 	// Read stream events
+	isMT5 := strings.EqualFold(info.Platform, "MT5")
 	for {
 		update, err := stream.Recv()
 		if err != nil {
@@ -525,12 +551,56 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 			continue
 		}
 
+		// ── MT5 path ───────────────────────────────────────────────────────
+		// MT5 OnOrderProfit stream's Profit/Equity/Balance fields do NOT
+		// match the terminal ACCOUNT_PROFIT (MQL5 AccountInfoDouble). The
+		// canonical source is unary AccountSummary (same family as terminal
+		// snapshot). We trigger AccountSummary on each stream frame so that
+		// the 30s background poller and the stream cannot disagree → no
+		// floating-profit flapping between two values.
+		// MT4 keeps the original eq-bal derivation (this issue is MT5-only).
+		if isMT5 {
+			sctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			acct, aerr := fetchAccountSummary(sctx, conn, info.Platform, sessionID)
+			cancel()
+			if aerr == nil && acct != nil {
+				// Mismatch monitoring: compare derived (eq-bal) vs terminal Profit.
+				derived := result.GetEquity() - result.GetBalance()
+				if math.Abs(derived-acct.Profit) > 1.0 {
+					mt5ProfitMismatchTotal.Inc()
+					if m.log != nil {
+						m.log.Warn("mt5 profit mismatch (stream eq-bal vs AccountSummary.Profit)",
+							zap.String("account_id", info.ID),
+							zap.Float64("summary_profit", acct.Profit),
+							zap.Float64("derived_eq_bal", derived),
+							zap.Float64("summary_equity", acct.Equity),
+							zap.Float64("summary_balance", acct.Balance),
+						)
+					}
+				}
+				m.publishAndUpdate(ctx, info.ID, acct, nil)
+				if m.onAccountUpdate != nil {
+					m.onAccountUpdate(info.ID, acct.Balance, acct.Equity,
+						acct.Margin, acct.FreeMargin)
+				}
+				continue
+			}
+			if m.log != nil {
+				m.log.Debug("mt5 AccountSummary in stream loop failed; falling back to stream frame",
+					zap.String("account_id", info.ID),
+					zap.Error(aerr),
+				)
+			}
+			// fall through to MT4-style derivation as a degraded fallback
+		}
+
+		// ── MT4 path (and MT5 fallback when AccountSummary RPC failed) ─────
 		// Stream only gives balance/equity; merge with current DB state to avoid zeroing other fields.
 		// 浮动盈亏 = equity - balance (MT 公式：Equity = Balance + Floating Profit + Credit；
 		// demo/常规账户 credit≈0)，由流数据派生，保证浮动盈亏与净值一同实时更新。
 		bal := result.GetBalance()
 		eq := result.GetEquity()
-		partial := &mtapi.AccountInfo{
+		partial := &AccountSummaryInfo{
 			Balance: bal,
 			Equity:  eq,
 			Profit:  eq - bal,
@@ -551,6 +621,11 @@ func (m *Manager) eventLoop(ctx context.Context, conn *grpc.ClientConn, info Acc
 			partial.Leverage = int32(leverage)
 		}
 		m.publishAndUpdate(ctx, info.ID, partial, nil)
+		// Push account state to risk engine for real-time rule evaluation
+		if m.onAccountUpdate != nil && partial != nil {
+			m.onAccountUpdate(info.ID, partial.Balance, partial.Equity,
+				partial.Margin, partial.FreeMargin)
+		}
 	}
 }
 
@@ -564,7 +639,7 @@ func (m *Manager) pollLoop(ctx context.Context, conn *grpc.ClientConn, info Acco
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			acct, err := mtapi.FetchAccountSummary(ctx, conn, info.Platform, sessionID)
+			acct, err := fetchAccountSummary(ctx, conn, info.Platform, sessionID)
 			if err != nil {
 				return fmt.Errorf("poll: %w", err)
 			}
@@ -745,30 +820,32 @@ func (s *mt4OrderStream) Recv() error { _, e := s.s.Recv(); return e }
 
 // ── Helpers ──
 
-func (m *Manager) publishAndUpdate(ctx context.Context, accountID string, info *mtapi.AccountInfo, positions []*mtapi.PositionInfo) {
+func (m *Manager) publishAndUpdate(ctx context.Context, accountID string, info *AccountSummaryInfo, positions []*PositionInfo) {
 	m.publish(accountID, info, positions)
 	m.updateDB(ctx, accountID, info)
 }
 
-func (m *Manager) publish(accountID string, info *mtapi.AccountInfo, positions []*mtapi.PositionInfo) {
+func (m *Manager) publish(accountID string, info *AccountSummaryInfo, positions []*PositionInfo) {
 	m.publishEvent(accountID, info, positions, false)
 }
 
-func (m *Manager) publishEvent(accountID string, info *mtapi.AccountInfo, positions []*mtapi.PositionInfo, orderEvent bool) {
+func (m *Manager) publishEvent(accountID string, info *AccountSummaryInfo, positions []*PositionInfo, orderEvent bool) {
 	if m.nc == nil {
 		return
 	}
 	subject := fmt.Sprintf("account.status.%s", accountID)
 
 	type posOut struct {
-		Ticket     int64   `json:"ticket"`
-		Symbol     string  `json:"symbol"`
-		Type       string  `json:"type"`
-		Lots       float64 `json:"lots"`
-		OpenPrice  float64 `json:"openPrice"`
-		Profit     float64 `json:"profit"`
-		Swap       float64 `json:"swap"`
-		Commission float64 `json:"commission"`
+		Ticket       int64   `json:"ticket"`
+		Symbol       string  `json:"symbol"`
+		Type         string  `json:"type"`
+		Lots         float64 `json:"lots"`
+		OpenPrice    float64 `json:"openPrice"`
+		Profit       float64 `json:"profit"`
+		Swap         float64 `json:"swap"`
+		Commission   float64 `json:"commission"`
+		OpenTimeMs   int64   `json:"openTimeMs"`
+		CurrentPrice float64 `json:"currentPrice"`
 	}
 
 	payload := map[string]interface{}{
@@ -789,6 +866,7 @@ func (m *Manager) publishEvent(accountID string, info *mtapi.AccountInfo, positi
 				Ticket: p.Ticket, Symbol: p.Symbol, Type: p.Type,
 				Lots: p.Lots, OpenPrice: p.OpenPrice,
 				Profit: p.Profit, Swap: p.Swap, Commission: p.Commission,
+				OpenTimeMs: p.OpenTimeMs, CurrentPrice: p.CurrentPrice,
 			})
 		}
 		payload["positions"] = out
@@ -858,15 +936,16 @@ func (m *Manager) publishOrderDelta(accountID string, changed []*repo.HistoryOrd
 	_ = m.nc.Publish(subject, data)
 }
 
-func (m *Manager) updateDB(ctx context.Context, accountID string, info *mtapi.AccountInfo) {
+func (m *Manager) updateDB(ctx context.Context, accountID string, info *AccountSummaryInfo) {
 	_, _ = m.pool.Exec(ctx, `
 		UPDATE accounts
 		SET status='connected', balance=$1, equity=$2, margin=$3,
 		    free_margin=$4, margin_level=$5, profit=$6,
-		    currency=$7, leverage=$8, connected_at=now(), updated_at=now()
+		    currency=$7, leverage=$8, connected_at=now(), updated_at=now(),
+		    account_type = CASE WHEN $10 != '' AND account_type != $10 THEN $10 ELSE account_type END
 		WHERE id=$9
 	`, info.Balance, info.Equity, info.Margin, info.FreeMargin,
-		info.MarginLevel, info.Profit, info.Currency, info.Leverage, accountID)
+		info.MarginLevel, info.Profit, info.Currency, info.Leverage, accountID, info.AccountType)
 
 	// Cache in Redis with 2min TTL
 	if m.rdb != nil {
@@ -915,20 +994,76 @@ func atoi(s string) int {
 }
 
 // fetchPositionsViaMthub fetches opened orders through the MT Session Hub.
-func fetchPositionsViaMthub(ctx context.Context, client *mthub.Client, accountID string) []*mtapi.PositionInfo {
+func fetchPositionsViaMthub(ctx context.Context, client *mthub.Client, accountID string) []*PositionInfo {
 	if client == nil {
 		return nil
 	}
 	orders, err := client.OpenedOrders(ctx, accountID)
 	if err != nil {
+		log.Printf("mthub OpenedOrders failed for %s: %v", accountID, err)
 		return nil
 	}
-	out := make([]*mtapi.PositionInfo, 0, len(orders))
+	log.Printf("mthub OpenedOrders for %s: %d positions", accountID, len(orders))
+	if len(orders) > 0 {
+		log.Printf("DEBUG first order: ticket=%d openTimeMs=%d currentPrice=%.5f", orders[0].Ticket, orders[0].OpenTimeMs, orders[0].CurrentPrice)
+	}
+	out := make([]*PositionInfo, 0, len(orders))
 	for _, o := range orders {
-		out = append(out, &mtapi.PositionInfo{
+		out = append(out, &PositionInfo{
 			Ticket: o.Ticket, Symbol: o.Symbol, Type: o.Side, Lots: o.Lots,
 			OpenPrice: o.OpenPrice, Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+			OpenTimeMs: o.OpenTimeMs, CurrentPrice: o.CurrentPrice,
 		})
 	}
 	return out
+}
+
+// fetchAccountSummary fetches the full account summary using MT gRPC calls
+// on an existing connection (formerly via external mtapi package).
+func fetchAccountSummary(ctx context.Context, conn *grpc.ClientConn, platform, sessionID string) (*AccountSummaryInfo, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		client := mt5pb.NewMT5Client(conn)
+		resp, err := client.AccountSummary(ctxWithID, &mt5pb.AccountSummaryRequest{Id: sessionID})
+		if err != nil {
+			return nil, fmt.Errorf("mt5 account summary: %w", err)
+		}
+		summ := resp.GetResult()
+		if summ == nil {
+			return &AccountSummaryInfo{}, nil
+		}
+		return &AccountSummaryInfo{
+			Balance:     summ.GetBalance(),
+			Equity:      summ.GetEquity(),
+			Margin:      summ.GetMargin(),
+			FreeMargin:  summ.GetFreeMargin(),
+			MarginLevel: summ.GetMarginLevel(),
+			Profit:      summ.GetProfit(),
+			Currency:    summ.GetCurrency(),
+			Leverage:    int32(summ.GetLeverage()),
+		}, nil
+	case "MT4":
+		client := mt4pb.NewMT4Client(conn)
+		resp, err := client.AccountSummary(ctxWithID, &mt4pb.AccountSummaryRequest{Id: sessionID})
+		if err != nil {
+			return nil, fmt.Errorf("mt4 account summary: %w", err)
+		}
+		summ := resp.GetResult()
+		if summ == nil {
+			return &AccountSummaryInfo{}, nil
+		}
+		return &AccountSummaryInfo{
+			Balance:     summ.GetBalance(),
+			Equity:      summ.GetEquity(),
+			Margin:      summ.GetMargin(),
+			FreeMargin:  summ.GetFreeMargin(),
+			MarginLevel: summ.GetMarginLevel(),
+			Profit:      summ.GetProfit(),
+			Currency:    summ.GetCurrency(),
+			Leverage:    int32(summ.GetLeverage()),
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown platform: %s", platform)
+	}
 }

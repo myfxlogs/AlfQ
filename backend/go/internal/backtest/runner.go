@@ -2,9 +2,12 @@
 package backtest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -103,4 +106,53 @@ func writeTempSpec(data []byte) (string, error) {
 
 func cleanupTemp(path string) {
 	_ = os.Remove(path)
+}
+
+// backtestRunnerAddr is the address of the backtest-runner HTTP service.
+// Defaults to the Docker compose internal service name.
+var backtestRunnerAddr = envOrDefault("BACKTEST_RUNNER_ADDR", "http://backtest-runner:9009")
+
+func envOrDefault(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+// RunViaService sends a backtest spec to the backtest-runner HTTP service.
+// This replaces the exec.Command approach when the backtest-runner container is available.
+func RunViaService(ctx context.Context, spec map[string]any) (*Result, error) {
+	body, err := json.Marshal(map[string]any{"spec": spec})
+	if err != nil {
+		return nil, fmt.Errorf("backtest: marshal spec: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST",
+		backtestRunnerAddr+"/run", bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("backtest: request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("backtest: call runner: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB max
+
+	if resp.StatusCode != http.StatusOK {
+		return &Result{Status: "failed", Error: string(respBody)}, nil
+	}
+
+	var wrapper struct {
+		Stdout string `json:"stdout"`
+		Stderr string `json:"stderr"`
+	}
+	if err := json.Unmarshal(respBody, &wrapper); err != nil {
+		return &Result{Status: "failed", Error: fmt.Sprintf("unmarshal response: %v", err)}, nil
+	}
+
+	return parseResult([]byte(wrapper.Stdout))
 }

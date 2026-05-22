@@ -79,11 +79,12 @@ func SignalToOMS(
 	}
 }
 
-// DefaultSymbolResolver returns a resolver that uses the canonical name as-is
-// (fallback when broker_symbols table is not available).
+// DefaultSymbolResolver returns a pass-through resolver (RS06).
+// Symbol resolution is now handled by the adminapi SymbolResolver backed by broker_symbols PG table.
+// The quant-engine receives already-resolved symbol_raw from the strategy runner.
 func DefaultSymbolResolver() func(canonical string) (string, error) {
 	return func(canonical string) (string, error) {
-		return canonical, nil
+		return canonical, nil // pass-through: canonical is assumed pre-resolved
 	}
 }
 

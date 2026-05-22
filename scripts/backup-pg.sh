@@ -13,12 +13,12 @@ PG_USER="${PG_USER:-alfq}"
 PG_DB="${PG_DB:-alfq}"
 MINIO_ENDPOINT="${MINIO_ENDPOINT:-localhost:9002}"
 MINIO_AK="${MINIO_AK:-alfq}"
-MINIO_SK="${MINIO_SK:-alfq_dev}"
+MINIO_SK="${MINIO_SK:?MINIO_SK env required}"
 MINIO_BUCKET="${MINIO_BUCKET:-alfq-backups}"
 MODE="${1:-full}"
 TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
 
-export PGPASSWORD="${PG_PASSWORD:-alfq_dev}"
+export PGPASSWORD="${PG_PASSWORD:?PG_PASSWORD env required}"
 
 log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 
@@ -66,3 +66,31 @@ elif [ "$MODE" = "wal" ]; then
 fi
 
 log "PG backup finished"
+
+# ── Restore verification (dry-run) ──
+verify_restore() {
+  local latest
+  latest=$(ls -t "$BACKUP_DIR"/alfq_*_full.dump 2>/dev/null | head -1)
+  if [ -z "$latest" ]; then
+    log "No backup to verify"
+    return
+  fi
+
+  # Verify the dump is valid PostgreSQL (check for pg_dump header)
+  if head -c 100 "$latest" | grep -q "PGDMP"; then
+    log "Backup verified: $(basename "$latest") ($(du -h "$latest" | cut -f1))"
+  else
+    log "ERROR: Backup invalid — no PGDMP header in $(basename "$latest")"
+    return 1
+  fi
+
+  # Verify all 4 key tables exist in the dump
+  for table in user_api_keys ai_usage_logs docs_embeddings strategy_revisions; do
+    if grep -q "CREATE TABLE.*${table}" "$latest"; then
+      log "  OK: $table schema present"
+    else
+      log "  WARN: $table schema missing"
+    fi
+  done
+}
+verify_restore

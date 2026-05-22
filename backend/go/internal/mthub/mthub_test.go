@@ -46,7 +46,7 @@ func TestHubEnsureSession(t *testing.T) {
 		}
 		return nil, false
 	}
-	hub := NewHub(lookup, zap.NewNop())
+	hub := NewHub(lookup, nil, zap.NewNop())
 
 	// First call: should register session.
 	ses, err := hub.EnsureSession("acc-1", "b1")
@@ -87,7 +87,7 @@ func TestHubCloseSession(t *testing.T) {
 	gw := &mockGateway{platform: "mt5", brokerID: "b1"}
 	hub := NewHub(func(brokerID string) (Gateway, bool) {
 		return gw, true
-	}, zap.NewNop())
+	}, nil, zap.NewNop())
 
 	hub.EnsureSession("acc-1", "b1")
 	if hub.SessionCount() != 1 {
@@ -102,7 +102,7 @@ func TestHubCloseSession(t *testing.T) {
 func TestHubActiveSessions(t *testing.T) {
 	hub := NewHub(func(brokerID string) (Gateway, bool) {
 		return &mockGateway{platform: "mt5", brokerID: brokerID}, true
-	}, zap.NewNop())
+	}, nil, zap.NewNop())
 
 	hub.EnsureSession("a1", "b1")
 	hub.EnsureSession("a2", "b2")
@@ -144,7 +144,7 @@ func TestMtHubServiceEnsureSession(t *testing.T) {
 	gw := &mockGateway{platform: "mt5", sessionID: "s1", brokerID: "b1"}
 	hub := NewHub(func(brokerID string) (Gateway, bool) {
 		return gw, true
-	}, zap.NewNop())
+	}, nil, zap.NewNop())
 	svc := NewMtHubService(hub, NewOrderEventBroker(), zap.NewNop())
 
 	req := connect.NewRequest(&mthubv1.EnsureSessionRequest{AccountId: "acc-1"})
@@ -161,7 +161,7 @@ func TestMtHubServiceCloseSession(t *testing.T) {
 	gw := &mockGateway{platform: "mt5", brokerID: "b1"}
 	hub := NewHub(func(brokerID string) (Gateway, bool) {
 		return gw, true
-	}, zap.NewNop())
+	}, nil, zap.NewNop())
 	svc := NewMtHubService(hub, NewOrderEventBroker(), zap.NewNop())
 
 	hub.EnsureSession("acc-1", "b1")
@@ -177,47 +177,32 @@ func TestMtHubServiceCloseSession(t *testing.T) {
 
 func TestMtHubServiceStubs(t *testing.T) {
 	svc := NewMtHubService(
-		NewHub(func(string) (Gateway, bool) { return nil, false }, zap.NewNop()),
+		NewHub(func(string) (Gateway, bool) { return nil, false }, nil, zap.NewNop()),
 		NewOrderEventBroker(), zap.NewNop(),
 	)
 
-	// OrderSend stub
-	r1 := connect.NewRequest(&mthubv1.OrderSendRequest{})
-	resp1, err := svc.OrderSend(context.Background(), r1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp1.Msg.Error == "" {
-		t.Error("expected stub error message")
+	// R10/RC11: All methods now return errors when no session exists (not stub responses).
+	// OrderSend should fail
+	_, err := svc.OrderSend(context.Background(), connect.NewRequest(&mthubv1.OrderSendRequest{}))
+	if err == nil {
+		t.Error("OrderSend: expected session error")
 	}
 
-	// OrderClose stub
-	r2 := connect.NewRequest(&mthubv1.OrderCloseRequest{})
-	resp2, err := svc.OrderClose(context.Background(), r2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp2.Msg.Error == "" {
-		t.Error("expected stub error message")
+	// OrderClose should fail
+	_, err = svc.OrderClose(context.Background(), connect.NewRequest(&mthubv1.OrderCloseRequest{}))
+	if err == nil {
+		t.Error("OrderClose: expected session error")
 	}
 
-	// SymbolParamsMany stub
-	r3 := connect.NewRequest(&mthubv1.SymbolParamsManyRequest{})
-	resp3, err := svc.SymbolParamsMany(context.Background(), r3)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp3.Msg == nil {
-		t.Error("expected non-nil response")
+	// SymbolParamsMany — now implemented, returns "not connected" without session
+	_, err = svc.SymbolParamsMany(context.Background(), connect.NewRequest(&mthubv1.SymbolParamsManyRequest{}))
+	if err == nil {
+		t.Error("SymbolParamsMany: expected not connected error")
 	}
 
-	// PriceHistory stub
-	r4 := connect.NewRequest(&mthubv1.PriceHistoryRequest{})
-	resp4, err := svc.PriceHistory(context.Background(), r4)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resp4.Msg == nil {
-		t.Error("expected non-nil response")
+	// PriceHistory — now implemented, returns "not connected" without session
+	_, err = svc.PriceHistory(context.Background(), connect.NewRequest(&mthubv1.PriceHistoryRequest{}))
+	if err == nil {
+		t.Error("PriceHistory: expected not connected error")
 	}
 }

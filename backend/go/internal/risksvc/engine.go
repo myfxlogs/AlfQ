@@ -19,6 +19,7 @@ type Rule interface {
 
 // AccountState holds real-time risk metrics for an account.
 type AccountState struct {
+	Balance        float64
 	Equity         float64
 	Margin         float64
 	FreeMargin     float64
@@ -61,6 +62,18 @@ func (e *Engine) Register(r Rule) {
 	e.mu.Lock()
 	e.rules = append(e.rules, r)
 	e.mu.Unlock()
+}
+
+// Whitelist returns the whitelist rule for dynamic symbol loading, or nil.
+func (e *Engine) Whitelist() *Whitelist {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	for _, r := range e.rules {
+		if w, ok := r.(*Whitelist); ok {
+			return w
+		}
+	}
+	return nil
 }
 
 // Check runs all rules against an order request. Returns deny on first failure.
@@ -143,13 +156,44 @@ func (r *Drawdown) Check(_ context.Context, req *pb.OrderRequest, state *Account
 }
 
 // Whitelist rejects orders for symbols not in the allowed list.
-type Whitelist struct{}
+// Symbols can be loaded dynamically from broker_symbols via LoadSymbols().
+type Whitelist struct {
+	mu      sync.RWMutex
+	symbols map[string]bool // loaded from broker_symbols at runtime
+}
 
 func (r *Whitelist) Name() string { return "whitelist" }
+
+// LoadSymbols replaces the allowed symbol set (e.g. from broker_symbols table).
+func (r *Whitelist) LoadSymbols(symbols []string) {
+	r.mu.Lock()
+	r.symbols = make(map[string]bool, len(symbols))
+	for _, s := range symbols {
+		r.symbols[s] = true
+	}
+	r.mu.Unlock()
+}
+
 func (r *Whitelist) Check(_ context.Context, req *pb.OrderRequest, _ *AccountState) *pb.RiskCheckResult {
-	// TODO: load whitelist from config/PG
-	allowed := map[string]bool{"EURUSD": true, "GBPUSD": true, "USDJPY": true}
-	if !allowed[req.Symbol] {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	// If symbols were loaded dynamically, use them.
+	if len(r.symbols) > 0 {
+		if r.symbols[req.Symbol] {
+			return &pb.RiskCheckResult{Approved: true}
+		}
+		return &pb.RiskCheckResult{Approved: false, Reason: fmt.Sprintf("symbol %s not in whitelist", req.Symbol), RuleId: r.Name()}
+	}
+
+	// Fallback: hardcoded major pairs (development without PG).
+	static := map[string]bool{
+		"EURUSD": true, "EURUSDm": true, "GBPUSD": true, "GBPUSDm": true,
+		"USDJPY": true, "USDJPYm": true, "USDCHF": true, "USDCHFm": true,
+		"AUDUSD": true, "AUDUSDm": true, "NZDUSD": true, "NZDUSDm": true,
+		"USDCAD": true, "USDCADm": true, "XAUUSD": true, "XAUUSDm": true,
+	}
+	if !static[req.Symbol] {
 		return &pb.RiskCheckResult{Approved: false, Reason: fmt.Sprintf("symbol %s not in whitelist", req.Symbol), RuleId: r.Name()}
 	}
 	return &pb.RiskCheckResult{Approved: true}

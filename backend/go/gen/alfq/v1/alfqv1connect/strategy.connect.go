@@ -52,6 +52,9 @@ const (
 	// StrategyServiceStopStrategyProcedure is the fully-qualified name of the StrategyService's
 	// StopStrategy RPC.
 	StrategyServiceStopStrategyProcedure = "/alfq.v1.StrategyService/StopStrategy"
+	// StrategyServicePromoteToLiveProcedure is the fully-qualified name of the StrategyService's
+	// PromoteToLive RPC.
+	StrategyServicePromoteToLiveProcedure = "/alfq.v1.StrategyService/PromoteToLive"
 	// StrategyServiceStreamSignalsProcedure is the fully-qualified name of the StrategyService's
 	// StreamSignals RPC.
 	StrategyServiceStreamSignalsProcedure = "/alfq.v1.StrategyService/StreamSignals"
@@ -79,6 +82,7 @@ type StrategyServiceClient interface {
 	ListStrategies(context.Context, *connect.Request[v1.ListStrategiesRequest]) (*connect.Response[v1.ListStrategiesResponse], error)
 	DeployStrategy(context.Context, *connect.Request[v1.DeployStrategyRequest]) (*connect.Response[v1.Strategy], error)
 	StopStrategy(context.Context, *connect.Request[v1.StopStrategyRequest]) (*connect.Response[v1.Strategy], error)
+	PromoteToLive(context.Context, *connect.Request[v1.PromoteToLiveRequest]) (*connect.Response[v1.PromoteToLiveResponse], error)
 	StreamSignals(context.Context, *connect.Request[v1.StreamSignalsRequest]) (*connect.ServerStreamForClient[v1.Signal], error)
 }
 
@@ -123,6 +127,12 @@ func NewStrategyServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(strategyServiceMethods.ByName("StopStrategy")),
 			connect.WithClientOptions(opts...),
 		),
+		promoteToLive: connect.NewClient[v1.PromoteToLiveRequest, v1.PromoteToLiveResponse](
+			httpClient,
+			baseURL+StrategyServicePromoteToLiveProcedure,
+			connect.WithSchema(strategyServiceMethods.ByName("PromoteToLive")),
+			connect.WithClientOptions(opts...),
+		),
 		streamSignals: connect.NewClient[v1.StreamSignalsRequest, v1.Signal](
 			httpClient,
 			baseURL+StrategyServiceStreamSignalsProcedure,
@@ -139,6 +149,7 @@ type strategyServiceClient struct {
 	listStrategies *connect.Client[v1.ListStrategiesRequest, v1.ListStrategiesResponse]
 	deployStrategy *connect.Client[v1.DeployStrategyRequest, v1.Strategy]
 	stopStrategy   *connect.Client[v1.StopStrategyRequest, v1.Strategy]
+	promoteToLive  *connect.Client[v1.PromoteToLiveRequest, v1.PromoteToLiveResponse]
 	streamSignals  *connect.Client[v1.StreamSignalsRequest, v1.Signal]
 }
 
@@ -167,6 +178,11 @@ func (c *strategyServiceClient) StopStrategy(ctx context.Context, req *connect.R
 	return c.stopStrategy.CallUnary(ctx, req)
 }
 
+// PromoteToLive calls alfq.v1.StrategyService.PromoteToLive.
+func (c *strategyServiceClient) PromoteToLive(ctx context.Context, req *connect.Request[v1.PromoteToLiveRequest]) (*connect.Response[v1.PromoteToLiveResponse], error) {
+	return c.promoteToLive.CallUnary(ctx, req)
+}
+
 // StreamSignals calls alfq.v1.StrategyService.StreamSignals.
 func (c *strategyServiceClient) StreamSignals(ctx context.Context, req *connect.Request[v1.StreamSignalsRequest]) (*connect.ServerStreamForClient[v1.Signal], error) {
 	return c.streamSignals.CallServerStream(ctx, req)
@@ -179,6 +195,7 @@ type StrategyServiceHandler interface {
 	ListStrategies(context.Context, *connect.Request[v1.ListStrategiesRequest]) (*connect.Response[v1.ListStrategiesResponse], error)
 	DeployStrategy(context.Context, *connect.Request[v1.DeployStrategyRequest]) (*connect.Response[v1.Strategy], error)
 	StopStrategy(context.Context, *connect.Request[v1.StopStrategyRequest]) (*connect.Response[v1.Strategy], error)
+	PromoteToLive(context.Context, *connect.Request[v1.PromoteToLiveRequest]) (*connect.Response[v1.PromoteToLiveResponse], error)
 	StreamSignals(context.Context, *connect.Request[v1.StreamSignalsRequest], *connect.ServerStream[v1.Signal]) error
 }
 
@@ -219,6 +236,12 @@ func NewStrategyServiceHandler(svc StrategyServiceHandler, opts ...connect.Handl
 		connect.WithSchema(strategyServiceMethods.ByName("StopStrategy")),
 		connect.WithHandlerOptions(opts...),
 	)
+	strategyServicePromoteToLiveHandler := connect.NewUnaryHandler(
+		StrategyServicePromoteToLiveProcedure,
+		svc.PromoteToLive,
+		connect.WithSchema(strategyServiceMethods.ByName("PromoteToLive")),
+		connect.WithHandlerOptions(opts...),
+	)
 	strategyServiceStreamSignalsHandler := connect.NewServerStreamHandler(
 		StrategyServiceStreamSignalsProcedure,
 		svc.StreamSignals,
@@ -237,6 +260,8 @@ func NewStrategyServiceHandler(svc StrategyServiceHandler, opts ...connect.Handl
 			strategyServiceDeployStrategyHandler.ServeHTTP(w, r)
 		case StrategyServiceStopStrategyProcedure:
 			strategyServiceStopStrategyHandler.ServeHTTP(w, r)
+		case StrategyServicePromoteToLiveProcedure:
+			strategyServicePromoteToLiveHandler.ServeHTTP(w, r)
 		case StrategyServiceStreamSignalsProcedure:
 			strategyServiceStreamSignalsHandler.ServeHTTP(w, r)
 		default:
@@ -266,6 +291,10 @@ func (UnimplementedStrategyServiceHandler) DeployStrategy(context.Context, *conn
 
 func (UnimplementedStrategyServiceHandler) StopStrategy(context.Context, *connect.Request[v1.StopStrategyRequest]) (*connect.Response[v1.Strategy], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.StrategyService.StopStrategy is not implemented"))
+}
+
+func (UnimplementedStrategyServiceHandler) PromoteToLive(context.Context, *connect.Request[v1.PromoteToLiveRequest]) (*connect.Response[v1.PromoteToLiveResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.StrategyService.PromoteToLive is not implemented"))
 }
 
 func (UnimplementedStrategyServiceHandler) StreamSignals(context.Context, *connect.Request[v1.StreamSignalsRequest], *connect.ServerStream[v1.Signal]) error {

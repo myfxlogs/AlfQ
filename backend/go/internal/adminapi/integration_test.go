@@ -31,6 +31,10 @@ func setupDB(t *testing.T) *pg.Pool {
 	if err != nil {
 		t.Skipf("pg unavailable: %v", err)
 	}
+	// Verify connectivity before creating tables (AfterConnect runs on first use)
+	if _, err := pool.Exec(context.Background(), "SELECT 1"); err != nil {
+		t.Skipf("pg unavailable: %v", err)
+	}
 	for _, stmt := range []string{
 		`CREATE TABLE IF NOT EXISTS brokers (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

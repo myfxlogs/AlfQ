@@ -1,26 +1,20 @@
 // Package quantengine wires factor-svc and strategy-svc into a single process.
-// EP-2: Integrates strategy spec loading, signal generation, and OMS wiring.
+// RS05: Per-strategy goroutine isolation + snapshot persistence + hot-reload.
 package quantengine
 
 import (
 	"context"
 	"net/http"
 	"os"
+	"fmt"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/factorsvc"
 	stratspec "github.com/alfq/backend/go/internal/strategysvc/spec"
-	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
-
-// StrategyRuntime bundles a loaded spec with its model runner.
-type StrategyRuntime struct {
-	Spec   *stratspec.StrategySpec
-	Runner *ModelRunner
-	// mu     sync.Mutex // reserved for future concurrent access
-}
 
 // SignalHandler receives signals and routes them to OMS.
 type SignalHandler func(symbol string, side string, qty float64, reason string)
@@ -46,18 +40,9 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 	}
 	d.Log.Info("strategy specs loaded", zap.Int("count", len(specs)))
 
-	// Build runtime map
-	runtimes := make(map[string]*StrategyRuntime, len(specs))
+	// Build factor engine
 	factorDefs := make([]factorsvc.FactorDef, 0)
-
 	for _, spec := range specs {
-		mr, err := NewModelRunner(spec)
-		if err != nil {
-			d.Log.Warn("model runner creation failed", zap.String("spec", spec.Name), zap.Error(err))
-			continue
-		}
-		runtimes[spec.Name] = &StrategyRuntime{Spec: spec, Runner: mr}
-
 		for name, expr := range spec.Factors {
 			factorDefs = append(factorDefs, factorsvc.FactorDef{
 				Name:       name,
@@ -77,16 +62,64 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 
 	engine := factorsvc.NewEngine(fCfg)
 
+	// RS03: WindowBuffer for rolling factor computation + CH bootstrap
+	maxWindow := maxFactorWindow(factorDefs)
+	buf := factorsvc.NewWindowBuffer(maxWindow, d.Log)
+	specsList := make([]factorsvc.BootstrapSpec, 0)
+	for _, spec := range specs {
+		for _, sym := range spec.CanonicalSymbols {
+			specsList = append(specsList, factorsvc.BootstrapSpec{
+				TenantID: "00000000-0000-0000-0000-000000000001",
+				Symbol:   sym,
+				Period:   spec.Period,
+				Limit:    maxWindow,
+			})
+		}
+	}
+	buf.Bootstrap(ctx, specsList)
+	engine.SetBuffer(buf)
+	d.Log.Info("window buffer bootstrapped", zap.Int("specs", len(specsList)), zap.Int("max_window", maxWindow))
+
+	// RS03: Bootstrap WindowBuffer from ClickHouse historical bars.
+	chConn := bootstrapFromCH(ctx, buf, specsList, d.Log)
+
 	// Ensure NATS JetStream stream exists for md.bar.>
 	ensureBarStream(fCfg.NatsURL, d.Log)
 
 	sub := factorsvc.NewSubscriber(engine, fCfg.NatsURL, d.Log)
 
+	// R18: FactorCHWriter with real CH connection for INSERTs.
 	chWCfg := factorsvc.DefaultFactorCHWriterConfig()
 	chWriter := factorsvc.NewFactorCHWriter(chWCfg, d.Log)
+	if chConn != nil {
+		chWriter.WithConn(chConn)
+	}
+	sub.SetCHWriter(chWriter)
+
+	// ── RS05: RuntimeManager with per-strategy isolation ──
+	runtimeMgr := NewRuntimeManager(d.Log).WithPool(d.PG)
+	for _, spec := range specs {
+		rt, err := NewStrategyRuntime(spec, engine, onSignal, d.Log)
+		if err != nil {
+			d.Log.Warn("runtime creation failed", zap.String("spec", spec.Name), zap.Error(err))
+			continue
+		}
+		runtimeMgr.Add(ctx, rt)
+	}
+
+	// Restore previous state from PG snapshots (RS05)
+	if err := runtimeMgr.RestoreAll(ctx); err != nil {
+		d.Log.Warn("runtime restore failed", zap.Error(err))
+	}
+
+	// Start snapshot persistence loop (30s)
+	runtimeMgr.StartSnapshotLoop(ctx, 30*time.Second)
+
+	// RS05: Listen for strategy_revisions NOTIFY for hot-reload
+	runtimeMgr.ListenForRevisions(ctx)
 
 	d.Log.Info("quant-engine starting",
-		zap.Int("runtimes", len(runtimes)),
+		zap.Int("runtimes", runtimeMgr.Count()),
 		zap.Int("factors", len(fCfg.Factors)),
 	)
 
@@ -96,7 +129,6 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 	})
 
 	chWriter.Start(ctx)
-	defer func() { _ = chWriter.Close() }()
 
 	go func() {
 		if err := sub.Start(ctx); err != nil {
@@ -104,7 +136,7 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 		}
 	}()
 
-	// ── Main evaluation loop: evaluate factors → generate signals ──
+	// ── Bar-driven evaluation loop (replaces 10s ticker) ──
 	go func() {
 		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
@@ -113,7 +145,8 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				evaluateAll(ctx, engine, runtimes, onSignal, d.Log)
+				// RS05: Dispatch bar event to all isolated runtimes.
+				runtimeMgr.OnBar()
 			}
 		}
 	}()
@@ -121,48 +154,83 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 	return nil
 }
 
-func evaluateAll(ctx context.Context, engine *factorsvc.Engine, runtimes map[string]*StrategyRuntime, onSignal SignalHandler, log *zap.Logger) {
-	for name, rt := range runtimes {
-		// Evaluate all factors for this strategy's symbols
-		factorVals := make(map[string]float64)
-		for _, sym := range rt.Spec.CanonicalSymbols {
-			// Factor evaluation uses the engine's bar stream.
-			// For demo: use a single symbol's latest bar.
-			_ = sym
-		}
-
-		// In production this would come from NATS bar stream.
-		// For now, run DSL signal evaluation.
-		signal, err := rt.Runner.Predict(ctx, factorVals)
-		if err != nil {
-			log.Warn("signal eval failed", zap.String("strategy", name), zap.Error(err))
-			continue
-		}
-
-		dir := Direction(signal)
-		if dir == "flat" {
-			continue
-		}
-
-		qty := 0.1 // default 0.1 lots; in prod use sizing calculator
-		if onSignal != nil {
-			// Route to OMS via signal handler
-			onSignal(rt.Spec.CanonicalSymbols[0], dir, qty, name)
-		}
-
-		log.Debug("signal generated",
-			zap.String("strategy", name),
-			zap.Float64("signal", signal),
-			zap.String("direction", dir),
-		)
+// bootstrapFromCH fills the WindowBuffer with historical bars from ClickHouse.
+// Returns the CH connection for reuse by the caller (e.g. factor writer).
+func bootstrapFromCH(ctx context.Context, buf *factorsvc.WindowBuffer, specs []factorsvc.BootstrapSpec, log *zap.Logger) clickhouse.Conn {
+	chAddr := os.Getenv("CH_ADDR")
+	if chAddr == "" {
+		chAddr = "localhost:9000"
 	}
+	chPassword := os.Getenv("CLICKHOUSE_PASSWORD")
+	
+	conn, err := clickhouse.Open(&clickhouse.Options{
+		Addr: []string{chAddr},
+		Auth: clickhouse.Auth{
+			Database: "alfq",
+			Username: "alfq",
+			Password: chPassword,
+		},
+		DialTimeout: 10 * time.Second,
+	})
+	if err != nil {
+		log.Warn("ch bootstrap: connect failed, will rely on live bars", zap.Error(err))
+		return nil
+	}
+
+	if err := conn.Ping(ctx); err != nil {
+		log.Warn("ch bootstrap: ping failed, will rely on live bars", zap.Error(err))
+		conn.Close()
+		return nil
+	}
+
+	totalBars := 0
+	for _, spec := range specs {
+		rows, err := conn.Query(ctx, fmt.Sprintf(
+			`SELECT toFloat64(open), toFloat64(high), toFloat64(low), toFloat64(close), volume, close_ts_unix_ms
+			 FROM alfq.md_bars
+			 WHERE canonical = '%s' AND period = '%s'
+			 ORDER BY close_ts_unix_ms DESC
+			 LIMIT %d`,
+			spec.Symbol, spec.Period, spec.Limit,
+		))
+		if err != nil {
+			log.Warn("ch bootstrap: query failed", zap.String("symbol", spec.Symbol), zap.String("period", spec.Period), zap.Error(err))
+			continue
+		}
+
+		// Collect rows (newest first from DESC), then push oldest first
+		type barRow struct {
+			open, high, low, close, volume float64
+			tsMs                           uint64
+		}
+		var bars []barRow
+		for rows.Next() {
+			var open, high, low, close, volume float64
+			var tsMs uint64
+			if err := rows.Scan(&open, &high, &low, &close, &volume, &tsMs); err != nil {
+				log.Warn("ch bootstrap: scan failed", zap.Error(err))
+				continue
+			}
+			bars = append(bars, barRow{open, high, low, close, volume, tsMs})
+		}
+		rows.Close()
+
+		// Push oldest first
+		for i := len(bars) - 1; i >= 0; i-- {
+			b := bars[i]
+			buf.PushRaw(spec.TenantID, spec.Symbol, spec.Period, b.open, b.high, b.low, b.close, b.volume, int64(b.tsMs))
+			totalBars++
+		}
+	}
+	log.Info("ch bootstrap: loaded historical bars", zap.Int("total_bars", totalBars))
+	return conn
 }
 
 func defaultDemoSpec() *stratspec.StrategySpec {
 	return &stratspec.StrategySpec{
 		Name:             "demo_sma_cross",
 		Version:          "1.0.0",
-		CanonicalSymbols: []string{"EURUSD"},
+		CanonicalSymbols: []string{"BTCUSD"},
 		Period:           "1h",
 		Factors: map[string]string{
 			"sma20": "sma($close, 20)",
@@ -174,29 +242,48 @@ func defaultDemoSpec() *stratspec.StrategySpec {
 }
 
 func ensureBarStream(natsURL string, log *zap.Logger) {
-	nc, err := nats.Connect(natsURL)
-	if err != nil {
-		log.Warn("nats connect for stream setup failed", zap.Error(err))
-		return
-	}
-	defer nc.Close()
+	_ = natsURL
+	_ = log
+}
 
-	js, err := nc.JetStream()
-	if err != nil {
-		log.Warn("nats jetstream for stream setup failed", zap.Error(err))
-		return
+// maxFactorWindow scans factor definitions and returns the maximum window size needed.
+// For SMA(n)/EMA(n)/RSI(n), returns the largest n value across all factors.
+func maxFactorWindow(defs []factorsvc.FactorDef) int {
+	maxW := 60 // default minimum
+	for _, f := range defs {
+		// Simple parsing: extract numbers after known function names
+		for _, fn := range []string{"sma(", "ema(", "wma(", "rsi(", "std(", "var(", "min(", "max(", "sum(", "ref(", "delta(", "pct_change(", "zscore(", "rank(", "atr("} {
+			idx := 0
+			for {
+				pos := indexAfter(f.Expression, fn, idx)
+				if pos < 0 {
+					break
+				}
+				numEnd := pos
+				for numEnd < len(f.Expression) && f.Expression[numEnd] >= '0' && f.Expression[numEnd] <= '9' {
+					numEnd++
+				}
+				if numEnd > pos {
+					n := 0
+					for i := pos; i < numEnd; i++ {
+						n = n*10 + int(f.Expression[i]-'0')
+					}
+					if n > maxW {
+						maxW = n
+					}
+				}
+				idx = numEnd
+			}
+		}
 	}
+	return maxW
+}
 
-	_, err = js.AddStream(&nats.StreamConfig{
-		Name:     "MD_BARS",
-		Subjects: []string{"md.bar.>"},
-		MaxMsgs:  1_000_000,
-		MaxBytes: 512 * 1024 * 1024,
-		Storage:  nats.FileStorage,
-	})
-	if err != nil {
-		log.Warn("nats add stream MD_BARS", zap.Error(err))
-	} else {
-		log.Info("nats stream MD_BARS created")
+func indexAfter(s, sub string, start int) int {
+	for i := start; i <= len(s)-len(sub); i++ {
+		if s[i:i+len(sub)] == sub {
+			return i + len(sub)
+		}
 	}
+	return -1
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/alfq/backend/go/internal/accountconn"
 	"github.com/alfq/backend/go/internal/common/auth"
 	"github.com/alfq/backend/go/internal/common/config"
+	"github.com/alfq/backend/go/internal/common/crypto"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/oms/repo"
 	"go.uber.org/zap"
@@ -34,6 +35,8 @@ type Service struct {
 	syncWorker        OrderSyncer
 	historyRepo       HistoryOrderRepo
 	publishSyncDoneFn func(accountID string)
+	encCipher         *crypto.AESCipher // R10: AES-256-GCM for API keys
+	symbolResolver    *SymbolResolver  // RS06: validates strategy symbols against broker
 }
 
 // OrderSyncer abstracts the order history sync worker.
@@ -64,6 +67,9 @@ type AccountConnector interface {
 	// LatestPositions returns the most-recent positions for an account, or nil if
 	// no live session is available. Implementations must be non-blocking.
 	LatestPositions(accountID string) []*PositionInfo
+	// RefreshPositions fetches fresh positions from the broker (via mthub).
+	// Call before LatestPositions to get live current prices.
+	RefreshPositions(ctx context.Context, accountID string)
 	// WithLiveSession invokes fn with the live gateway gRPC connection and session ID.
 	// Returns an error if no live session is available. Implementations must not
 	// block on dialing — the live session is expected to already exist.
@@ -72,14 +78,16 @@ type AccountConnector interface {
 
 // PositionInfo is a unified position record exposed by AccountConnector.
 type PositionInfo struct {
-	Ticket     int64
-	Symbol     string
-	Type       string
-	Lots       float64
-	OpenPrice  float64
-	Profit     float64
-	Swap       float64
-	Commission float64
+	Ticket       int64
+	Symbol       string
+	Type         string
+	Lots         float64
+	OpenPrice    float64
+	Profit       float64
+	Swap         float64
+	Commission   float64
+	OpenTimeMs   int64   // position open timestamp (UTC ms)
+	CurrentPrice float64 // latest bid/ask
 }
 
 // NewService creates a trading-core API service backed by a PG connection pool.
@@ -97,6 +105,20 @@ func (s *Service) WithGateways(mt4, mt5 config.GatewayConfig) *Service {
 // WithLog sets a logger (defaults to nop).
 func (s *Service) WithLog(log *zap.Logger) *Service {
 	s.log = log
+	return s
+}
+
+// WithEncCipher sets the AES-256-GCM cipher for API key encryption (R10).
+func (s *Service) WithEncCipher(c *crypto.AESCipher) *Service {
+	s.encCipher = c
+	return s
+}
+
+// WithSymbolResolver enables strategy symbol validation (RS06).
+func (s *Service) WithSymbolResolver() *Service {
+	if s.pool != nil {
+		s.symbolResolver = NewSymbolResolver(s.pool.Pool)
+	}
 	return s
 }
 

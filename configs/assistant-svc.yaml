@@ -1,7 +1,7 @@
 server:
   listen: ":9006"
 log:
-  level: info
+  level: warn
 providers:
   - name: openai
     endpoint: "https://api.openai.com"

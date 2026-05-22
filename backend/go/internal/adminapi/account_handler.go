@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/alfq/backend/go/internal/common/auth"
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 	"github.com/jackc/pgx/v5/pgconn"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
@@ -18,7 +17,7 @@ import (
 )
 
 func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.Account, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 
@@ -128,7 +127,7 @@ func (s *Service) CreateAccount(ctx context.Context, req *pb.CreateAccountReques
 			timeout = 30 * time.Second
 		}
 		connectCtx, cancel := context.WithTimeout(ctx, timeout)
-		info, err := mtapi.TestConnect(connectCtx, gw, platform, req.Login, req.Password, brokerHost)
+		info, err := brokerTestConnect(connectCtx, gw, platform, req.Login, req.Password, brokerHost)
 		cancel()
 
 		if err != nil {
@@ -236,7 +235,7 @@ func parseHostFromError(msg string) string {
 }
 
 func (s *Service) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.Account, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	return s.scanAccount(ctx, `SELECT id, tenant_id, user_id, broker_id, login, server, server_name, account_type, currency, leverage,
@@ -246,7 +245,7 @@ func (s *Service) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*p
 }
 
 func (s *Service) ListAccounts(ctx context.Context, req *pb.ListAccountsRequest) (*pb.ListAccountsResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	uid := auth.UserFromContext(ctx)
@@ -285,7 +284,7 @@ func (s *Service) ListAccounts(ctx context.Context, req *pb.ListAccountsRequest)
 }
 
 func (s *Service) UpdateAccount(ctx context.Context, req *pb.Account) (*pb.Account, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	return s.scanAccount(ctx, `
@@ -301,7 +300,7 @@ func (s *Service) UpdateAccount(ctx context.Context, req *pb.Account) (*pb.Accou
 }
 
 func (s *Service) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	_, err := s.pool.Exec(ctx, `DELETE FROM accounts WHERE id = $1`, req.Id)
@@ -312,7 +311,7 @@ func (s *Service) DeleteAccount(ctx context.Context, req *pb.DeleteAccountReques
 }
 
 func (s *Service) ConnectAccount(ctx context.Context, req *pb.ConnectAccountRequest) (*pb.ConnectAccountResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	_, _ = s.pool.Exec(ctx, `UPDATE accounts SET status='connected', connected_at=now(), updated_at=now() WHERE id=$1`, req.Id)
@@ -320,7 +319,7 @@ func (s *Service) ConnectAccount(ctx context.Context, req *pb.ConnectAccountRequ
 }
 
 func (s *Service) DisconnectAccount(ctx context.Context, req *pb.DisconnectAccountRequest) (*pb.DisconnectAccountResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	_, _ = s.pool.Exec(ctx, `UPDATE accounts SET status='disconnected', updated_at=now() WHERE id=$1`, req.Id)
@@ -382,7 +381,7 @@ func scanAccountRow(row interface{ Scan(...interface{}) error }) (*pb.Account, e
 }
 
 func (s *Service) ListAccountOrders(ctx context.Context, req *pb.ListAccountOrdersRequest) (*pb.ListAccountOrdersResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	if s.historyRepo == nil {
@@ -417,7 +416,7 @@ func (s *Service) ListAccountOrders(ctx context.Context, req *pb.ListAccountOrde
 }
 
 func (s *Service) SyncAccountHistory(ctx context.Context, req *pb.SyncAccountHistoryRequest) (*pb.SyncAccountHistoryResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	if s.syncWorker == nil {
@@ -437,7 +436,7 @@ func (s *Service) SyncAccountHistory(ctx context.Context, req *pb.SyncAccountHis
 }
 
 func (s *Service) GetSyncStatus(ctx context.Context, req *pb.GetSyncStatusRequest) (*pb.GetSyncStatusResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	if s.syncWorker == nil {
@@ -465,12 +464,13 @@ func (s *Service) GetSyncStatus(ctx context.Context, req *pb.GetSyncStatusReques
 }
 
 func (s *Service) ListAccountPositions(ctx context.Context, req *pb.ListAccountPositionsRequest) (*pb.ListAccountPositionsResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	if s.acctConn == nil {
 		return &pb.ListAccountPositionsResponse{}, nil
 	}
+	s.acctConn.RefreshPositions(ctx, req.AccountId)
 	cached := s.acctConn.LatestPositions(req.AccountId)
 	out := make([]*pb.AccountPosition, 0, len(cached))
 	for _, p := range cached {
@@ -478,6 +478,7 @@ func (s *Service) ListAccountPositions(ctx context.Context, req *pb.ListAccountP
 			Ticket: p.Ticket, Symbol: p.Symbol, Side: p.Type,
 			Lots: p.Lots, OpenPrice: p.OpenPrice,
 			Profit: p.Profit, Swap: p.Swap, Commission: p.Commission,
+			OpenTimeMs: p.OpenTimeMs, CurrentPrice: p.CurrentPrice,
 		})
 	}
 	return &pb.ListAccountPositionsResponse{Positions: out}, nil

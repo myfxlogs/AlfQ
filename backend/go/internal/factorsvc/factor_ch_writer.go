@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.uber.org/zap"
 )
 
@@ -43,6 +44,7 @@ type FactorCHWriter struct {
 	cfg  FactorCHWriterConfig
 	log  *zap.Logger
 	ch   chan factorRow
+	conn clickhouse.Conn
 	done chan struct{}
 	wg   sync.WaitGroup
 }
@@ -57,7 +59,7 @@ type factorRow struct {
 
 // NewFactorCHWriter creates a FactorCHWriter.
 func NewFactorCHWriter(cfg FactorCHWriterConfig, log *zap.Logger) *FactorCHWriter {
-	if cfg.FlushInterval == 0 {
+	if cfg.FlushInterval <= 0 {
 		cfg.FlushInterval = 5 * time.Second
 	}
 	if cfg.MaxBatchSize == 0 {
@@ -69,6 +71,12 @@ func NewFactorCHWriter(cfg FactorCHWriterConfig, log *zap.Logger) *FactorCHWrite
 		ch:   make(chan factorRow, cfg.MaxBatchSize*2),
 		done: make(chan struct{}),
 	}
+}
+
+// WithConn sets the ClickHouse connection for real writes.
+func (w *FactorCHWriter) WithConn(conn clickhouse.Conn) *FactorCHWriter {
+	w.conn = conn
+	return w
 }
 
 // Start begins the async flush loop.
@@ -88,11 +96,38 @@ func (w *FactorCHWriter) loop(ctx context.Context) {
 		if len(batch) == 0 {
 			return
 		}
-		// In production: clickhouse-go/v2 batch INSERT INTO alfq.factor_values
-		w.log.Debug("factor_ch_writer: flush",
-			zap.Int("rows", len(batch)),
-			zap.String("example_factor", batch[0].Factor),
-		)
+		if w.conn == nil {
+			w.log.Warn("factor_ch_writer: flush skipped (no CH conn)",
+				zap.Int("rows", len(batch)),
+			)
+			batch = batch[:0]
+			return
+		}
+		insertCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		chBatch, err := w.conn.PrepareBatch(insertCtx,
+			"INSERT INTO alfq.factor_values (tenant_id, factor_name, symbol, ts_ms, value)")
+		if err != nil {
+			w.log.Warn("factor_ch_writer: prepare batch failed", zap.Error(err))
+			batch = batch[:0]
+			return
+		}
+
+		for _, r := range batch {
+			if err := chBatch.Append(r.TenantID, r.Factor, r.Symbol, r.TS, r.Value); err != nil {
+				w.log.Warn("factor_ch_writer: batch append failed", zap.Error(err))
+			}
+		}
+
+		if err := chBatch.Send(); err != nil {
+			w.log.Warn("factor_ch_writer: batch send failed", zap.Error(err))
+		} else {
+			w.log.Info("factor_ch_writer: flushed to CH",
+				zap.Int("rows", len(batch)),
+				zap.String("example_factor", batch[0].Factor),
+			)
+		}
 		batch = batch[:0]
 	}
 

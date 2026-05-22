@@ -1,0 +1,19 @@
+# Demo strategy: SMA(20) vs SMA(60) crossover on BTCUSD 1h bars.
+# When sma20 crosses above sma60 → long signal (1).
+# When sma20 crosses below sma60 → short signal (-1).
+name: demo_sma_cross
+version: "1.0.0"
+canonical_symbols:
+  - BTCUSD
+period: 1h
+factors:
+  sma20: sma($close, 20)
+  sma60: sma($close, 60)
+signal_rule: "sma20 > sma60 ? 1 : -1"
+sizing:
+  type: fixed_lots
+  lots: 0.1
+risk_limits:
+  max_drawdown_pct: 5.0
+  daily_loss_limit: 100.0
+description: Demo SMA crossover strategy for live verification

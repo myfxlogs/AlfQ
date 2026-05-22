@@ -1,57 +1,93 @@
-# ADR 0013 — ONNX Runtime Strategy
+# ADR 0013 · ONNX Runtime Strategy
 
-- **Status**: Proposed
-- **Date**: 2026-05-20
-- **Deciders**: (等待人类决策)
+> 日期：2026-05-22 | 状态：提议（Proposed）
 
-## Context
+## 背景
 
-quant-engine 的 strategy inference 当前仅支持 DSL signal rule，`onnx_runtime.go` 是 placeholder。
-项目需要决策是否及何时集成真正的 ONNX runtime。
+量化策略的信号生成有两种路径：
+1. **DSL 因子表达式**：手写因子 + 信号规则（如 `ema20/ema60 > 1`），可解释性强但表达能力有限
+2. **ML 模型推理**：LightGBM/XGBoost 训练 → ONNX 导出 → 推理，适合复杂非线性模式
 
-## Options
+ADR 0013 定义 ONNX 作为 ALFQ 唯一的 ML 模型交换格式和推理运行时。
 
-### 1. `onnxruntime-go` (CGO binding to ONNX Runtime C API)
-- 性能最好，可直接在 Go 进程内跑推理
-- binary 显著增大 (~50MB)，构建复杂 (CGO + musl 冲突)
-- 单机 docker-compose 部署可接受
+## 决策
 
-### 2. assistant-svc 暴露 `EvaluateModel` Connect RPC（Python 加载 ORT）
-- 与现有 ML 治理链路（docs/18）统一
-- Assistant-svc 已有 Python 研究环境，可直接用 onnxruntime
-- Quant-engine 不依赖 ORT binary，通过 RPC 调用
+**ALFQ 使用 ONNX Runtime 进行模型推理，不直接调用 sklearn/lightgbm 原生 API。**
 
-### 3. `gorgonia.org/onnx-go` (pure Go)
-- 构建简单，无 CGO 依赖
-- 算子覆盖有限，部分 ONNX ops 不支持
+理由：
+- ONNX 是跨框架标准格式，LightGBM、XGBoost、PyTorch 均可导出
+- `onnxruntime-go` 提供 Go 原生绑定，与 quant-engine 语言一致
+- 模型与策略 spec 解耦：spec 引用 `model_uri`，模型文件存储在 MinIO/S3
+- 推理延迟 < 1ms（单样本），适合实时 bar 级信号生成
 
-### 4. 不做（永远 DSL）
-- 策略永远只跑 DSL 信号规则
-- 放弃 ONNX 模型线上推理能力
+## 架构
 
-## Decision
+```
+Python 研究层                        Go 生产层
+┌──────────────────┐              ┌──────────────────────┐
+│ ModelTrainer      │              │ ONNXModelRunner      │
+│  train_lightgbm() │── ONNX ──→  │  LoadModel(uri)      │
+│  export_onnx()    │   .onnx     │  Predict(features)    │
+│  upload_model()   │   MinIO     │  → float64 signal     │
+└──────────────────┘              └──────────────────────┘
+```
 
-**暂保持 DSL fallback**。当以下触发条件全部满足时，选择 **选项 2** 升级到真集成：
+## 模型生命周期
 
-1. EP-1 trainer 已能产出 .onnx 文件并写 `ai_artifacts` 表
-2. 至少 1 个研究员愿意把 ONNX 上 paper 跑 ≥ 1 周
-3. 模型治理（drift / shadow / lifecycle）已就绪
+1. **训练**（研究层）
+   - `ModelTrainer` 从 ClickHouse 拉取历史因子值
+   - 使用 LightGBM 训练二分类模型（long/short/flat）
+   - 输出：`strategy_{id}_v{revision}.onnx`
 
-## Consequences
+2. **导出**
+   - `export_onnx()` 调用 `hummingbird-ml` 或 `onnxmltools` 转换
+   - 验证：roundtrip 测试（Python 原生 vs ONNX 推理，diff < 1e-6）
 
-- 研究端 PyTorch/sklearn 训练全部 → ONNX → assistant-svc 加载 → 通过 RPC 调用
-- quant-engine 不依赖 ORT binary，保持构建轻量
-- 现阶段 DSL fallback 足够：没有已训练 ONNX 模型、策略 Spec 还在双签定型中
-- 选项 2 需要在 assistant-svc 新增 `EvaluateModel` RPC（proto + handler），届时需 ADR 补充
+3. **存储**
+   - `upload_model()` 上传到 MinIO `ai-artifacts` bucket
+   - 路径：`models/{strategy_id}/{revision}.onnx`
 
-## Gate
+4. **部署**
+   - quant-engine 的 `ONNXModelRunner` 从 MinIO 下载模型
+   - 每个 bar 调用 `Predict(features)`，特征向量从 `factorsvc.Engine` 获取
 
-触发条件 1+2+3 全满足才推进 ADR 进 `Accepted`。
-在此之前，DSL fallback 视为生产就绪。
+5. **回滚**
+   - 保留最近 3 个 revision 的 .onnx 文件
+   - Paper→Live 升级时锁死 revision
 
-## References
+## 因子→特征映射
 
-- `docs/18-AI-Agent工作流深化与策略助手.md`
-- `docs/06-Python策略沙箱设计.md`
-- OPEN-DECISIONS-2026-05-20.md §2
-- `backend/go/internal/quantengine/onnx_runtime.go`
+`ONNXModelRunner` 的特征向量由策略 spec 的 `input_features` 字段定义：
+
+```json
+{
+  "input_features": ["ema20", "ema60", "rsi14", "bb_upper", "bb_lower"],
+  "model_uri": "s3://ai-artifacts/models/strat_xxx/v3.onnx"
+}
+```
+
+特征值从 `factorsvc.Engine.LatestFactors()` 按名称提取，缺失值填 0。
+
+## 模型版本管理
+
+- 模型文件绑 `strategy_revisions.revision_no`（RS02）
+- 每次 retrain 生成新 revision，旧模型保留不删
+- Paper 阶段可热替换模型（灰度切流），Live 阶段锁定
+
+## 回退策略
+
+如果 ONNX 模型不可用（MinIO 挂掉、模型损坏、首次部署），自动回退到 DSL 信号规则。`ONNXModelRunner.useDSL` 标记控制。
+
+## 验收标准
+
+- `research/tests/test_onnx_roundtrip.py` 通过：LightGBM → ONNX → Go 推理，diff < 1e-6
+- quant-engine 加载真实 .onnx 文件，单次推理 < 1ms
+- ONNX 不可用时自动回退 DSL，不阻塞信号链
+
+## 参考资料
+
+- `backend/go/internal/quantengine/onnx_runtime.go`（Go 端实现）
+- `research/alfq_research/model/trainer.py`（训练）
+- `research/alfq_research/model/exporter.py`（导出）
+- `research/tests/test_onnx_roundtrip.py`（一致性测试）
+- `docs/06-Python策略沙箱设计.md` §4（训练流程）

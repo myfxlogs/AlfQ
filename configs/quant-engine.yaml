@@ -1,12 +1,14 @@
 server:
   listen: ":9002"
 log:
-  level: info
+  level: warn
 nats:
   url_env: NATS_URL
 clickhouse:
   addr_env: CH_ADDR
   database: "alfq"
+  username: "alfq"
+  password_env: CLICKHOUSE_PASSWORD
 postgres:
   dsn_env: DATABASE_URL
 factors: []

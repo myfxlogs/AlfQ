@@ -18,3 +18,5 @@ backend/go/cover.out-e
 # Build artifacts
 *.tsbuildinfo
 tools/buf
+deploy/vault/init-output.json
+deploy/.env

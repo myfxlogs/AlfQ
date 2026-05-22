@@ -69,7 +69,8 @@ class BacktestRunner:
             with psycopg.connect(dsn, autocommit=True) as conn, conn.cursor() as cur:
                 cur.execute(
                     """SELECT canonical, contract_size, min_lot, max_lot, lot_step,
-                              tick_size, tick_value, point, swap_long, swap_short, digits
+                              tick_size, tick_value, point, swap_long, swap_short,
+                              COALESCE(swap_mode,0), digits
                        FROM broker_symbols
                        WHERE broker_id = %s AND canonical = ANY(%s)""",
                     (broker_id, config.symbols),
@@ -86,7 +87,8 @@ class BacktestRunner:
                         point=float(row[7]),
                         swap_long=float(row[8]),
                         swap_short=float(row[9]),
-                        digits=int(row[10]),
+                        swap_mode=int(row[10]),
+                        digits=int(row[11]),
                     )
         except ImportError:
             pass  # psycopg not available, use defaults

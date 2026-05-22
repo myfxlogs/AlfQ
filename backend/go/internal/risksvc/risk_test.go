@@ -112,9 +112,9 @@ func TestWhitelistCheck(t *testing.T) {
 	if !res.Approved {
 		t.Fatal("EURUSD should be whitelisted")
 	}
-	res = r.Check(context.Background(), &pb.OrderRequest{Symbol: "XAUUSD"}, &AccountState{})
+	res = r.Check(context.Background(), &pb.OrderRequest{Symbol: "BTCUSD"}, &AccountState{})
 	if res.Approved {
-		t.Fatal("XAUUSD should be rejected")
+		t.Fatal("BTCUSD should be rejected (not in whitelist)")
 	}
 }
 

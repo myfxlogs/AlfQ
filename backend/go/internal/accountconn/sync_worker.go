@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/alfq/backend/go/internal/common/db/pg"
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 	"github.com/alfq/backend/go/internal/mthub"
 	"github.com/alfq/backend/go/internal/oms/repo"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
 
 var (
@@ -28,6 +26,15 @@ var (
 	orderSyncDeltaCount = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "order_sync_delta_count",
 		Help: "Number of orders changed in the most recent sync.",
+	})
+	// mt5ProfitMismatchTotal counts events where the MT5 OnOrderProfit
+	// stream-derived floating profit (Equity-Balance) differs from the
+	// canonical AccountSummary.Profit by > $1. A non-zero value indicates
+	// either Credit on the account or a broker-side mismatch between the
+	// stream and terminal ACCOUNT_PROFIT — diagnostic only.
+	mt5ProfitMismatchTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "mt5_profit_mismatch_total",
+		Help: "Count of MT5 stream-derived profit vs AccountSummary.Profit mismatches (>$1).",
 	})
 	// orderSyncLagSeconds = promauto.NewGauge(prometheus.GaugeOpts{
 	// 	Name: "order_sync_lag_seconds",
@@ -104,13 +111,13 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 			chunkEnd = windowEnd
 		}
 
-		var orders []*mtapi.HistoryOrderInfo
+		var orders []*HistoryOrderInfo
 		if w.mthubClient != nil {
 			mthubOrders, err := w.mthubClient.OrderHistory(ctx, accountID,
 				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339))
 			if err == nil {
 				for _, o := range mthubOrders {
-					orders = append(orders, &mtapi.HistoryOrderInfo{
+					orders = append(orders, &HistoryOrderInfo{
 						Ticket: o.Ticket, Symbol: o.Symbol, Type: o.Side, Lots: o.Lots,
 						OpenPrice: o.OpenPrice, ClosePrice: o.ClosePrice,
 						Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
@@ -126,25 +133,23 @@ func (w *SyncWorker) FullSync(ctx context.Context, accountID string) error {
 				continue
 			}
 		} else {
-			var err error
-			//nolint:staticcheck // retained for CLI fallback (symbol-sync, md-backfill) until MH-4 wires those tools
-			orders, err = mtapi.DialAndFetchOrderHistory(ctx, mtapiAddr, platform, login, password, server,
-				windowStart.Format(time.RFC3339), chunkEnd.Format(time.RFC3339))
-			if err != nil {
-				w.log.Warn("full sync chunk failed",
-					zap.String("account_id", accountID),
-					zap.Time("from", windowStart),
-					zap.Time("to", chunkEnd),
-					zap.Error(err),
-				)
-				windowStart = chunkEnd
-				continue
-			}
+			w.log.Warn("full sync: mthub client not available, skipping chunk",
+				zap.String("account_id", accountID),
+				zap.Time("from", windowStart),
+				zap.Time("to", chunkEnd),
+			)
+			windowStart = chunkEnd
+			continue
 		}
 		if len(orders) > 0 {
 			repoOrders := make([]*repo.HistoryOrder, 0, len(orders))
 			for _, o := range orders {
-				repoOrders = append(repoOrders, repo.ToHistoryOrder(tenantID, accountID, o, "closed"))
+				repoOrders = append(repoOrders, repo.ToHistoryOrder(tenantID, accountID, &repo.HistoryOrderInput{
+					Ticket: o.Ticket, Symbol: o.Symbol, Type: o.Type, Lots: o.Lots,
+					OpenPrice: o.OpenPrice, ClosePrice: o.ClosePrice,
+					Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+					OpenTime: o.OpenTime, CloseTime: o.CloseTime,
+				}, "closed"))
 			}
 			if _, err := w.repo.BatchUpsert(ctx, tenantID, repoOrders); err != nil {
 				w.log.Warn("full sync upsert failed", zap.Error(err))
@@ -203,22 +208,31 @@ func (w *SyncWorker) IncrSync(ctx context.Context, accountID string, from, to ti
 	}
 
 	var changed []*repo.HistoryOrder
-	err := w.manager.WithLiveSession(accountID, func(conn *grpc.ClientConn, sessionID, plat string) error {
-		orders, err := mtapi.FetchOrderHistory(ctx, conn, plat, sessionID,
-			from.Format(time.RFC3339), to.Format(time.RFC3339))
-		if err != nil {
-			return err
-		}
-		if len(orders) == 0 {
-			return nil
-		}
-		repoOrders := make([]*repo.HistoryOrder, 0, len(orders))
-		for _, o := range orders {
-			repoOrders = append(repoOrders, repo.ToHistoryOrder(tenantID, accountID, o, "closed"))
+	if w.mthubClient == nil {
+		return nil, fmt.Errorf("incr sync: no mthub client")
+	}
+	mthubOrders, err := w.mthubClient.OrderHistory(ctx, accountID,
+		from.Format(time.RFC3339), to.Format(time.RFC3339))
+	if err != nil {
+		_ = w.setSyncStatus(ctx, accountID, "error", err.Error())
+		return nil, err
+	}
+	if len(mthubOrders) > 0 {
+		repoOrders := make([]*repo.HistoryOrder, 0, len(mthubOrders))
+		for _, o := range mthubOrders {
+			repoOrders = append(repoOrders, repo.ToHistoryOrder(tenantID, accountID, &repo.HistoryOrderInput{
+				Ticket: o.Ticket, Symbol: o.Symbol, Type: o.Side, Lots: o.Lots,
+				OpenPrice: o.OpenPrice, ClosePrice: o.ClosePrice,
+				Profit: o.Profit, Swap: o.Swap, Commission: o.Commission,
+				OpenTime: o.OpenTime, CloseTime: o.CloseTime,
+			}, "closed"))
 		}
 		changed, err = w.repo.BatchUpsert(ctx, tenantID, repoOrders)
-		return err
-	})
+		if err != nil {
+			_ = w.setSyncStatus(ctx, accountID, "error", err.Error())
+			return nil, err
+		}
+	}
 	if err != nil {
 		_ = w.setSyncStatus(ctx, accountID, "error", err.Error())
 		return nil, err

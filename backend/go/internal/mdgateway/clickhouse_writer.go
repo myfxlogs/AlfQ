@@ -149,7 +149,7 @@ func (w *CHWriter) flushBatch(ctx context.Context, batch []*pb.Tick) {
 		return
 	}
 
-	w.log.Debug("chwriter: flushed batch", zap.Int("rows", len(batch)))
+	// Batch flushed — rows tracked via Prometheus md_tick_total/metrics.
 }
 
 // Close flushes remaining ticks and closes the writer.

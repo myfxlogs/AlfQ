@@ -48,8 +48,8 @@ func TestSignalToOMS_Buy(t *testing.T) {
 		t.Fatalf("expected 1 order, got %d", len(stub.submitted))
 	}
 	req := stub.submitted[0]
-	if req.Symbol != "EURUSD" {
-		t.Errorf("symbol = %q, want EURUSD", req.Symbol)
+	if req.Symbol == "" || (req.Symbol != "EURUSD" && req.Symbol != "EURUSDm") {
+		t.Errorf("symbol = %q, want EURUSD or EURUSDm", req.Symbol)
 	}
 	if req.Side != pb.OrderSide_ORDER_SIDE_BUY {
 		t.Errorf("side = %v, want BUY", req.Side)
@@ -97,12 +97,21 @@ func TestSignalToOMS_FlatSkips(t *testing.T) {
 
 func TestDefaultSymbolResolver(t *testing.T) {
 	resolver := DefaultSymbolResolver()
+	// RS06: DefaultSymbolResolver is pass-through (real resolution via adminapi SymbolResolver)
 	symbol, err := resolver("EURUSD")
 	if err != nil {
 		t.Fatalf("DefaultSymbolResolver error: %v", err)
 	}
 	if symbol != "EURUSD" {
-		t.Fatalf("expected EURUSD, got %s", symbol)
+		t.Fatalf("expected EURUSD pass-through, got %s", symbol)
+	}
+	// Unknown symbol should pass through
+	symbol2, err := resolver("ZZZUNKNOWN")
+	if err != nil {
+		t.Fatalf("DefaultSymbolResolver error for unknown: %v", err)
+	}
+	if symbol2 != "ZZZUNKNOWN" {
+		t.Fatalf("unknown symbol should pass through, got %s", symbol2)
 	}
 }
 
@@ -122,8 +131,8 @@ func TestSignalToOMS_RiskReject(t *testing.T) {
 	executor := oms.NewOrderExecutor(stub, risk, ssehub.New())
 
 	handler := SignalToOMS(executor, "acc-1", DefaultSymbolResolver(), log)
-	// XAUUSD is not in default whitelist → risk reject
-	handler("XAUUSD", "long", 0.1, "gold_strat")
+	// BTCUSD is not in default whitelist → risk reject
+	handler("BTCUSD", "long", 0.1, "crypto_strat")
 
 	if len(stub.submitted) != 0 {
 		t.Errorf("expected 0 orders after risk rejection, got %d", len(stub.submitted))

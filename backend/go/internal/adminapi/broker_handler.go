@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
-
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
 )
 
 func (s *Service) CreateBroker(ctx context.Context, req *pb.CreateBrokerRequest) (*pb.Broker, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	b := &pb.Broker{}
@@ -30,7 +28,7 @@ func (s *Service) CreateBroker(ctx context.Context, req *pb.CreateBrokerRequest)
 }
 
 func (s *Service) GetBroker(ctx context.Context, req *pb.GetBrokerRequest) (*pb.Broker, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	b := &pb.Broker{}
@@ -45,7 +43,7 @@ func (s *Service) GetBroker(ctx context.Context, req *pb.GetBrokerRequest) (*pb.
 }
 
 func (s *Service) ListBrokers(ctx context.Context, req *pb.ListBrokersRequest) (*pb.ListBrokersResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	tenantID := effectiveTenantID(ctx, req.TenantId)
@@ -70,7 +68,7 @@ func (s *Service) ListBrokers(ctx context.Context, req *pb.ListBrokersRequest) (
 }
 
 func (s *Service) UpdateBroker(ctx context.Context, req *pb.Broker) (*pb.Broker, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	b := &pb.Broker{}
@@ -88,7 +86,7 @@ func (s *Service) UpdateBroker(ctx context.Context, req *pb.Broker) (*pb.Broker,
 }
 
 func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest) (*pb.SearchBrokerResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	// 1. Try DB first
@@ -126,7 +124,7 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 	if kw == "" {
 		kw = "tr" // gateway requires ≥2 chars; "tr" yields broad coverage (~450 brokers)
 	}
-	if onlineMatches, err := mtapi.SearchBrokersOnline(ctx, gw, req.Platform, kw); err == nil && len(onlineMatches) > 0 {
+	if onlineMatches, err := brokerSearchOnline(ctx, gw, req.Platform, kw); err == nil && len(onlineMatches) > 0 {
 		var matches []*pb.BrokerMatch
 		for _, m := range onlineMatches {
 			var servers []*pb.BrokerServer
@@ -146,7 +144,7 @@ func (s *Service) SearchBroker(ctx context.Context, req *pb.SearchBrokerRequest)
 }
 
 func (s *Service) DeleteBroker(ctx context.Context, req *pb.DeleteBrokerRequest) (*pb.DeleteBrokerResponse, error) {
-	if err := s.setRLS(ctx); err != nil {
+	if err := RequireTenant(ctx); err != nil {
 		return nil, fmt.Errorf("rls: %w", err)
 	}
 	_, err := s.pool.Exec(ctx, `DELETE FROM brokers WHERE id = $1`, req.Id)

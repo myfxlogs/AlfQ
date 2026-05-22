@@ -181,6 +181,21 @@ func (a *Adapter) StopStrategy(ctx context.Context, req *connect.Request[pb.Stop
 	}
 	return connect.NewResponse(st), nil
 }
+func (a *Adapter) PromoteToLive(ctx context.Context, req *connect.Request[pb.PromoteToLiveRequest]) (*connect.Response[pb.PromoteToLiveResponse], error) {
+	pr := &PromoteStrategyRequest{
+		StrategyID: req.Msg.Id,
+		Approvals:  []string{req.Msg.TenantAdminId, req.Msg.RiskOfficerId},
+	}
+	st, promoErr, err := a.svc.PromoteToLive(ctx, pr)
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.PromoteToLiveResponse{Strategy: st, Approved: promoErr == nil}
+	if promoErr != nil {
+		resp.Reason = promoErr.Reason
+	}
+	return connect.NewResponse(resp), nil
+}
 func (a *Adapter) StreamSignals(ctx context.Context, req *connect.Request[pb.StreamSignalsRequest], stream *connect.ServerStream[pb.Signal]) error {
 	// Placeholder: no real signal stream yet.
 	return nil
@@ -204,6 +219,16 @@ func (a *Adapter) UpdateSystemSetting(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 	return connect.NewResponse(resp), nil
+}
+
+// -- R10: AI usage stats + API key test --
+
+func (a *Adapter) GetAIUsageStats(ctx context.Context, req *connect.Request[pb.GetAIUsageStatsRequest]) (*connect.Response[pb.GetAIUsageStatsResponse], error) {
+	return a.svc.GetAIUsageStats(ctx, req)
+}
+
+func (a *Adapter) TestAPIKey(ctx context.Context, req *connect.Request[pb.TestAPIKeyRequest]) (*connect.Response[pb.TestAPIKeyResponse], error) {
+	return a.svc.TestAPIKey(ctx, req)
 }
 
 // -- ServiceManagementService --
@@ -241,5 +266,5 @@ func (a *Adapter) ListAuditLogs(ctx context.Context, req *connect.Request[pb.Lis
 }
 
 func (a *Adapter) StreamAuditLogs(ctx context.Context, req *connect.Request[pb.StreamAuditLogsRequest], stream *connect.ServerStream[pb.AuditLog]) error {
-	return nil // stub
+	return a.svc.StreamAuditLogs(ctx, req.Msg, stream)
 }

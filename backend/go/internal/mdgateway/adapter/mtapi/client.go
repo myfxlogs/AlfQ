@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -29,18 +30,48 @@ type AccountInfo struct {
 	Profit      float64
 	Currency    string
 	Leverage    int32
+	AccountType string // "demo", "real", "contest" from MT
+	IsInvestor  bool
 }
 
 // PositionInfo is a unified position record from MT4/MT5.
 type PositionInfo struct {
-	Ticket     int64
-	Symbol     string
-	Type       string // "buy" | "sell"
-	Lots       float64
-	OpenPrice  float64
-	Profit     float64
-	Swap       float64
-	Commission float64
+	Ticket       int64
+	Symbol       string
+	Type         string // "buy" | "sell"
+	Lots         float64
+	OpenPrice    float64
+	Profit       float64
+	Swap         float64
+	Commission   float64
+	OpenTimeMs   int64   // position open timestamp (UTC ms)
+	CurrentPrice float64 // latest bid/ask
+}
+
+// SymbolParams holds broker symbol metadata (RS08).
+type SymbolParams struct {
+	Symbol       string
+	Digits       int
+	ContractSize float64
+	MinLot       float64
+	MaxLot       float64
+	LotStep      float64
+	TickSize     float64
+	TickValue    float64
+	Point        float64
+	SwapLong     float64
+	SwapShort    float64
+	SwapMode     int
+}
+
+// PriceBar is a single OHLC bar from today's price history (RS08).
+type PriceBar struct {
+	Time   int64
+	Open   float64
+	High   float64
+	Low    float64
+	Close  float64
+	Volume float64
 }
 
 // HistoryOrderInfo is a unified historical order record from MT4/MT5.
@@ -125,6 +156,110 @@ func searchMT4(ctx context.Context, conn *grpc.ClientConn, company string) ([]Br
 		matches = append(matches, BrokerMatch{Company: c.GetCompanyName(), Servers: servers})
 	}
 	return matches, nil
+}
+
+// OrderRequest is a normalized order submission request for OrderSend.
+type OrderRequest struct {
+	Symbol    string
+	Side      string // "buy" or "sell"
+	Volume    float64
+	Price     float64
+	Slippage  int32
+	StopLoss  float64
+	TakeProfit float64
+	Comment   string
+}
+
+// PlaceOrder sends an order to the MT4/MT5 Trading service via the given connection.
+func PlaceOrder(ctx context.Context, conn *grpc.ClientConn, platform, sessionID string, req *OrderRequest) (ticket int64, err error) {
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		return mt5PlaceOrder(ctx, conn, sessionID, req)
+	case "MT4":
+		return mt4PlaceOrder(ctx, conn, sessionID, req)
+	default:
+		return 0, fmt.Errorf("mtapi: unknown platform %q", platform)
+	}
+}
+
+func mt5PlaceOrder(ctx context.Context, conn *grpc.ClientConn, sessionID string, req *OrderRequest) (int64, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	client := mt5pb.NewTradingClient(conn)
+	op := mt5pb.OrderType_OrderType_Buy
+	if req.Side == "sell" {
+		op = mt5pb.OrderType_OrderType_Sell
+	}
+	price := req.Price
+	slippage := uint64(req.Slippage)
+	comment := req.Comment
+	r, err := client.OrderSend(ctxWithID, &mt5pb.OrderSendRequest{
+		Id: sessionID, Symbol: req.Symbol, Operation: op, Volume: req.Volume,
+		Price: &price, Slippage: &slippage, Stoploss: &req.StopLoss,
+		Takeprofit: &req.TakeProfit, Comment: &comment,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("mt5 ordersend: %w", err)
+	}
+	if e := r.GetError(); e != nil && e.GetCode() != 0 {
+		return 0, fmt.Errorf("mt5 ordersend rejected: code=%d msg=%s", e.GetCode(), e.GetMessage())
+	}
+	if r.GetResult() != nil {
+		return r.GetResult().Ticket, nil
+	}
+	return 0, fmt.Errorf("mt5 ordersend: empty result and no error from broker")
+}
+
+func mt4PlaceOrder(ctx context.Context, conn *grpc.ClientConn, sessionID string, req *OrderRequest) (int64, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	client := mt4pb.NewTradingClient(conn)
+	op := mt4pb.Op_Op_Buy
+	if req.Side == "sell" {
+		op = mt4pb.Op_Op_Sell
+	}
+	r, err := client.OrderSend(ctxWithID, &mt4pb.OrderSendRequest{
+		Id: sessionID, Symbol: req.Symbol, Operation: op, Volume: req.Volume,
+		Price: req.Price, Slippage: int32(req.Slippage), Stoploss: req.StopLoss,
+		Takeprofit: req.TakeProfit, Comment: req.Comment,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("mt4 ordersend: %w", err)
+	}
+	if e := r.GetError(); e != nil && e.GetCode() != 0 {
+		return 0, fmt.Errorf("mt4 ordersend rejected: code=%d msg=%s", e.GetCode(), e.GetMessage())
+	}
+	if r.GetResult() != nil {
+		return int64(r.GetResult().Ticket), nil
+	}
+	return 0, fmt.Errorf("mt4 ordersend: empty result and no error from broker")
+}
+
+// CloseOrder closes an existing position by ticket.
+func CloseOrder(ctx context.Context, conn *grpc.ClientConn, platform, sessionID string, ticket int64, volume float64) error {
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		return mt5CloseOrder(ctx, conn, sessionID, ticket, volume)
+	case "MT4":
+		return mt4CloseOrder(ctx, conn, sessionID, ticket, volume)
+	default:
+		return fmt.Errorf("mtapi: unknown platform %q", platform)
+	}
+}
+
+func mt5CloseOrder(ctx context.Context, conn *grpc.ClientConn, sessionID string, ticket int64, volume float64) error {
+	client := mt5pb.NewTradingClient(conn)
+	lots := volume
+	_, err := client.OrderClose(ctx, &mt5pb.OrderCloseRequest{
+		Id: sessionID, Ticket: ticket, Lots: &lots,
+	})
+	return err
+}
+
+func mt4CloseOrder(ctx context.Context, conn *grpc.ClientConn, sessionID string, ticket int64, volume float64) error {
+	client := mt4pb.NewTradingClient(conn)
+	_, err := client.OrderClose(ctx, &mt4pb.OrderCloseRequest{
+		Id: sessionID, Ticket: int32(ticket), Lots: volume,
+	})
+	return err
 }
 
 // ── Account connection ──
@@ -289,6 +424,8 @@ func FetchAccountSummary(ctx context.Context, conn *grpc.ClientConn, platform, s
 			Profit:      summ.GetProfit(),
 			Currency:    summ.GetCurrency(),
 			Leverage:    int32(summ.GetLeverage()),
+			AccountType: strings.ToLower(summ.GetType()),
+			IsInvestor:  summ.GetIsInvestor(),
 		}, nil
 	case "MT4":
 		client := mt4pb.NewMT4Client(conn)
@@ -309,6 +446,8 @@ func FetchAccountSummary(ctx context.Context, conn *grpc.ClientConn, platform, s
 			Profit:      summ.GetProfit(),
 			Currency:    summ.GetCurrency(),
 			Leverage:    int32(summ.GetLeverage()),
+			AccountType: strings.TrimPrefix(strings.ToLower(mt4pb.AccountType_name[int32(summ.GetType())]), "accounttype_"),
+			IsInvestor:  summ.GetIsInvestor(),
 		}, nil
 	default:
 		return nil, fmt.Errorf("mtapi: unsupported platform %q", platform)
@@ -336,15 +475,18 @@ func FetchOpenedOrders(ctx context.Context, conn *grpc.ClientConn, platform, ses
 				posType = "sell"
 			}
 			positions = append(positions, &PositionInfo{
-				Ticket:     o.GetTicket(),
-				Symbol:     o.GetSymbol(),
-				Type:       posType,
-				Lots:       o.GetLots(),
-				OpenPrice:  o.GetOpenPrice(),
-				Profit:     o.GetProfit(),
-				Swap:       o.GetSwap(),
-				Commission: o.GetCommission(),
+				Ticket:       o.GetTicket(),
+				Symbol:       o.GetSymbol(),
+				Type:         posType,
+				Lots:         o.GetLots(),
+				OpenPrice:    o.GetOpenPrice(),
+				Profit:       o.GetProfit(),
+				Swap:         o.GetSwap(),
+				Commission:   o.GetCommission(),
+				OpenTimeMs:   o.GetOpenTimestampUTC(), // already in ms
+				CurrentPrice: o.GetOpenPrice(),             // default to open price, updated by live ticks
 			})
+			log.Printf("mtapi MT5 position: ticket=%d openTimeMs=%d", o.GetTicket(), o.GetOpenTimestampUTC())
 		}
 		return positions, nil
 	case "MT4":
@@ -362,14 +504,16 @@ func FetchOpenedOrders(ctx context.Context, conn *grpc.ClientConn, platform, ses
 				posType = "sell"
 			}
 			positions = append(positions, &PositionInfo{
-				Ticket:     int64(o.GetTicket()),
-				Symbol:     o.GetSymbol(),
-				Type:       posType,
-				Lots:       o.GetLots(),
-				OpenPrice:  o.GetOpenPrice(),
-				Profit:     o.GetProfit(),
-				Swap:       o.GetSwap(),
-				Commission: o.GetCommission(),
+				Ticket:       int64(o.GetTicket()),
+				Symbol:       o.GetSymbol(),
+				Type:         posType,
+				Lots:         o.GetLots(),
+				OpenPrice:    o.GetOpenPrice(),
+				Profit:       o.GetProfit(),
+				Swap:         o.GetSwap(),
+				Commission:   o.GetCommission(),
+				OpenTimeMs:   timestampToMs(o.GetOpenTime()),
+				CurrentPrice: o.GetOpenPrice(),
 			})
 		}
 		return positions, nil
@@ -508,6 +652,13 @@ func timestampToRFC3339(ts *timestamppb.Timestamp) string {
 	return ts.AsTime().UTC().Format(time.RFC3339)
 }
 
+func timestampToMs(ts *timestamppb.Timestamp) int64 {
+	if ts == nil {
+		return 0
+	}
+	return ts.AsTime().UnixMilli()
+}
+
 // // getAccountSummary is a legacy helper for reflection-based RPC calls.
 // // Deprecated: use typed FetchAccountSummary instead.
 // func getAccountSummary(ctx context.Context, conn *grpc.ClientConn, method string) (*AccountInfo, error) {
@@ -575,3 +726,78 @@ func parsePort(s string) int32 {
 // 	s, _ := m[key].(string)
 // 	return s
 // }
+
+// ── RS08: Symbol params + price history ──
+
+// FetchSymbolParamsMany retrieves symbol metadata for multiple symbols.
+func FetchSymbolParamsMany(ctx context.Context, conn *grpc.ClientConn, platform, sessionID string, symbols []string) ([]*SymbolParams, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		client := mt5pb.NewMT5Client(conn)
+		resp, err := client.SymbolParamsMany(ctxWithID, &mt5pb.SymbolParamsManyRequest{
+			Id: sessionID, Symbol: symbols,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("mtapi: mt5 symbol params: %w", err)
+		}
+		var out []*SymbolParams
+		for _, s := range resp.GetResult() {
+			info := s.GetSymbolInfo()
+			out = append(out, &SymbolParams{
+				Symbol: s.GetSymbol(),
+			})
+			if info != nil {
+				_ = info // RS08: full field mapping in follow-up
+			}
+		}
+		return out, nil
+	case "MT4":
+		client := mt4pb.NewMT4Client(conn)
+		resp, err := client.SymbolParamsMany(ctxWithID, &mt4pb.SymbolParamsManyRequest{
+			Id: sessionID, Symbols: symbols,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("mtapi: mt4 symbol params: %w", err)
+		}
+		var out []*SymbolParams
+		for _, s := range resp.GetResult() {
+			out = append(out, &SymbolParams{Symbol: s.GetSymbolName()})
+		}
+		return out, nil
+	default:
+		return nil, fmt.Errorf("mtapi: unsupported platform %q", platform)
+	}
+}
+
+// FetchPriceHistoryToday retrieves today's 1-minute bars for a symbol (MT5 only; MT4 stub).
+func FetchPriceHistoryToday(ctx context.Context, conn *grpc.ClientConn, platform, sessionID, symbol string) ([]*PriceBar, error) {
+	ctxWithID := metadata.AppendToOutgoingContext(ctx, "id", sessionID)
+	switch strings.ToUpper(platform) {
+	case "MT5":
+		client := mt5pb.NewQuoteHistoryClient(conn)
+		resp, err := client.PriceHistoryToday(ctxWithID, &mt5pb.PriceHistoryTodayRequest{
+			Id: sessionID, Symbol: symbol,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("mtapi: mt5 price history: %w", err)
+		}
+		var out []*PriceBar
+		for _, b := range resp.GetResult() {
+			ts := b.GetTime()
+			out = append(out, &PriceBar{
+				Time:   ts.GetSeconds(),
+				Open:   b.GetOpenPrice(),
+				High:   b.GetHighPrice(),
+				Low:    b.GetLowPrice(),
+				Close:  b.GetClosePrice(),
+				Volume: float64(b.GetTickVolume()),
+			})
+		}
+		return out, nil
+	case "MT4":
+		return nil, fmt.Errorf("mtapi: price history not available for MT4 via mtapi")
+	default:
+		return nil, fmt.Errorf("mtapi: unsupported platform %q", platform)
+	}
+}

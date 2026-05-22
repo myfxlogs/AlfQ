@@ -1,4 +1,5 @@
 // assistant-svc is the AI Strategy Assistant service.
+// R10: Now requires PostgreSQL for user API keys, usage tracking, and RAG.
 package main
 
 import (
@@ -11,7 +12,6 @@ import (
 
 func main() {
 	if err := bootstrap.Run("assistant-svc", register,
-		bootstrap.WithoutPG(),
 		bootstrap.WithoutRedis(),
 		bootstrap.WithoutNATS(),
 		bootstrap.WithoutCH(),

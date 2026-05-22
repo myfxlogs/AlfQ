@@ -1,0 +1,42 @@
+{
+  "title": "ALFQ SLO Overview",
+  "uid": "alfq-slo",
+  "panels": [
+    {
+      "title": "Service Health",
+      "type": "stat",
+      "targets": [{ "expr": "up{job=~\"trading-core|md-gateway|quant-engine|assistant-svc\"}" }],
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 1 }] } } }
+    },
+    {
+      "title": "Tick Gap Rate (24h)",
+      "type": "stat",
+      "targets": [{ "expr": "rate(md_gap_count[24h])" }],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.1 }] } } }
+    },
+    {
+      "title": "Order Reject Rate (10m)",
+      "type": "gauge",
+      "targets": [{ "expr": "rate(order_rejected_total[10m]) / rate(order_submitted_total[10m])" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1, "thresholds": { "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 0.3 }] } } }
+    },
+    {
+      "title": "CH Write Success Rate",
+      "type": "stat",
+      "targets": [{ "expr": "rate(ch_insert_rows_total{status=\"ok\"}[5m]) / rate(ch_insert_rows_total[5m])" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "thresholds": { "steps": [{ "color": "red", "value": 0 }, { "color": "yellow", "value": 0.999 }, { "color": "green", "value": 0.9999 }] } } }
+    },
+    {
+      "title": "Factor NaN Ratio",
+      "type": "timeseries",
+      "targets": [{ "expr": "factor_values_null_ratio", "legendFormat": "{{factor_name}}" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } }
+    },
+    {
+      "title": "MT Connection State",
+      "type": "stat",
+      "targets": [{ "expr": "mt_connection_state" }],
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 1 }] } } }
+    }
+  ]
+}

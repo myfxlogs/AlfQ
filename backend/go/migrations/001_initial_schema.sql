@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   login TEXT NOT NULL,
   password TEXT NOT NULL,
   server TEXT NOT NULL,
+  server_name TEXT NOT NULL DEFAULT '',
   account_type TEXT NOT NULL DEFAULT 'demo',
   position_mode TEXT NOT NULL DEFAULT 'auto',
   currency TEXT NOT NULL DEFAULT 'USD',
@@ -124,6 +125,8 @@ CREATE POLICY tenant_isolation ON orders
 ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON accounts
   USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+-- Gateway bypass: md-gateway queries accounts across all tenants (no app.tenant_id set).
+CREATE POLICY gateway_bypass ON accounts FOR SELECT USING (true);
 
 -- Seed: demo admin user (a@1.com / 12345678)
 INSERT INTO users (id, tenant_id, email, password_hash, roles) VALUES (

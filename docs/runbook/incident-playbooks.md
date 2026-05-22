@@ -152,6 +152,51 @@
 7. **事后**：回填缺失时段数据（`md-backfill`）
 
 ---
+---
+
+## 7. 因子计算异常 (Factor Anomaly)
+
+**症状**：
+- `factor_values_null_ratio` 超过 50%
+- `alfq_factor_eval_error_total` 计数器增长
+- 策略信号全部为 flat（无新订单产生）
+
+**严重级别**：P1（策略静默停止）
+
+**处置步骤**：
+1. **确认范围**：`clickhouse-client -q "SELECT factor_name, count() FILTER (WHERE value IS NULL) FROM factor_values WHERE ts > now() - INTERVAL 10 MINUTE GROUP BY 1"`
+2. **检查数据源**：CH 中 md_bars 是否正常写入（因子计算依赖 bar 数据）
+3. **检查窗口缓冲**：WindowBuffer 是否初始化完成（启动后 bootstrap 需 N 根 bar）
+4. **重启因子引擎**（如果是启动时序问题）：`docker restart deploy-quant-engine-1`
+5. **检查 DSL 表达式**：最近是否有策略 spec 变更导致因子表达式不兼容
+6. **验证恢复**：`clickhouse-client -q "SELECT factor_name, count() FROM factor_values WHERE ts > now() - INTERVAL 5 MINUTE GROUP BY 1"`
+7. **事后**：记录异常因子名称、持续时长、根本原因
+
+---
+
+## 8. 回测失败 (Backtest Failure)
+
+**症状**：
+- `POST /run` 返回 500 或 504
+- `alfq_backtest_total{status="failed"}` 增长
+- 前端回测页面显示 "backtest failed"
+
+**严重级别**：P2（研究受阻，不影响实盘）
+
+**处置步骤**：
+1. **检查 backtest-runner 状态**：`docker logs deploy-backtest-runner-1 --tail 50`
+2. **常见原因**：
+   - 数据不足（所选时间段内 CH 无 bar 数据）
+   - 策略 spec 中的因子表达式语法错误
+   - Python 依赖缺失（`ModuleNotFoundError`）
+   - 超时（回测时间超过 5 分钟）
+3. **验证数据**：`clickhouse-client -q "SELECT min(ts), max(ts), count() FROM md_bars WHERE symbol='EURUSD' AND period='M5'"`
+4. **本地调试**：`cd research && uv run python -m alfq_research.cli backtest --spec '<json>'`
+5. **清理重试**：如果文件系统残留，`rm -rf /tmp/alfq-backtest-spec-*.json`
+6. **事后**：如果是代码 bug，修 → 加测试 → 重新部署
+
+---
+
 ## 通用工具命令
 
 ```bash

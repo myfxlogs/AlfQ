@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/alfq/backend/go/internal/common/db/pg"
-	"github.com/alfq/backend/go/internal/mdgateway/adapter/mtapi"
 )
 
 // HistoryOrder represents a row in orders_history.
@@ -213,8 +212,23 @@ func (r *HistoryOrderRepo) BatchUpsert(ctx context.Context, tenantID string, ord
 	return changed, nil
 }
 
-// ToHistoryOrder converts an mtapi.HistoryOrderInfo into a repo HistoryOrder.
-func ToHistoryOrder(tenantID, accountID string, info *mtapi.HistoryOrderInfo, state string) *HistoryOrder {
+// HistoryOrderInput is a generic historical order record (formerly from mtapi package).
+type HistoryOrderInput struct {
+	Ticket     int64
+	Symbol     string
+	Type       string
+	Lots       float64
+	OpenPrice  float64
+	ClosePrice float64
+	Profit     float64
+	Swap       float64
+	Commission float64
+	OpenTime   string
+	CloseTime  string
+}
+
+// ToHistoryOrder converts a HistoryOrderInput into a repo HistoryOrder.
+func ToHistoryOrder(tenantID, accountID string, info *HistoryOrderInput, state string) *HistoryOrder {
 	if state == "" {
 		state = "closed"
 	}
