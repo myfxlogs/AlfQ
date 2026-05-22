@@ -11,8 +11,8 @@ func TestDefaultDemoSpec(t *testing.T) {
 	if spec == nil {
 		t.Fatal("defaultDemoSpec returned nil")
 	}
-	if spec.Name != "demo_sma_cross" {
-		t.Fatalf("expected Name=demo_sma_cross, got %s", spec.Name)
+	if spec.Name != "demo_sma_e2e" {
+		t.Fatalf("expected Name=demo_sma_e2e, got %s", spec.Name)
 	}
 	if spec.Version != "1.0.0" {
 		t.Fatalf("expected Version=1.0.0, got %s", spec.Version)
@@ -49,9 +49,9 @@ func TestStrategyRuntime_Fields(t *testing.T) {
 
 func TestSignalHandler(t *testing.T) {
 	// Just ensure the type exists
-	var h SignalHandler = func(symbol, side string, qty float64, reason string) {}
+	var h SignalHandler = func(strategyID, symbol, side string, qty float64, reason string) {}
 	if h == nil {
 		t.Fatal("SignalHandler should not be nil")
 	}
-	h("EURUSD", "buy", 0.1, "test")
+	h("sid", "EURUSD", "buy", 0.1, "test")
 }

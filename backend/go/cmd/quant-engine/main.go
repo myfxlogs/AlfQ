@@ -113,7 +113,6 @@ func (a *mthubAdapter) Query(ctx context.Context, ticket string) (*pb.Order, err
 func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 	accountID := "51b8fe22-1561-4027-802d-32af80d17f6d" // MT5 demo
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	strategyID := "70846f7a-9873-492f-82f7-7ac48d26551e"
 
 	mthubAddr := os.Getenv("MTHUB_ADDR")
 	if mthubAddr == "" {
@@ -137,7 +136,11 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 	)
 
 	// Wire signal→order bridge: signals flow through OMS state machine
-	onSignal := func(symbol string, side string, qty float64, reason string) {
+	onSignal := func(strategyID, symbol, side string, qty float64, reason string) {
+		if strategyID == "" {
+			d.Log.Warn("signal dropped: missing strategy_id", zap.String("reason", reason))
+			return
+		}
 		// Resolve canonical → broker-specific symbol_raw
 		brokerSymbol := symbol
 		if d.PG != nil {

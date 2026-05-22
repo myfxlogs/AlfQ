@@ -24,7 +24,7 @@ func SignalToOMS(
 	resolveSymbol func(canonical string) (string, error),
 	log *zap.Logger,
 ) SignalHandler {
-	return func(canonical string, side string, qty float64, reason string) {
+	return func(strategyID, canonical, side string, qty float64, reason string) {
 		// Resolve canonical → broker symbol_raw
 		symbolRaw, err := resolveSymbol(canonical)
 		if err != nil {
@@ -49,7 +49,7 @@ func SignalToOMS(
 
 		req := &pb.OrderRequest{
 			AccountId:  accountID,
-			StrategyId: reason, // strategy name
+			StrategyId: strategyID,
 			Symbol:     symbolRaw,
 			Side:       orderSide,
 			Type:       pb.OrderType_ORDER_TYPE_MARKET,

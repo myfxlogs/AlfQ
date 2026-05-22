@@ -42,7 +42,7 @@ func TestSignalToOMS_Buy(t *testing.T) {
 	executor := oms.NewOrderExecutor(stub, risk, sse)
 
 	handler := SignalToOMS(executor, "acc-1", DefaultSymbolResolver(), log)
-	handler("EURUSD", "long", 0.1, "demo_sma")
+	handler("strat-1", "EURUSD", "long", 0.1, "demo_sma")
 
 	if len(stub.submitted) != 1 {
 		t.Fatalf("expected 1 order, got %d", len(stub.submitted))
@@ -68,7 +68,7 @@ func TestSignalToOMS_Sell(t *testing.T) {
 	executor := oms.NewOrderExecutor(stub, risksvc.NewEngine(), ssehub.New())
 
 	handler := SignalToOMS(executor, "acc-2", DefaultSymbolResolver(), log)
-	handler("GBPUSD", "short", 0.2, "trend_follow")
+	handler("strat-2", "GBPUSD", "short", 0.2, "trend_follow")
 
 	if len(stub.submitted) != 1 {
 		t.Fatalf("expected 1 order, got %d", len(stub.submitted))
@@ -88,7 +88,7 @@ func TestSignalToOMS_FlatSkips(t *testing.T) {
 	executor := oms.NewOrderExecutor(stub, risksvc.NewEngine(), ssehub.New())
 
 	handler := SignalToOMS(executor, "acc-1", DefaultSymbolResolver(), log)
-	handler("EURUSD", "flat", 0.1, "test")
+	handler("strat-3", "EURUSD", "flat", 0.1, "test")
 
 	if len(stub.submitted) != 0 {
 		t.Errorf("expected 0 orders for flat signal, got %d", len(stub.submitted))
@@ -132,7 +132,7 @@ func TestSignalToOMS_RiskReject(t *testing.T) {
 
 	handler := SignalToOMS(executor, "acc-1", DefaultSymbolResolver(), log)
 	// BTCUSD is not in default whitelist → risk reject
-	handler("BTCUSD", "long", 0.1, "crypto_strat")
+	handler("strat-4", "BTCUSD", "long", 0.1, "crypto_strat")
 
 	if len(stub.submitted) != 0 {
 		t.Errorf("expected 0 orders after risk rejection, got %d", len(stub.submitted))

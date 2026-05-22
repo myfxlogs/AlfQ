@@ -31,6 +31,7 @@ type RuntimeState struct {
 type StrategyRuntime struct {
 	Spec       *stratspec.StrategySpec
 	name       string
+	strategyID string // DB UUID, set by RuntimeManager after creation
 	runner     *ModelRunner
 	engine     *factorsvc.Engine
 	onSignal   SignalHandler
@@ -154,7 +155,7 @@ func (rt *StrategyRuntime) evaluate(ctx context.Context) {
 	rt.stateMu.Unlock()
 
 	if rt.onSignal != nil && len(rt.Spec.CanonicalSymbols) > 0 {
-		rt.onSignal(rt.Spec.CanonicalSymbols[0], dir, 0.1, rt.name)
+		rt.onSignal(rt.strategyID, rt.Spec.CanonicalSymbols[0], dir, 0.1, rt.name)
 	}
 
 	rt.log.Debug("signal generated",

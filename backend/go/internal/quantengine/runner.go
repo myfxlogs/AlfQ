@@ -17,7 +17,8 @@ import (
 )
 
 // SignalHandler receives signals and routes them to OMS.
-type SignalHandler func(symbol string, side string, qty float64, reason string)
+// strategyID is the DB UUID of the strategy that produced this signal.
+type SignalHandler func(strategyID, symbol, side string, qty float64, reason string)
 
 // RunQuantEngine wires factor + strategy services and registers /readyz on mux.
 func RunQuantEngine(mux *http.ServeMux, d *bootstrap.Deps) error {
@@ -99,26 +100,26 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 	// ── RS05: RuntimeManager with per-strategy isolation ──
 	runtimeMgr := NewRuntimeManager(d.Log).WithPool(d.PG)
 
-	// Load running strategy names from database (respect status field)
-	runningNames := make(map[string]bool)
+	// Load running strategies from database: name → id (respect status field)
+	runningIDs := make(map[string]string)
 	if d.PG != nil {
-		rows, err := d.PG.Query(ctx, `SELECT name FROM strategies WHERE status = 'running'`)
+		rows, err := d.PG.Query(ctx, `SELECT id, name FROM strategies WHERE status = 'running'`)
 		if err != nil {
 			d.Log.Warn("failed to query running strategies", zap.Error(err))
 		} else {
-			defer rows.Close()
 			for rows.Next() {
-				var name string
-				if err := rows.Scan(&name); err == nil {
-					runningNames[name] = true
+				var id, name string
+				if err := rows.Scan(&id, &name); err == nil {
+					runningIDs[name] = id
 				}
 			}
+			rows.Close()
 		}
 	}
 
 	for _, spec := range specs {
-		// Only start runtimes for strategies with status='running' in DB
-		if !runningNames[spec.Name] {
+		strategyID, ok := runningIDs[spec.Name]
+		if !ok {
 			d.Log.Info("skipping strategy (not running in DB)", zap.String("strategy", spec.Name))
 			continue
 		}
@@ -127,7 +128,9 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 			d.Log.Warn("runtime creation failed", zap.String("spec", spec.Name), zap.Error(err))
 			continue
 		}
+		rt.strategyID = strategyID
 		runtimeMgr.Add(ctx, rt)
+		d.Log.Info("runtime started", zap.String("strategy", spec.Name), zap.String("strategy_id", strategyID))
 	}
 
 	// Restore previous state from PG snapshots (RS05)
@@ -251,7 +254,7 @@ func bootstrapFromCH(ctx context.Context, buf *factorsvc.WindowBuffer, specs []f
 
 func defaultDemoSpec() *stratspec.StrategySpec {
 	return &stratspec.StrategySpec{
-		Name:             "demo_sma_cross",
+		Name:             "demo_sma_e2e",
 		Version:          "1.0.0",
 		CanonicalSymbols: []string{"BTCUSD"},
 		Period:           "1h",

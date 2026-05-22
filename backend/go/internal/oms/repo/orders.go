@@ -16,18 +16,40 @@ type OrderRepo struct {
 // NewOrderRepo creates an order repository.
 func NewOrderRepo(pool *pg.Pool) *OrderRepo { return &OrderRepo{pool: pool} }
 
+// moneyOrNil returns the numeric string for a Money proto, or nil for an
+// empty/zero value so PG inserts NULL rather than failing on empty-string→numeric.
+func moneyOrNil(m *pb.Money) interface{} {
+	if m == nil || m.GetValue() == "" {
+		return nil
+	}
+	return m.GetValue()
+}
+
+func strOrNil(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
 // Insert creates a new order row.
 func (r *OrderRepo) Insert(ctx context.Context, o *pb.Order) error {
 	if err := r.pool.SetTenant(ctx, o.TenantId); err != nil {
 		return err
 	}
+	ts := o.CreatedTsMs
+	if ts == 0 {
+		ts = o.UpdatedTsMs
+	}
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO orders (order_id, tenant_id, account_id, strategy_id, client_order_id,
-		 broker_ticket, symbol, side, type, state, price, stop_price, qty, filled_qty)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-		o.OrderId, o.TenantId, o.AccountId, o.StrategyId, o.ClientOrderId,
-		o.BrokerTicket, o.Symbol, int32(o.Side), int32(o.Type), int32(o.State),
-		o.GetPrice().GetValue(), o.GetStopPrice().GetValue(), o.Qty, o.FilledQty,
+		 broker_ticket, symbol, side, type, state, price, stop_price, qty, filled_qty,
+		 created_ts_ms, updated_ts_ms)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15)`,
+		o.OrderId, o.TenantId, o.AccountId, strOrNil(o.StrategyId), o.ClientOrderId,
+		strOrNil(o.BrokerTicket), o.Symbol, int32(o.Side), int32(o.Type), int32(o.State),
+		moneyOrNil(o.GetPrice()), moneyOrNil(o.GetStopPrice()), o.Qty, o.FilledQty,
+		ts,
 	)
 	return err
 }
