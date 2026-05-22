@@ -33,25 +33,81 @@ func New() (*Client, error) {
 	return &Client{addr: addr, token: token, hc: &http.Client{}}, nil
 }
 
-// LoadSecrets reads all secrets under the given KV-v2 path.
+// LoadSecrets reads all secrets under the given KV-v2 mount path.
 // Returns map of key → value.
 func (c *Client) LoadSecrets(ctx context.Context, path string) (map[string]string, error) {
-	url := fmt.Sprintf("%s/v1/%s/data", c.addr, path)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	// First, list all keys under the mount.
+	keys, err := c.listKeys(ctx, path)
 	if err != nil {
-		return nil, fmt.Errorf("vault: request: %w", err)
+		return nil, fmt.Errorf("vault: list keys: %w", err)
+	}
+
+	out := make(map[string]string, len(keys))
+	for _, k := range keys {
+		val, err := c.readKey(ctx, path, k)
+		if err != nil {
+			// Skip keys we can't read; they may be sub-paths or different types.
+			continue
+		}
+		out[strings.ToUpper(k)] = val
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("vault: no readable keys at %s", path)
+	}
+	return out, nil
+}
+
+// listKeys returns all top-level keys under a KV-v2 mount.
+func (c *Client) listKeys(ctx context.Context, path string) ([]string, error) {
+	url := fmt.Sprintf("%s/v1/%s/metadata?list=true", c.addr, path)
+	req, err := http.NewRequestWithContext(ctx, "LIST", url, nil)
+	if err != nil {
+		return nil, err
 	}
 	req.Header.Set("X-Vault-Token", c.token)
 
 	resp, err := c.hc.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("vault: get %s: %w", url, err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return nil, fmt.Errorf("vault: list %s: %s: %s", url, resp.Status, string(body))
+	}
+
+	var result struct {
+		Data struct {
+			Keys []string `json:"keys"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result.Data.Keys, nil
+}
+
+// readKey reads a single secret from a KV-v2 mount.
+func (c *Client) readKey(ctx context.Context, mount, key string) (string, error) {
+	url := fmt.Sprintf("%s/v1/%s/data/%s", c.addr, mount, key)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("X-Vault-Token", c.token)
+
+	resp, err := c.hc.Do(req)
+	if err != nil {
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("vault: %s: %s", resp.Status, string(body))
+		return "", fmt.Errorf("vault: read %s: %s", url, resp.Status)
 	}
 
 	var result struct {
@@ -60,16 +116,10 @@ func (c *Client) LoadSecrets(ctx context.Context, path string) (map[string]strin
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("vault: decode: %w", err)
+		return "", err
 	}
-	if result.Data.Data == nil {
-		return nil, fmt.Errorf("vault: no data at %s", path)
+	if v, ok := result.Data.Data["value"]; ok {
+		return v, nil
 	}
-
-	// Normalize keys: Vault returns lowercase, convert env-style keys back.
-	out := make(map[string]string, len(result.Data.Data))
-	for k, v := range result.Data.Data {
-		out[strings.ToUpper(k)] = v
-	}
-	return out, nil
+	return "", fmt.Errorf("vault: no 'value' field at %s", key)
 }

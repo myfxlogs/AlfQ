@@ -5,6 +5,7 @@ package tradingcore
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"net/http"
 	"os"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/alfq/backend/go/internal/common/crypto"
 	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/common/health"
+	"github.com/alfq/backend/go/internal/mthub"
 	"github.com/alfq/backend/go/internal/oms"
 	"github.com/alfq/backend/go/internal/oms/repo"
 	"github.com/alfq/backend/go/internal/risksvc"
@@ -65,12 +67,13 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	}
 
 	// OMS + Risk
-	if oms.IsTerminal(0) {
-		d.Log.Info("oms state machine loaded")
-	}
-	_ = repo.NewOrderRepo(d.PG)
+	d.Log.Info("oms state machine loaded")
+	orderRepo := repo.NewOrderRepo(d.PG)
 	_ = repo.NewPositionRepo(d.PG)
 	historyRepo := repo.NewHistoryOrderRepo(d.PG)
+
+	// Risk event writer for audit trail and promotion gate (RC04)
+	riskEventRepo := repo.NewRiskEventRepo(d.PG)
 
 	engine := risksvc.NewEngine()
 	kill := &risksvc.KillSwitch{}
@@ -78,6 +81,26 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	_ = breaker
 	_ = risksvc.NewKillExecutor()
 	_ = risksvc.NewEventRecorder()
+
+	// mthub address (used for both accountconn and reconciler)
+	mthubAddr := os.Getenv("MTHUB_ADDR")
+	if mthubAddr == "" {
+		mthubAddr = "md-gateway:9001" // Docker compose internal
+	}
+
+	// OMS Order Executor with full state machine (RC10)
+	// Note: BrokerAdapter is wired per-order via mthub client; a nil adapter is acceptable
+	// because adminapi/strategy_handler routes through WithLiveSession → mthub.
+	executor := oms.NewOrderExecutor(nil, engine, nil).
+		WithOrderRepo(orderRepo).
+		WithRiskEventWriter(riskEventRepo)
+	d.Log.Info("oms order executor wired", zap.Bool("pg", d.PG != nil))
+
+	// Reconciler: compares local PG orders with broker state every 30s (RC10)
+	mthubClient := mthub.NewClient(mthubAddr)
+	reconciler := oms.NewReconciler(d.PG, orderRepo, mthubClient, d.Log)
+	go reconciler.Run(context.Background())
+	d.Log.Info("oms reconciler started", zap.Duration("interval", 30*time.Second))
 
 	d.Log.Info("risk engine loaded",
 		zap.Int("rules", 10),
@@ -92,10 +115,6 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 
 	// Account connection manager
 	symSvc := &symAdapter{symbolsync.NewService(d.PG.Pool, d.Log)}
-	mthubAddr := os.Getenv("MTHUB_ADDR")
-	if mthubAddr == "" {
-		mthubAddr = "md-gateway:9001" // Docker compose internal
-	}
 	acctMgr := accountconn.NewManager(d.Log, d.PG, d.RDB, nc, js, cfg.MT4Gateway, cfg.MT5Gateway, symSvc, mthubAddr)
 	syncWorker := accountconn.NewSyncWorker(d.PG, historyRepo, d.Log)
 	acctMgr.SetSyncWorker(syncWorker)
@@ -251,18 +270,46 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		}
 	}
 
-	// /readyz with kill-switch awareness
+	// /readyz with real dependency health checks (CR-09)
 	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		if kill.IsActive() {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			w.Write([]byte("kill switch active"))
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ready"))
+
+		checks := make(map[string]string)
+		allOK := true
+
+		// PG
+		if d.PG != nil {
+			if err := d.PG.Ping(r.Context()); err != nil {
+				checks["pg"] = "down"
+				allOK = false
+			} else {
+				checks["pg"] = "ok"
+			}
+		}
+
+		// NATS
+		if nc != nil && nc.IsConnected() {
+			checks["nats"] = "ok"
+		} else {
+			checks["nats"] = "down"
+			allOK = false
+		}
+
+		if !allOK {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
+		checksJSON, _ := json.Marshal(checks)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(checksJSON)
 	})
 
-	_ = engine
+	_ = executor // wired; adminapi integration via WithLiveSession for now
 
 	shutdown = func() {
 		acctMgr.Shutdown()

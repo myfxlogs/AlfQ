@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { authClient, saveAuth } from "../api/client";
 
-export default function Login() {
+export default function Login({ reason }: { reason?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,6 +31,11 @@ export default function Login() {
     <div style={{ display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100vh", background:"var(--color-bg-secondary)" }}>
       <div className="glass-card" style={{ padding:"3rem", width:360 }}>
         <h1 className="text-gradient" style={{ textAlign:"center", marginBottom:"2rem", fontSize:28 }}>ALFQ</h1>
+        {reason && (
+          <div style={{ color:"var(--color-warning, #f59e0b)", marginBottom:12, fontSize:14, textAlign:"center" }}>
+            {reason === "expired" ? "会话已过期，请重新登录" : reason === "forbidden" ? "权限不足" : ""}
+          </div>
+        )}
         {error && <div style={{ color:"var(--color-danger)", marginBottom:12, fontSize:14 }}>{error}</div>}
         <input className="input" placeholder="邮箱" type="email" value={email} onChange={e=>setEmail(e.target.value)}
           style={{ width:"100%", marginBottom:12 }} />

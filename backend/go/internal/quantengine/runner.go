@@ -98,7 +98,30 @@ func RunQuantEngineWithSignalHandler(mux *http.ServeMux, d *bootstrap.Deps, onSi
 
 	// ── RS05: RuntimeManager with per-strategy isolation ──
 	runtimeMgr := NewRuntimeManager(d.Log).WithPool(d.PG)
+
+	// Load running strategy names from database (respect status field)
+	runningNames := make(map[string]bool)
+	if d.PG != nil {
+		rows, err := d.PG.Query(ctx, `SELECT name FROM strategies WHERE status = 'running'`)
+		if err != nil {
+			d.Log.Warn("failed to query running strategies", zap.Error(err))
+		} else {
+			defer rows.Close()
+			for rows.Next() {
+				var name string
+				if err := rows.Scan(&name); err == nil {
+					runningNames[name] = true
+				}
+			}
+		}
+	}
+
 	for _, spec := range specs {
+		// Only start runtimes for strategies with status='running' in DB
+		if !runningNames[spec.Name] {
+			d.Log.Info("skipping strategy (not running in DB)", zap.String("strategy", spec.Name))
+			continue
+		}
 		rt, err := NewStrategyRuntime(spec, engine, onSignal, d.Log)
 		if err != nil {
 			d.Log.Warn("runtime creation failed", zap.String("spec", spec.Name), zap.Error(err))

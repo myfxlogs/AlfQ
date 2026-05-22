@@ -152,11 +152,23 @@ func (h *AuthHandler) Login(ctx context.Context, req *connect.Request[pb.LoginRe
 		}
 	}
 
-	return connect.NewResponse(&pb.LoginResponse{
+	resp := connect.NewResponse(&pb.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		ExpiresIn:    3600,
-	}), nil
+	})
+	// CR-03: Set httpOnly secure SameSite cookie for XSS protection.
+	resp.Header().Set("Set-Cookie", fmt.Sprintf(
+		"alfq_token=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600",
+		accessToken,
+	))
+	if refreshToken != "" {
+		resp.Header().Add("Set-Cookie", fmt.Sprintf(
+			"alfq_refresh=%s; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800",
+			refreshToken,
+		))
+	}
+	return resp, nil
 }
 
 // RefreshToken validates a refresh token and issues new tokens.

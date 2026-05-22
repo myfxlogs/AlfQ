@@ -1,11 +1,7 @@
 // ServiceManagement — 服务状态监控、重启、日志
 import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { ServiceManagementService, type ServiceStatus } from "../gen/alfq/v1/broker_pb";
-
-const transport = createConnectTransport({ baseUrl: "/api" });
-const client = createClient(ServiceManagementService, transport);
+import { type ServiceStatus } from "../gen/alfq/v1/broker_pb";
+import { serviceManagementClient as client } from "../api/client";
 
 export default function ServiceManagement() {
   const [services, setServices] = useState<ServiceStatus[]>([]);

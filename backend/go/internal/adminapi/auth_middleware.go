@@ -100,12 +100,14 @@ func RequireTenant(ctx context.Context) error {
 }
 
 func extractBearerToken(r *http.Request) string {
+	// CR-03: Check Authorization header first, then fallback to httpOnly cookie.
 	authHdr := r.Header.Get("Authorization")
-	if authHdr == "" {
-		return ""
+	if authHdr != "" && strings.HasPrefix(authHdr, "Bearer ") {
+		return strings.TrimPrefix(authHdr, "Bearer ")
 	}
-	if !strings.HasPrefix(authHdr, "Bearer ") {
-		return ""
+	// Fallback: read from httpOnly cookie.
+	if cookie, err := r.Cookie("alfq_token"); err == nil && cookie.Value != "" {
+		return cookie.Value
 	}
-	return strings.TrimPrefix(authHdr, "Bearer ")
+	return ""
 }

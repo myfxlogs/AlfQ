@@ -17,6 +17,8 @@ import AdminSettings from "./pages/AdminSettings";
 import ServiceManagement from "./pages/ServiceManagement";
 import BindAccount from "./pages/BindAccount";
 import AccountDetails from "./pages/AccountDetails";
+import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
 
 const userRoutes: Record<string, () => React.ReactNode> = {
   "#/": Dashboard,
@@ -155,12 +157,40 @@ export default function App() {
 
   // Login page is fullscreen, no layout
   if (hash === "#/login") {
-    return <Login />;
+    const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    const reason = params.get("reason") || undefined;
+    return <Login reason={reason} />;
+  }
+
+  // Unauthorized page (explicit redirect from session expiry)
+  if (hash.startsWith("#/unauthorized")) {
+    const params = new URLSearchParams(window.location.hash.split("?")[1] || "");
+    const reason = params.get("reason") || undefined;
+    return <Unauthorized reason={reason} />;
   }
 
   // Dynamic route: account details
   if (hash.startsWith("#/account/")) {
     return <AccountDetails />;
+  }
+
+  // Check if route is known; fallback to NotFound
+  const knownRoute = isAdmin ? hash in adminRoutes : hash in userRoutes;
+  if (!knownRoute) {
+    return (
+      <div className="app-layout">
+        <Sidebar hash={hash} isAdmin={isAdmin} onClose={closeSidebar} />
+        <div className="main-content">
+          <div className="topbar">
+            <button className="hamburger" onClick={toggleSidebar} aria-label="菜单">
+              ☰
+            </button>
+            <span className="topbar-brand">{isAdmin ? "ALFQ 管理" : "ALFQ"}</span>
+          </div>
+          <NotFound />
+        </div>
+      </div>
+    );
   }
 
   const Page = isAdmin ? adminRoutes[hash] || Users : userRoutes[hash] || Dashboard;

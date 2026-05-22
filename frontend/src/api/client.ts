@@ -1,7 +1,7 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient, ConnectError, Code, type Interceptor } from "@connectrpc/connect";
 import { AuthService, AuditService, TenantService, UserService } from "../gen/alfq/v1/auth_pb";
-import { BrokerService, AccountService, SystemSettingsService } from "../gen/alfq/v1/broker_pb";
+import { BrokerService, AccountService, SystemSettingsService, ServiceManagementService } from "../gen/alfq/v1/broker_pb";
 import { StrategyService, BacktestService } from "../gen/alfq/v1/strategy_pb";
 
 interface ImportMetaEnv {
@@ -79,6 +79,48 @@ scheduleRefresh(); // kick off on page load
 
 // ── Interceptors ──
 
+// MR-02: Logging interceptor — records method name, duration, and status.
+const loggingInterceptor: Interceptor = (next) => async (req) => {
+  const start = performance.now();
+  try {
+    const res = await next(req);
+    const dur = Math.round(performance.now() - start);
+    console.debug(`[api] ${req.method.name} ${req.url} ${dur}ms`);
+    return res;
+  } catch (e) {
+    const dur = Math.round(performance.now() - start);
+    const code = e instanceof ConnectError ? Code[e.code] : "Error";
+    console.debug(`[api] ${req.method.name} ${req.url} ${dur}ms ${code}`);
+    throw e;
+  }
+};
+
+// MR-01: Retry interceptor — exponential backoff for transient failures.
+const retryInterceptor: Interceptor = (next) => async (req) => {
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1s
+  let lastErr: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await next(req);
+    } catch (e) {
+      lastErr = e;
+      if (attempt >= maxRetries) break;
+      if (e instanceof ConnectError) {
+        const retryable =
+          e.code === Code.Unavailable || e.code === Code.DeadlineExceeded;
+        if (!retryable) throw e;
+      } else {
+        throw e;
+      }
+      const delay = baseDelay * Math.pow(2, attempt);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+};
+
 // Auth interceptor: attach Bearer token to every outgoing request.
 const authInterceptor: Interceptor = (next) => async (req) => {
   const token = getToken();
@@ -102,8 +144,8 @@ const sessionExpiryInterceptor: Interceptor = (next) => async (req) => {
         e.code === Code.Unavailable;
       if (shouldRedirect && !isAuthRpc) {
         clearToken();
-        if (!window.location.hash.startsWith("#/login")) {
-          window.location.hash = "#/login";
+        if (!window.location.hash.startsWith("#/login") && !window.location.hash.startsWith("#/unauthorized")) {
+          window.location.hash = `#/unauthorized?reason=${e.code === Code.Unauthenticated ? "expired" : "forbidden"}`;
         }
       }
     }
@@ -113,7 +155,7 @@ const sessionExpiryInterceptor: Interceptor = (next) => async (req) => {
 
 const transport = createConnectTransport({
   baseUrl: env("VITE_API_BASE_URL", "/api"),
-  interceptors: [authInterceptor, sessionExpiryInterceptor],
+  interceptors: [loggingInterceptor, retryInterceptor, authInterceptor, sessionExpiryInterceptor],
 });
 
 export const authClient = createClient(AuthService, transport);
@@ -125,3 +167,4 @@ export const backtestClient = createClient(BacktestService, transport);
 export const tenantClient = createClient(TenantService, transport);
 export const userClient = createClient(UserService, transport);
 export const settingsClient = createClient(SystemSettingsService, transport);
+export const serviceManagementClient = createClient(ServiceManagementService, transport);

@@ -1,11 +1,7 @@
 // AdminSettings — 系统配置（MT4/MT5 网关地址等）
 import { useEffect, useState } from "react";
-import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { SystemSettingsService, type SystemSetting } from "../gen/alfq/v1/broker_pb";
-
-const transport = createConnectTransport({ baseUrl: "/api" });
-const settingsClient = createClient(SystemSettingsService, transport);
+import { type SystemSetting } from "../gen/alfq/v1/broker_pb";
+import { settingsClient } from "../api/client";
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<SystemSetting[]>([]);

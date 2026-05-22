@@ -41,7 +41,6 @@ jobs:
 
   golangci:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -62,7 +61,6 @@ jobs:
           node-version: "22"
       - run: cd frontend && pnpm install --frozen-lockfile
       - run: cd frontend && pnpm lint
-        continue-on-error: true
       - run: cd frontend && pnpm build
 
   python-test:

@@ -25,7 +25,7 @@ func setupDB(t *testing.T) *pg.Pool {
 	t.Helper()
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "postgres://alfq:alfq_dev@localhost:5432/alfq?sslmode=disable"
+		dsn = "postgres://localhost:5432/alfq?sslmode=disable"
 	}
 	pool, err := pg.Connect(context.Background(), dsn)
 	if err != nil {
