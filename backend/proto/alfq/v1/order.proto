@@ -73,17 +73,21 @@ message Position {
 }
 
 // OrderRequest is the normalized order submission request.
+// Symbol holds the canonical name (e.g. "BTCUSD").
+// BrokerSymbolRaw holds the broker-specific name (e.g. "BTCUSDm"),
+// resolved by the OMS executor before broker submission.
 message OrderRequest {
   string client_order_id = 1;
   string tenant_id = 2;
   string account_id = 3;
   string strategy_id = 4;
-  string symbol = 5;
+  string symbol = 5;               // canonical symbol name
   OrderSide side = 6;
   OrderType type = 7;
   Money price = 8;
   Money stop_price = 9;
   double qty = 10;
+  string broker_symbol_raw = 11;   // broker-specific symbol, resolved by OMS
 }
 
 // RiskCheckResult is returned by risk-svc.

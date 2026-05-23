@@ -17,7 +17,6 @@ import (
 	"github.com/alfq/backend/go/internal/common/bus"
 	"github.com/alfq/backend/go/internal/common/config"
 	"github.com/alfq/backend/go/internal/common/crypto"
-	"github.com/alfq/backend/go/internal/common/db/pg"
 	"github.com/alfq/backend/go/internal/common/health"
 	"github.com/alfq/backend/go/internal/mthub"
 	"github.com/alfq/backend/go/internal/oms"
@@ -94,6 +93,14 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	executor := oms.NewOrderExecutor(nil, engine, nil).
 		WithOrderRepo(orderRepo).
 		WithRiskEventWriter(riskEventRepo)
+
+	// Wire canonical → symbol_raw resolver for Gate-3 (symbol_not_on_broker)
+	if d.PG != nil {
+		resolver := adminapi.NewSymbolResolver(d.PG.Pool)
+		executor.WithSymbolResolver(&omsSymbolResolver{resolver: resolver})
+		d.Log.Info("symbol resolver wired for canonical resolution")
+	}
+
 	d.Log.Info("oms order executor wired", zap.Bool("pg", d.PG != nil))
 
 	// Reconciler: compares local PG orders with broker state every 30s (RC10)
@@ -108,9 +115,13 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 		zap.Bool("breaker_ok", breaker.Allow()),
 	)
 
-	// Q2: Load whitelist from broker_symbols to replace hardcoded fallback.
+	// M4: Wire CanonicalAuth (replaces legacy Whitelist + loadWhitelistFromDB)
 	if d.PG != nil {
-		go loadWhitelistFromDB(d.PG, engine)
+		engine.WithCanonicalAuth(d.PG.Pool)
+		if ca := engine.CanonicalAuth(); ca != nil {
+			ca.StartNotifyListener(context.Background()) // M6: hot-reload cache
+		}
+		d.Log.Info("canonical auth rule activated (Gate 1+2)")
 	}
 
 	// Account connection manager
@@ -241,6 +252,14 @@ func RunTradingCore(mux *http.ServeMux, d *bootstrap.Deps) (shutdown func(), err
 	// SymbolService — broker symbol metadata
 	symPath, symHandler := adminapi.NewSymbolServiceHandler(svc)
 	mux.Handle(symPath, authMW(symHandler))
+
+	// StrategySymbolService — canonical symbol management (M5)
+	if d.PG != nil {
+		ssymHandler := adminapi.NewStrategySymbolHandler(d.PG.Pool)
+		ssymPath, ssymSvc := alfqv1connect.NewStrategySymbolServiceHandler(ssymHandler)
+		mux.Handle(ssymPath, authMW(ssymSvc))
+		d.Log.Info("strategy symbol service registered", zap.String("path", ssymPath))
+	}
 
 	// RS07: RLS interceptor applies tenant_id to PG session automatically.
 	// All handler-level setRLS calls can now be replaced with RequireTenant().
@@ -377,29 +396,20 @@ func (a *acctAdapter) WithLiveSession(accountID string, fn func(conn interface{}
 	})
 }
 
-// loadWhitelistFromDB replaces the hardcoded whitelist with real symbols from broker_symbols.
-func loadWhitelistFromDB(pgPool *pg.Pool, engine *risksvc.Engine) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+// omsSymbolResolver adapts adminapi.SymbolResolver to oms.SymbolResolver.
+type omsSymbolResolver struct {
+	resolver *adminapi.SymbolResolver
+}
 
-	rows, err := pgPool.Query(ctx, `SELECT DISTINCT symbol_raw FROM broker_symbols WHERE trade_mode > 0`)
+func (r *omsSymbolResolver) ResolveCanonical(ctx context.Context, accountID, canonical string) (string, int32, error) {
+	info, valid, err := r.resolver.ResolveCanonical(ctx, accountID, canonical)
 	if err != nil {
-		return
+		return "", 0, err
 	}
-	defer rows.Close()
-
-	var symbols []string
-	for rows.Next() {
-		var s string
-		if err := rows.Scan(&s); err == nil && s != "" {
-			symbols = append(symbols, s)
-		}
+	if !valid {
+		return info.SymbolRaw, info.TradeMode, nil
 	}
-	if len(symbols) > 0 {
-		if wl := engine.Whitelist(); wl != nil {
-			wl.LoadSymbols(symbols)
-		}
-	}
+	return info.SymbolRaw, info.TradeMode, nil
 }
 
 // getEncKey derives a 32-byte AES key for API key encryption.

@@ -55,3 +55,55 @@ message BrokerSymbolInfo {
 message Symbol { string name = 1; string description = 2; int32 digits = 3; double contract_size = 4; string currency = 5; }
 message ListSymbolsRequest { string broker_id = 1; }
 message ListSymbolsResponse { repeated Symbol symbols = 1; }
+
+// ── M5: Strategy Symbol (Canonical) Management ──
+
+service StrategySymbolService {
+  // List available canonical symbols for a tenant (from tenant_canonical_whitelist).
+  rpc ListAvailableCanonicals(ListAvailableCanonicalsRequest) returns (ListAvailableCanonicalsResponse);
+  // Resolve canonical symbols for a specific account (shows symbol_raw + tradability).
+  rpc ResolveCanonicalsForAccount(ResolveCanonicalsRequest) returns (ResolveCanonicalsResponse);
+  // Set a strategy's canonical symbol whitelist.
+  rpc UpdateStrategySymbols(UpdateStrategySymbolsRequest) returns (UpdateStrategySymbolsResponse);
+}
+
+message ListAvailableCanonicalsRequest {
+  string tenant_id = 1;
+}
+
+message ListAvailableCanonicalsResponse {
+  repeated CanonicalInfo canonicals = 1;
+}
+
+message CanonicalInfo {
+  string canonical = 1;
+  string asset_class = 2;
+  string description = 3;
+  bool enabled = 4;
+}
+
+message ResolveCanonicalsRequest {
+  string account_id = 1;
+  repeated string canonicals = 2;
+}
+
+message ResolveCanonicalsResponse {
+  repeated CanonicalResolution resolutions = 1;
+}
+
+message CanonicalResolution {
+  string canonical = 1;
+  string symbol_raw = 2;     // broker-specific name
+  bool tradable = 3;          // true if trade_mode > 0
+  int32 trade_mode = 4;       // 0=disabled, 1=long_only, 2=short_only, 3=full
+}
+
+message UpdateStrategySymbolsRequest {
+  string strategy_id = 1;
+  repeated string canonicals = 2;  // complete list; replaces existing
+}
+
+message UpdateStrategySymbolsResponse {
+  int32 added = 1;
+  int32 removed = 2;
+}

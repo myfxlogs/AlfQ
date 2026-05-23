@@ -13,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/alfq/backend/go/internal/adminapi"
 	"github.com/alfq/backend/go/internal/common/bootstrap"
 	"github.com/alfq/backend/go/internal/oms"
 	"github.com/alfq/backend/go/internal/oms/repo"
@@ -123,6 +124,10 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 	orderRepo := repo.NewOrderRepo(d.PG)
 	riskEventRepo := repo.NewRiskEventRepo(d.PG)
 	riskEngine := risksvc.NewEngine()
+	if d.PG != nil {
+		riskEngine.WithCanonicalAuth(d.PG.Pool)
+		d.Log.Info("canonical auth rule activated (Gate 1+2)")
+	}
 
 	mthub := newMthubAdapter(mthubAddr, d.Log)
 
@@ -130,32 +135,24 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 		WithOrderRepo(orderRepo).
 		WithRiskEventWriter(riskEventRepo)
 
+	// Wire canonical → symbol_raw resolver (Gate-3 in OMS executor)
+	if d.PG != nil {
+		resolver := adminapi.NewSymbolResolver(d.PG.Pool)
+		executor.WithSymbolResolver(&omsSymbolResolver{resolver: resolver})
+		d.Log.Info("symbol resolver wired for canonical resolution")
+	}
+
 	d.Log.Info("oms executor wired for quant-engine",
 		zap.String("account", accountID),
 		zap.String("mthub", mthubAddr),
 	)
 
 	// Wire signal→order bridge: signals flow through OMS state machine
+	// Symbol resolution (canonical → broker_symbol_raw) is handled by OrderExecutor.
 	onSignal := func(strategyID, symbol, side string, qty float64, reason string) {
 		if strategyID == "" {
 			d.Log.Warn("signal dropped: missing strategy_id", zap.String("reason", reason))
 			return
-		}
-		// Resolve canonical → broker-specific symbol_raw
-		brokerSymbol := symbol
-		if d.PG != nil {
-			var resolved string
-			if err := d.PG.QueryRow(context.Background(),
-				`SELECT bs.symbol_raw
-				   FROM accounts a
-				   JOIN broker_symbols bs ON bs.broker_id = a.broker_id
-				  WHERE a.id = $1
-				    AND (bs.canonical = $2 OR bs.symbol_raw = $2)
-				  LIMIT 1`,
-				accountID, symbol,
-			).Scan(&resolved); err == nil && resolved != "" {
-				brokerSymbol = resolved
-			}
 		}
 
 		var orderSide pb.OrderSide
@@ -169,21 +166,22 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 			return
 		}
 
+		// Symbol = canonical; OMS executor resolves BrokerSymbolRaw via SymbolResolver
 		req := &pb.OrderRequest{
 			TenantId:   tenantID,
 			AccountId:  accountID,
 			StrategyId: strategyID,
-			Symbol:     brokerSymbol,
+			Symbol:     symbol,
 			Side:       orderSide,
 			Qty:        qty,
 			Type:       pb.OrderType_ORDER_TYPE_MARKET,
-			ClientOrderId: fmt.Sprintf("qe-%s-%d", brokerSymbol, time.Now().UTC().UnixMilli()),
+			ClientOrderId: fmt.Sprintf("qe-%s-%d", symbol, time.Now().UTC().UnixMilli()),
 		}
 
 		resp, err := executor.Submit(context.Background(), req)
 		if err != nil {
 			d.Log.Warn("order submit failed (oms)",
-				zap.String("symbol", brokerSymbol),
+				zap.String("symbol", symbol),
 				zap.String("side", side),
 				zap.Error(err),
 			)
@@ -191,7 +189,7 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 		}
 		d.Log.Info("order submitted via oms",
 			zap.String("canonical", symbol),
-			zap.String("broker_symbol", brokerSymbol),
+			zap.String("broker_symbol", req.BrokerSymbolRaw),
 			zap.String("side", side),
 			zap.Float64("qty", qty),
 			zap.String("ticket", resp.Ticket),
@@ -199,4 +197,20 @@ func register(adapter *bootstrap.ServeMuxAdapter, d *bootstrap.Deps) error {
 	}
 
 	return quantengine.RunQuantEngineWithSignalHandler(adapter.Mux, d, onSignal)
+}
+
+// omsSymbolResolver adapts adminapi.SymbolResolver to oms.SymbolResolver.
+type omsSymbolResolver struct {
+	resolver *adminapi.SymbolResolver
+}
+
+func (r *omsSymbolResolver) ResolveCanonical(ctx context.Context, accountID, canonical string) (string, int32, error) {
+	info, valid, err := r.resolver.ResolveCanonical(ctx, accountID, canonical)
+	if err != nil {
+		return "", 0, err
+	}
+	if !valid {
+		return info.SymbolRaw, info.TradeMode, nil // trade_mode=0 → disabled
+	}
+	return info.SymbolRaw, info.TradeMode, nil
 }

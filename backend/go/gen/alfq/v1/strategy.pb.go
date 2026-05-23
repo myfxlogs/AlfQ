@@ -1425,6 +1425,430 @@ func (x *ListSymbolsResponse) GetSymbols() []*Symbol {
 	return nil
 }
 
+type ListAvailableCanonicalsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAvailableCanonicalsRequest) Reset() {
+	*x = ListAvailableCanonicalsRequest{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAvailableCanonicalsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAvailableCanonicalsRequest) ProtoMessage() {}
+
+func (x *ListAvailableCanonicalsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAvailableCanonicalsRequest.ProtoReflect.Descriptor instead.
+func (*ListAvailableCanonicalsRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ListAvailableCanonicalsRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+type ListAvailableCanonicalsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Canonicals    []*CanonicalInfo       `protobuf:"bytes,1,rep,name=canonicals,proto3" json:"canonicals,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAvailableCanonicalsResponse) Reset() {
+	*x = ListAvailableCanonicalsResponse{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAvailableCanonicalsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAvailableCanonicalsResponse) ProtoMessage() {}
+
+func (x *ListAvailableCanonicalsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAvailableCanonicalsResponse.ProtoReflect.Descriptor instead.
+func (*ListAvailableCanonicalsResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListAvailableCanonicalsResponse) GetCanonicals() []*CanonicalInfo {
+	if x != nil {
+		return x.Canonicals
+	}
+	return nil
+}
+
+type CanonicalInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Canonical     string                 `protobuf:"bytes,1,opt,name=canonical,proto3" json:"canonical,omitempty"`
+	AssetClass    string                 `protobuf:"bytes,2,opt,name=asset_class,json=assetClass,proto3" json:"asset_class,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Enabled       bool                   `protobuf:"varint,4,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CanonicalInfo) Reset() {
+	*x = CanonicalInfo{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CanonicalInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CanonicalInfo) ProtoMessage() {}
+
+func (x *CanonicalInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CanonicalInfo.ProtoReflect.Descriptor instead.
+func (*CanonicalInfo) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *CanonicalInfo) GetCanonical() string {
+	if x != nil {
+		return x.Canonical
+	}
+	return ""
+}
+
+func (x *CanonicalInfo) GetAssetClass() string {
+	if x != nil {
+		return x.AssetClass
+	}
+	return ""
+}
+
+func (x *CanonicalInfo) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *CanonicalInfo) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+type ResolveCanonicalsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Canonicals    []string               `protobuf:"bytes,2,rep,name=canonicals,proto3" json:"canonicals,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveCanonicalsRequest) Reset() {
+	*x = ResolveCanonicalsRequest{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveCanonicalsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveCanonicalsRequest) ProtoMessage() {}
+
+func (x *ResolveCanonicalsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveCanonicalsRequest.ProtoReflect.Descriptor instead.
+func (*ResolveCanonicalsRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ResolveCanonicalsRequest) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *ResolveCanonicalsRequest) GetCanonicals() []string {
+	if x != nil {
+		return x.Canonicals
+	}
+	return nil
+}
+
+type ResolveCanonicalsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resolutions   []*CanonicalResolution `protobuf:"bytes,1,rep,name=resolutions,proto3" json:"resolutions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveCanonicalsResponse) Reset() {
+	*x = ResolveCanonicalsResponse{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveCanonicalsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveCanonicalsResponse) ProtoMessage() {}
+
+func (x *ResolveCanonicalsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveCanonicalsResponse.ProtoReflect.Descriptor instead.
+func (*ResolveCanonicalsResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ResolveCanonicalsResponse) GetResolutions() []*CanonicalResolution {
+	if x != nil {
+		return x.Resolutions
+	}
+	return nil
+}
+
+type CanonicalResolution struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Canonical     string                 `protobuf:"bytes,1,opt,name=canonical,proto3" json:"canonical,omitempty"`
+	SymbolRaw     string                 `protobuf:"bytes,2,opt,name=symbol_raw,json=symbolRaw,proto3" json:"symbol_raw,omitempty"`  // broker-specific name
+	Tradable      bool                   `protobuf:"varint,3,opt,name=tradable,proto3" json:"tradable,omitempty"`                    // true if trade_mode > 0
+	TradeMode     int32                  `protobuf:"varint,4,opt,name=trade_mode,json=tradeMode,proto3" json:"trade_mode,omitempty"` // 0=disabled, 1=long_only, 2=short_only, 3=full
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CanonicalResolution) Reset() {
+	*x = CanonicalResolution{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CanonicalResolution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CanonicalResolution) ProtoMessage() {}
+
+func (x *CanonicalResolution) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CanonicalResolution.ProtoReflect.Descriptor instead.
+func (*CanonicalResolution) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *CanonicalResolution) GetCanonical() string {
+	if x != nil {
+		return x.Canonical
+	}
+	return ""
+}
+
+func (x *CanonicalResolution) GetSymbolRaw() string {
+	if x != nil {
+		return x.SymbolRaw
+	}
+	return ""
+}
+
+func (x *CanonicalResolution) GetTradable() bool {
+	if x != nil {
+		return x.Tradable
+	}
+	return false
+}
+
+func (x *CanonicalResolution) GetTradeMode() int32 {
+	if x != nil {
+		return x.TradeMode
+	}
+	return 0
+}
+
+type UpdateStrategySymbolsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StrategyId    string                 `protobuf:"bytes,1,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
+	Canonicals    []string               `protobuf:"bytes,2,rep,name=canonicals,proto3" json:"canonicals,omitempty"` // complete list; replaces existing
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateStrategySymbolsRequest) Reset() {
+	*x = UpdateStrategySymbolsRequest{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateStrategySymbolsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateStrategySymbolsRequest) ProtoMessage() {}
+
+func (x *UpdateStrategySymbolsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateStrategySymbolsRequest.ProtoReflect.Descriptor instead.
+func (*UpdateStrategySymbolsRequest) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *UpdateStrategySymbolsRequest) GetStrategyId() string {
+	if x != nil {
+		return x.StrategyId
+	}
+	return ""
+}
+
+func (x *UpdateStrategySymbolsRequest) GetCanonicals() []string {
+	if x != nil {
+		return x.Canonicals
+	}
+	return nil
+}
+
+type UpdateStrategySymbolsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Added         int32                  `protobuf:"varint,1,opt,name=added,proto3" json:"added,omitempty"`
+	Removed       int32                  `protobuf:"varint,2,opt,name=removed,proto3" json:"removed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateStrategySymbolsResponse) Reset() {
+	*x = UpdateStrategySymbolsResponse{}
+	mi := &file_alfq_v1_strategy_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateStrategySymbolsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateStrategySymbolsResponse) ProtoMessage() {}
+
+func (x *UpdateStrategySymbolsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_alfq_v1_strategy_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateStrategySymbolsResponse.ProtoReflect.Descriptor instead.
+func (*UpdateStrategySymbolsResponse) Descriptor() ([]byte, []int) {
+	return file_alfq_v1_strategy_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *UpdateStrategySymbolsResponse) GetAdded() int32 {
+	if x != nil {
+		return x.Added
+	}
+	return 0
+}
+
+func (x *UpdateStrategySymbolsResponse) GetRemoved() int32 {
+	if x != nil {
+		return x.Removed
+	}
+	return 0
+}
+
 var File_alfq_v1_strategy_proto protoreflect.FileDescriptor
 
 const file_alfq_v1_strategy_proto_rawDesc = "" +
@@ -1542,7 +1966,43 @@ const file_alfq_v1_strategy_proto_rawDesc = "" +
 	"\x12ListSymbolsRequest\x12\x1b\n" +
 	"\tbroker_id\x18\x01 \x01(\tR\bbrokerId\"@\n" +
 	"\x13ListSymbolsResponse\x12)\n" +
-	"\asymbols\x18\x01 \x03(\v2\x0f.alfq.v1.SymbolR\asymbols2\x81\x04\n" +
+	"\asymbols\x18\x01 \x03(\v2\x0f.alfq.v1.SymbolR\asymbols\"=\n" +
+	"\x1eListAvailableCanonicalsRequest\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\"Y\n" +
+	"\x1fListAvailableCanonicalsResponse\x126\n" +
+	"\n" +
+	"canonicals\x18\x01 \x03(\v2\x16.alfq.v1.CanonicalInfoR\n" +
+	"canonicals\"\x8a\x01\n" +
+	"\rCanonicalInfo\x12\x1c\n" +
+	"\tcanonical\x18\x01 \x01(\tR\tcanonical\x12\x1f\n" +
+	"\vasset_class\x18\x02 \x01(\tR\n" +
+	"assetClass\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x18\n" +
+	"\aenabled\x18\x04 \x01(\bR\aenabled\"Y\n" +
+	"\x18ResolveCanonicalsRequest\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12\x1e\n" +
+	"\n" +
+	"canonicals\x18\x02 \x03(\tR\n" +
+	"canonicals\"[\n" +
+	"\x19ResolveCanonicalsResponse\x12>\n" +
+	"\vresolutions\x18\x01 \x03(\v2\x1c.alfq.v1.CanonicalResolutionR\vresolutions\"\x8d\x01\n" +
+	"\x13CanonicalResolution\x12\x1c\n" +
+	"\tcanonical\x18\x01 \x01(\tR\tcanonical\x12\x1d\n" +
+	"\n" +
+	"symbol_raw\x18\x02 \x01(\tR\tsymbolRaw\x12\x1a\n" +
+	"\btradable\x18\x03 \x01(\bR\btradable\x12\x1d\n" +
+	"\n" +
+	"trade_mode\x18\x04 \x01(\x05R\ttradeMode\"_\n" +
+	"\x1cUpdateStrategySymbolsRequest\x12\x1f\n" +
+	"\vstrategy_id\x18\x01 \x01(\tR\n" +
+	"strategyId\x12\x1e\n" +
+	"\n" +
+	"canonicals\x18\x02 \x03(\tR\n" +
+	"canonicals\"O\n" +
+	"\x1dUpdateStrategySymbolsResponse\x12\x14\n" +
+	"\x05added\x18\x01 \x01(\x05R\x05added\x12\x18\n" +
+	"\aremoved\x18\x02 \x01(\x05R\aremoved2\x81\x04\n" +
 	"\x0fStrategyService\x12C\n" +
 	"\x0eCreateStrategy\x12\x1e.alfq.v1.CreateStrategyRequest\x1a\x11.alfq.v1.Strategy\x12=\n" +
 	"\vGetStrategy\x12\x1b.alfq.v1.GetStrategyRequest\x1a\x11.alfq.v1.Strategy\x12Q\n" +
@@ -1557,7 +2017,11 @@ const file_alfq_v1_strategy_proto_rawDesc = "" +
 	"\rSymbolService\x12H\n" +
 	"\vListSymbols\x12\x1b.alfq.v1.ListSymbolsRequest\x1a\x1c.alfq.v1.ListSymbolsResponse\x12Z\n" +
 	"\x11ListBrokerSymbols\x12!.alfq.v1.ListBrokerSymbolsRequest\x1a\".alfq.v1.ListBrokerSymbolsResponse\x12G\n" +
-	"\fLookupSymbol\x12\x1c.alfq.v1.LookupSymbolRequest\x1a\x19.alfq.v1.BrokerSymbolInfoB\x88\x01\n" +
+	"\fLookupSymbol\x12\x1c.alfq.v1.LookupSymbolRequest\x1a\x19.alfq.v1.BrokerSymbolInfo2\xd3\x02\n" +
+	"\x15StrategySymbolService\x12l\n" +
+	"\x17ListAvailableCanonicals\x12'.alfq.v1.ListAvailableCanonicalsRequest\x1a(.alfq.v1.ListAvailableCanonicalsResponse\x12d\n" +
+	"\x1bResolveCanonicalsForAccount\x12!.alfq.v1.ResolveCanonicalsRequest\x1a\".alfq.v1.ResolveCanonicalsResponse\x12f\n" +
+	"\x15UpdateStrategySymbols\x12%.alfq.v1.UpdateStrategySymbolsRequest\x1a&.alfq.v1.UpdateStrategySymbolsResponseB\x88\x01\n" +
 	"\vcom.alfq.v1B\rStrategyProtoP\x01Z-github.com/alfq/backend/go/gen/alfq/v1;alfqv1\xa2\x02\x03AXX\xaa\x02\aAlfq.V1\xca\x02\aAlfq\\V1\xe2\x02\x13Alfq\\V1\\GPBMetadata\xea\x02\bAlfq::V1b\x06proto3"
 
 var (
@@ -1572,31 +2036,39 @@ func file_alfq_v1_strategy_proto_rawDescGZIP() []byte {
 	return file_alfq_v1_strategy_proto_rawDescData
 }
 
-var file_alfq_v1_strategy_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_alfq_v1_strategy_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_alfq_v1_strategy_proto_goTypes = []any{
-	(*Strategy)(nil),                  // 0: alfq.v1.Strategy
-	(*CreateStrategyRequest)(nil),     // 1: alfq.v1.CreateStrategyRequest
-	(*GetStrategyRequest)(nil),        // 2: alfq.v1.GetStrategyRequest
-	(*ListStrategiesRequest)(nil),     // 3: alfq.v1.ListStrategiesRequest
-	(*ListStrategiesResponse)(nil),    // 4: alfq.v1.ListStrategiesResponse
-	(*DeployStrategyRequest)(nil),     // 5: alfq.v1.DeployStrategyRequest
-	(*StopStrategyRequest)(nil),       // 6: alfq.v1.StopStrategyRequest
-	(*PromoteToLiveRequest)(nil),      // 7: alfq.v1.PromoteToLiveRequest
-	(*PromoteToLiveResponse)(nil),     // 8: alfq.v1.PromoteToLiveResponse
-	(*StreamSignalsRequest)(nil),      // 9: alfq.v1.StreamSignalsRequest
-	(*Signal)(nil),                    // 10: alfq.v1.Signal
-	(*BacktestTask)(nil),              // 11: alfq.v1.BacktestTask
-	(*RunBacktestRequest)(nil),        // 12: alfq.v1.RunBacktestRequest
-	(*BacktestProgress)(nil),          // 13: alfq.v1.BacktestProgress
-	(*ListBacktestsRequest)(nil),      // 14: alfq.v1.ListBacktestsRequest
-	(*ListBacktestsResponse)(nil),     // 15: alfq.v1.ListBacktestsResponse
-	(*ListBrokerSymbolsRequest)(nil),  // 16: alfq.v1.ListBrokerSymbolsRequest
-	(*ListBrokerSymbolsResponse)(nil), // 17: alfq.v1.ListBrokerSymbolsResponse
-	(*LookupSymbolRequest)(nil),       // 18: alfq.v1.LookupSymbolRequest
-	(*BrokerSymbolInfo)(nil),          // 19: alfq.v1.BrokerSymbolInfo
-	(*Symbol)(nil),                    // 20: alfq.v1.Symbol
-	(*ListSymbolsRequest)(nil),        // 21: alfq.v1.ListSymbolsRequest
-	(*ListSymbolsResponse)(nil),       // 22: alfq.v1.ListSymbolsResponse
+	(*Strategy)(nil),                        // 0: alfq.v1.Strategy
+	(*CreateStrategyRequest)(nil),           // 1: alfq.v1.CreateStrategyRequest
+	(*GetStrategyRequest)(nil),              // 2: alfq.v1.GetStrategyRequest
+	(*ListStrategiesRequest)(nil),           // 3: alfq.v1.ListStrategiesRequest
+	(*ListStrategiesResponse)(nil),          // 4: alfq.v1.ListStrategiesResponse
+	(*DeployStrategyRequest)(nil),           // 5: alfq.v1.DeployStrategyRequest
+	(*StopStrategyRequest)(nil),             // 6: alfq.v1.StopStrategyRequest
+	(*PromoteToLiveRequest)(nil),            // 7: alfq.v1.PromoteToLiveRequest
+	(*PromoteToLiveResponse)(nil),           // 8: alfq.v1.PromoteToLiveResponse
+	(*StreamSignalsRequest)(nil),            // 9: alfq.v1.StreamSignalsRequest
+	(*Signal)(nil),                          // 10: alfq.v1.Signal
+	(*BacktestTask)(nil),                    // 11: alfq.v1.BacktestTask
+	(*RunBacktestRequest)(nil),              // 12: alfq.v1.RunBacktestRequest
+	(*BacktestProgress)(nil),                // 13: alfq.v1.BacktestProgress
+	(*ListBacktestsRequest)(nil),            // 14: alfq.v1.ListBacktestsRequest
+	(*ListBacktestsResponse)(nil),           // 15: alfq.v1.ListBacktestsResponse
+	(*ListBrokerSymbolsRequest)(nil),        // 16: alfq.v1.ListBrokerSymbolsRequest
+	(*ListBrokerSymbolsResponse)(nil),       // 17: alfq.v1.ListBrokerSymbolsResponse
+	(*LookupSymbolRequest)(nil),             // 18: alfq.v1.LookupSymbolRequest
+	(*BrokerSymbolInfo)(nil),                // 19: alfq.v1.BrokerSymbolInfo
+	(*Symbol)(nil),                          // 20: alfq.v1.Symbol
+	(*ListSymbolsRequest)(nil),              // 21: alfq.v1.ListSymbolsRequest
+	(*ListSymbolsResponse)(nil),             // 22: alfq.v1.ListSymbolsResponse
+	(*ListAvailableCanonicalsRequest)(nil),  // 23: alfq.v1.ListAvailableCanonicalsRequest
+	(*ListAvailableCanonicalsResponse)(nil), // 24: alfq.v1.ListAvailableCanonicalsResponse
+	(*CanonicalInfo)(nil),                   // 25: alfq.v1.CanonicalInfo
+	(*ResolveCanonicalsRequest)(nil),        // 26: alfq.v1.ResolveCanonicalsRequest
+	(*ResolveCanonicalsResponse)(nil),       // 27: alfq.v1.ResolveCanonicalsResponse
+	(*CanonicalResolution)(nil),             // 28: alfq.v1.CanonicalResolution
+	(*UpdateStrategySymbolsRequest)(nil),    // 29: alfq.v1.UpdateStrategySymbolsRequest
+	(*UpdateStrategySymbolsResponse)(nil),   // 30: alfq.v1.UpdateStrategySymbolsResponse
 }
 var file_alfq_v1_strategy_proto_depIdxs = []int32{
 	0,  // 0: alfq.v1.ListStrategiesResponse.strategies:type_name -> alfq.v1.Strategy
@@ -1604,35 +2076,43 @@ var file_alfq_v1_strategy_proto_depIdxs = []int32{
 	11, // 2: alfq.v1.ListBacktestsResponse.tasks:type_name -> alfq.v1.BacktestTask
 	19, // 3: alfq.v1.ListBrokerSymbolsResponse.symbols:type_name -> alfq.v1.BrokerSymbolInfo
 	20, // 4: alfq.v1.ListSymbolsResponse.symbols:type_name -> alfq.v1.Symbol
-	1,  // 5: alfq.v1.StrategyService.CreateStrategy:input_type -> alfq.v1.CreateStrategyRequest
-	2,  // 6: alfq.v1.StrategyService.GetStrategy:input_type -> alfq.v1.GetStrategyRequest
-	3,  // 7: alfq.v1.StrategyService.ListStrategies:input_type -> alfq.v1.ListStrategiesRequest
-	5,  // 8: alfq.v1.StrategyService.DeployStrategy:input_type -> alfq.v1.DeployStrategyRequest
-	6,  // 9: alfq.v1.StrategyService.StopStrategy:input_type -> alfq.v1.StopStrategyRequest
-	7,  // 10: alfq.v1.StrategyService.PromoteToLive:input_type -> alfq.v1.PromoteToLiveRequest
-	9,  // 11: alfq.v1.StrategyService.StreamSignals:input_type -> alfq.v1.StreamSignalsRequest
-	12, // 12: alfq.v1.BacktestService.RunBacktest:input_type -> alfq.v1.RunBacktestRequest
-	14, // 13: alfq.v1.BacktestService.ListBacktests:input_type -> alfq.v1.ListBacktestsRequest
-	21, // 14: alfq.v1.SymbolService.ListSymbols:input_type -> alfq.v1.ListSymbolsRequest
-	16, // 15: alfq.v1.SymbolService.ListBrokerSymbols:input_type -> alfq.v1.ListBrokerSymbolsRequest
-	18, // 16: alfq.v1.SymbolService.LookupSymbol:input_type -> alfq.v1.LookupSymbolRequest
-	0,  // 17: alfq.v1.StrategyService.CreateStrategy:output_type -> alfq.v1.Strategy
-	0,  // 18: alfq.v1.StrategyService.GetStrategy:output_type -> alfq.v1.Strategy
-	4,  // 19: alfq.v1.StrategyService.ListStrategies:output_type -> alfq.v1.ListStrategiesResponse
-	0,  // 20: alfq.v1.StrategyService.DeployStrategy:output_type -> alfq.v1.Strategy
-	0,  // 21: alfq.v1.StrategyService.StopStrategy:output_type -> alfq.v1.Strategy
-	8,  // 22: alfq.v1.StrategyService.PromoteToLive:output_type -> alfq.v1.PromoteToLiveResponse
-	10, // 23: alfq.v1.StrategyService.StreamSignals:output_type -> alfq.v1.Signal
-	13, // 24: alfq.v1.BacktestService.RunBacktest:output_type -> alfq.v1.BacktestProgress
-	15, // 25: alfq.v1.BacktestService.ListBacktests:output_type -> alfq.v1.ListBacktestsResponse
-	22, // 26: alfq.v1.SymbolService.ListSymbols:output_type -> alfq.v1.ListSymbolsResponse
-	17, // 27: alfq.v1.SymbolService.ListBrokerSymbols:output_type -> alfq.v1.ListBrokerSymbolsResponse
-	19, // 28: alfq.v1.SymbolService.LookupSymbol:output_type -> alfq.v1.BrokerSymbolInfo
-	17, // [17:29] is the sub-list for method output_type
-	5,  // [5:17] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	25, // 5: alfq.v1.ListAvailableCanonicalsResponse.canonicals:type_name -> alfq.v1.CanonicalInfo
+	28, // 6: alfq.v1.ResolveCanonicalsResponse.resolutions:type_name -> alfq.v1.CanonicalResolution
+	1,  // 7: alfq.v1.StrategyService.CreateStrategy:input_type -> alfq.v1.CreateStrategyRequest
+	2,  // 8: alfq.v1.StrategyService.GetStrategy:input_type -> alfq.v1.GetStrategyRequest
+	3,  // 9: alfq.v1.StrategyService.ListStrategies:input_type -> alfq.v1.ListStrategiesRequest
+	5,  // 10: alfq.v1.StrategyService.DeployStrategy:input_type -> alfq.v1.DeployStrategyRequest
+	6,  // 11: alfq.v1.StrategyService.StopStrategy:input_type -> alfq.v1.StopStrategyRequest
+	7,  // 12: alfq.v1.StrategyService.PromoteToLive:input_type -> alfq.v1.PromoteToLiveRequest
+	9,  // 13: alfq.v1.StrategyService.StreamSignals:input_type -> alfq.v1.StreamSignalsRequest
+	12, // 14: alfq.v1.BacktestService.RunBacktest:input_type -> alfq.v1.RunBacktestRequest
+	14, // 15: alfq.v1.BacktestService.ListBacktests:input_type -> alfq.v1.ListBacktestsRequest
+	21, // 16: alfq.v1.SymbolService.ListSymbols:input_type -> alfq.v1.ListSymbolsRequest
+	16, // 17: alfq.v1.SymbolService.ListBrokerSymbols:input_type -> alfq.v1.ListBrokerSymbolsRequest
+	18, // 18: alfq.v1.SymbolService.LookupSymbol:input_type -> alfq.v1.LookupSymbolRequest
+	23, // 19: alfq.v1.StrategySymbolService.ListAvailableCanonicals:input_type -> alfq.v1.ListAvailableCanonicalsRequest
+	26, // 20: alfq.v1.StrategySymbolService.ResolveCanonicalsForAccount:input_type -> alfq.v1.ResolveCanonicalsRequest
+	29, // 21: alfq.v1.StrategySymbolService.UpdateStrategySymbols:input_type -> alfq.v1.UpdateStrategySymbolsRequest
+	0,  // 22: alfq.v1.StrategyService.CreateStrategy:output_type -> alfq.v1.Strategy
+	0,  // 23: alfq.v1.StrategyService.GetStrategy:output_type -> alfq.v1.Strategy
+	4,  // 24: alfq.v1.StrategyService.ListStrategies:output_type -> alfq.v1.ListStrategiesResponse
+	0,  // 25: alfq.v1.StrategyService.DeployStrategy:output_type -> alfq.v1.Strategy
+	0,  // 26: alfq.v1.StrategyService.StopStrategy:output_type -> alfq.v1.Strategy
+	8,  // 27: alfq.v1.StrategyService.PromoteToLive:output_type -> alfq.v1.PromoteToLiveResponse
+	10, // 28: alfq.v1.StrategyService.StreamSignals:output_type -> alfq.v1.Signal
+	13, // 29: alfq.v1.BacktestService.RunBacktest:output_type -> alfq.v1.BacktestProgress
+	15, // 30: alfq.v1.BacktestService.ListBacktests:output_type -> alfq.v1.ListBacktestsResponse
+	22, // 31: alfq.v1.SymbolService.ListSymbols:output_type -> alfq.v1.ListSymbolsResponse
+	17, // 32: alfq.v1.SymbolService.ListBrokerSymbols:output_type -> alfq.v1.ListBrokerSymbolsResponse
+	19, // 33: alfq.v1.SymbolService.LookupSymbol:output_type -> alfq.v1.BrokerSymbolInfo
+	24, // 34: alfq.v1.StrategySymbolService.ListAvailableCanonicals:output_type -> alfq.v1.ListAvailableCanonicalsResponse
+	27, // 35: alfq.v1.StrategySymbolService.ResolveCanonicalsForAccount:output_type -> alfq.v1.ResolveCanonicalsResponse
+	30, // 36: alfq.v1.StrategySymbolService.UpdateStrategySymbols:output_type -> alfq.v1.UpdateStrategySymbolsResponse
+	22, // [22:37] is the sub-list for method output_type
+	7,  // [7:22] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_alfq_v1_strategy_proto_init() }
@@ -1646,9 +2126,9 @@ func file_alfq_v1_strategy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_alfq_v1_strategy_proto_rawDesc), len(file_alfq_v1_strategy_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   31,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   4,
 		},
 		GoTypes:           file_alfq_v1_strategy_proto_goTypes,
 		DependencyIndexes: file_alfq_v1_strategy_proto_depIdxs,

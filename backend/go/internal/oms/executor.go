@@ -19,15 +19,22 @@ type RiskEventWriter interface {
 	Write(ctx context.Context, tenantID, accountID, strategyID, ruleID, reason, severity string, orderReq *pb.OrderRequest) error
 }
 
+// SymbolResolver resolves a canonical symbol name to broker-specific symbol_raw.
+// Used by OrderExecutor before broker submission (Gate-3: symbol_not_on_broker).
+type SymbolResolver interface {
+	ResolveCanonical(ctx context.Context, accountID, canonical string) (symbolRaw string, tradeMode int32, err error)
+}
+
 // OrderExecutor submits orders through the full state machine:
 // NEW → VALIDATED → RISK_APPROVED → SUBMITTED (or REJECTED/FAILED).
 // Every state transition is persisted to the PG orders table.
 type OrderExecutor struct {
-	adapter       BrokerAdapter
-	risk          *risksvc.Engine
-	sse           *ssehub.Hub
-	orderRepo     *repo.OrderRepo
-	riskEventRepo RiskEventWriter
+	adapter        BrokerAdapter
+	risk           *risksvc.Engine
+	sse            *ssehub.Hub
+	orderRepo      *repo.OrderRepo
+	riskEventRepo  RiskEventWriter
+	symbolResolver SymbolResolver
 }
 
 // NewOrderExecutor creates an order executor.
@@ -44,6 +51,12 @@ func (e *OrderExecutor) WithOrderRepo(r *repo.OrderRepo) *OrderExecutor {
 // WithRiskEventWriter sets the risk event writer for audit persistence.
 func (e *OrderExecutor) WithRiskEventWriter(w RiskEventWriter) *OrderExecutor {
 	e.riskEventRepo = w
+	return e
+}
+
+// WithSymbolResolver sets the canonical→symbol_raw resolver for broker submission.
+func (e *OrderExecutor) WithSymbolResolver(r SymbolResolver) *OrderExecutor {
+	e.symbolResolver = r
 	return e
 }
 
@@ -91,6 +104,28 @@ func (e *OrderExecutor) Submit(ctx context.Context, req *pb.OrderRequest) (*Brok
 		// 4. Transition VALIDATED → RISK_APPROVED
 		order := e.buildOrder(req, pb.OrderState_ORDER_STATE_VALIDATED, "", nowMs)
 		_ = e.transitionAndPersist(ctx, order, pb.OrderState_ORDER_STATE_RISK_APPROVED, 0)
+	}
+
+	// 4.5 Resolve canonical → broker symbol_raw (Gate-3: symbol_not_on_broker)
+	if e.symbolResolver != nil && req.BrokerSymbolRaw == "" {
+		symbolRaw, tradeMode, err := e.symbolResolver.ResolveCanonical(ctx, req.AccountId, req.Symbol)
+		if err != nil {
+			reason := fmt.Sprintf("symbol_not_on_broker: %s: %v", req.Symbol, err)
+			if e.riskEventRepo != nil {
+				_ = e.riskEventRepo.Write(ctx, req.TenantId, req.AccountId, req.StrategyId,
+					"symbol_not_on_broker", reason, "P1", req)
+			}
+			return nil, fmt.Errorf("oms: %s", reason)
+		}
+		if tradeMode == 0 {
+			reason := fmt.Sprintf("symbol_disabled_on_broker: %s → %s (trade_mode=0)", req.Symbol, symbolRaw)
+			if e.riskEventRepo != nil {
+				_ = e.riskEventRepo.Write(ctx, req.TenantId, req.AccountId, req.StrategyId,
+					"symbol_disabled_on_broker", reason, "P1", req)
+			}
+			return nil, fmt.Errorf("oms: %s", reason)
+		}
+		req.BrokerSymbolRaw = symbolRaw
 	}
 
 	// 5. Submit to broker
@@ -171,7 +206,7 @@ func riskSeverity(ruleID string) string {
 	switch ruleID {
 	case "daily_loss", "drawdown", "margin":
 		return "P0"
-	case "max_lot", "max_position", "whitelist":
+	case "max_lot", "max_position", "whitelist", "symbol_not_on_broker", "symbol_disabled_on_broker":
 		return "P1"
 	default:
 		return "P2"

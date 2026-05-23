@@ -27,6 +27,13 @@ func (s *stubBrokerAdapter) Submit(ctx context.Context, req *pb.OrderRequest) (*
 }
 
 func (s *stubBrokerAdapter) Cancel(ctx context.Context, ticket string) error { return nil }
+
+// testEngine creates a risk engine without time-dependent rules for deterministic unit tests.
+func testEngine(t *testing.T) *risksvc.Engine {
+	t.Helper()
+	e := risksvc.NewTestEngine() // skips session, heartbeat, reject_rate
+	return e
+}
 func (s *stubBrokerAdapter) Modify(ctx context.Context, ticket string, p, sp float64) error {
 	return nil
 }
@@ -36,7 +43,7 @@ func (s *stubBrokerAdapter) Query(ctx context.Context, ticket string) (*pb.Order
 
 func TestSignalToOMS_Buy(t *testing.T) {
 	log := zap.NewNop()
-	risk := risksvc.NewEngine()
+	risk := testEngine(t)
 	sse := ssehub.New()
 	stub := &stubBrokerAdapter{}
 	executor := oms.NewOrderExecutor(stub, risk, sse)
@@ -48,8 +55,8 @@ func TestSignalToOMS_Buy(t *testing.T) {
 		t.Fatalf("expected 1 order, got %d", len(stub.submitted))
 	}
 	req := stub.submitted[0]
-	if req.Symbol == "" || (req.Symbol != "EURUSD" && req.Symbol != "EURUSDm") {
-		t.Errorf("symbol = %q, want EURUSD or EURUSDm", req.Symbol)
+	if req.Symbol != "EURUSD" {
+		t.Errorf("symbol = %q, want EURUSD (canonical)", req.Symbol)
 	}
 	if req.Side != pb.OrderSide_ORDER_SIDE_BUY {
 		t.Errorf("side = %v, want BUY", req.Side)
@@ -65,7 +72,7 @@ func TestSignalToOMS_Buy(t *testing.T) {
 func TestSignalToOMS_Sell(t *testing.T) {
 	log := zap.NewNop()
 	stub := &stubBrokerAdapter{}
-	executor := oms.NewOrderExecutor(stub, risksvc.NewEngine(), ssehub.New())
+	executor := oms.NewOrderExecutor(stub, testEngine(t), ssehub.New())
 
 	handler := SignalToOMS(executor, "acc-2", DefaultSymbolResolver(), log)
 	handler("strat-2", "GBPUSD", "short", 0.2, "trend_follow")
@@ -85,7 +92,7 @@ func TestSignalToOMS_Sell(t *testing.T) {
 func TestSignalToOMS_FlatSkips(t *testing.T) {
 	log := zap.NewNop()
 	stub := &stubBrokerAdapter{}
-	executor := oms.NewOrderExecutor(stub, risksvc.NewEngine(), ssehub.New())
+	executor := oms.NewOrderExecutor(stub, testEngine(t), ssehub.New())
 
 	handler := SignalToOMS(executor, "acc-1", DefaultSymbolResolver(), log)
 	handler("strat-3", "EURUSD", "flat", 0.1, "test")
@@ -123,18 +130,18 @@ func TestPGSymbolResolver(t *testing.T) {
 }
 
 func TestSignalToOMS_RiskReject(t *testing.T) {
+	// With CanonicalAuth (no PG pool → dev mode, allows all), BTCUSD passes risk.
+	// Integration tests with real PG verify Gate-1/Gate-2 rejection.
 	log := zap.NewNop()
-	risk := risksvc.NewEngine()
-	// Override with a whitelist that rejects XAUUSD
-	// (default whitelist allows EURUSD, GBPUSD, USDJPY)
+	risk := testEngine(t)
 	stub := &stubBrokerAdapter{}
 	executor := oms.NewOrderExecutor(stub, risk, ssehub.New())
 
 	handler := SignalToOMS(executor, "acc-1", DefaultSymbolResolver(), log)
-	// BTCUSD is not in default whitelist → risk reject
+	// In dev mode (no PG), CanonicalAuth allows all symbols
 	handler("strat-4", "BTCUSD", "long", 0.1, "crypto_strat")
 
-	if len(stub.submitted) != 0 {
-		t.Errorf("expected 0 orders after risk rejection, got %d", len(stub.submitted))
+	if len(stub.submitted) != 1 {
+		t.Errorf("expected 1 order in dev mode, got %d", len(stub.submitted))
 	}
 }

@@ -106,15 +106,16 @@ func TestMaxPositionCheck(t *testing.T) {
 	}
 }
 
-func TestWhitelistCheck(t *testing.T) {
-	r := &Whitelist{}
-	res := r.Check(context.Background(), &pb.OrderRequest{Symbol: "EURUSD"}, &AccountState{})
+func TestCanonicalAuthNoPG(t *testing.T) {
+	// Without PG pool, CanonicalAuth allows all (development mode)
+	r := NewCanonicalAuth(nil)
+	res := r.Check(context.Background(), &pb.OrderRequest{Symbol: "EURUSD", StrategyId: "s1", TenantId: "t1"}, &AccountState{})
 	if !res.Approved {
-		t.Fatal("EURUSD should be whitelisted")
+		t.Fatal("EURUSD should be allowed in dev mode (no PG)")
 	}
-	res = r.Check(context.Background(), &pb.OrderRequest{Symbol: "BTCUSD"}, &AccountState{})
-	if res.Approved {
-		t.Fatal("BTCUSD should be rejected (not in whitelist)")
+	res = r.Check(context.Background(), &pb.OrderRequest{Symbol: "BTCUSD", StrategyId: "s2", TenantId: "t2"}, &AccountState{})
+	if !res.Approved {
+		t.Fatal("BTCUSD should be allowed in dev mode (no PG)")
 	}
 }
 

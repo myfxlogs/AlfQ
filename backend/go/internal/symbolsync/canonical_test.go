@@ -23,8 +23,9 @@ func TestCanonicalize(t *testing.T) {
 		{"EURUSD.I", "EURUSD"},
 		{"EURUSD.stp", "EURUSD"},
 		{"EURUSD.STP", "EURUSD"},
-		{"EURUSD.c", "EURUSD"},
-		{"EURUSD.C", "EURUSD"},
+		// .c is now preserved (different contract, not position alias)
+		{"EURUSD.c", "EURUSD.C"},
+		{"EURUSD.C", "EURUSD.C"},
 		{"GBPJPY", "GBPJPY"},
 		{"XAUUSD.raw", "XAUUSD"},
 		{"EURUSD..m", "EURUSD."}, // .M stripped → trailing dot remains (only one suffix removed)

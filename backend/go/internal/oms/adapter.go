@@ -70,7 +70,7 @@ func (a *MT5Adapter) Submit(ctx context.Context, req *pb.OrderRequest) (*BrokerR
 	price := parseMoney(req.GetPrice())
 	mtReq := &mt5pb.OrderSendRequest{
 		Id:        sessionID,
-		Symbol:    req.Symbol,
+		Symbol:    brokerSymbol(req),
 		Operation: op,
 		Volume:    req.Qty,
 		Price:     &price,
@@ -140,7 +140,7 @@ func (a *MT4Adapter) Submit(ctx context.Context, req *pb.OrderRequest) (*BrokerR
 
 	mtReq := &mt4pb.OrderSendRequest{
 		Id:        sessionID,
-		Symbol:    req.Symbol,
+		Symbol:    brokerSymbol(req),
 		Operation: op,
 		Volume:    req.Qty,
 		Price:     parseMoney(req.GetPrice()),
@@ -176,6 +176,16 @@ func (a *MT4Adapter) Modify(ctx context.Context, ticket string, price, stopPrice
 func (a *MT4Adapter) Query(ctx context.Context, ticket string) (*pb.Order, error) { return nil, nil }
 
 // ── shared helpers ──────────────────────────────────────────────────
+
+// brokerSymbol returns the broker-specific symbol for order submission.
+// Uses BrokerSymbolRaw if set (canonical resolution done by OMS),
+// otherwise falls back to Symbol for backward compatibility.
+func brokerSymbol(req *pb.OrderRequest) string {
+	if req.BrokerSymbolRaw != "" {
+		return req.BrokerSymbolRaw
+	}
+	return req.Symbol
+}
 
 func dialMT(ctx context.Context, addr string) (*grpc.ClientConn, error) {
 	dialCtx, cancel := context.WithTimeout(ctx, 15*time.Second)

@@ -27,6 +27,8 @@ const (
 	BacktestServiceName = "alfq.v1.BacktestService"
 	// SymbolServiceName is the fully-qualified name of the SymbolService service.
 	SymbolServiceName = "alfq.v1.SymbolService"
+	// StrategySymbolServiceName is the fully-qualified name of the StrategySymbolService service.
+	StrategySymbolServiceName = "alfq.v1.StrategySymbolService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -73,6 +75,15 @@ const (
 	// SymbolServiceLookupSymbolProcedure is the fully-qualified name of the SymbolService's
 	// LookupSymbol RPC.
 	SymbolServiceLookupSymbolProcedure = "/alfq.v1.SymbolService/LookupSymbol"
+	// StrategySymbolServiceListAvailableCanonicalsProcedure is the fully-qualified name of the
+	// StrategySymbolService's ListAvailableCanonicals RPC.
+	StrategySymbolServiceListAvailableCanonicalsProcedure = "/alfq.v1.StrategySymbolService/ListAvailableCanonicals"
+	// StrategySymbolServiceResolveCanonicalsForAccountProcedure is the fully-qualified name of the
+	// StrategySymbolService's ResolveCanonicalsForAccount RPC.
+	StrategySymbolServiceResolveCanonicalsForAccountProcedure = "/alfq.v1.StrategySymbolService/ResolveCanonicalsForAccount"
+	// StrategySymbolServiceUpdateStrategySymbolsProcedure is the fully-qualified name of the
+	// StrategySymbolService's UpdateStrategySymbols RPC.
+	StrategySymbolServiceUpdateStrategySymbolsProcedure = "/alfq.v1.StrategySymbolService/UpdateStrategySymbols"
 )
 
 // StrategyServiceClient is a client for the alfq.v1.StrategyService service.
@@ -517,4 +528,132 @@ func (UnimplementedSymbolServiceHandler) ListBrokerSymbols(context.Context, *con
 
 func (UnimplementedSymbolServiceHandler) LookupSymbol(context.Context, *connect.Request[v1.LookupSymbolRequest]) (*connect.Response[v1.BrokerSymbolInfo], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.SymbolService.LookupSymbol is not implemented"))
+}
+
+// StrategySymbolServiceClient is a client for the alfq.v1.StrategySymbolService service.
+type StrategySymbolServiceClient interface {
+	// List available canonical symbols for a tenant (from tenant_canonical_whitelist).
+	ListAvailableCanonicals(context.Context, *connect.Request[v1.ListAvailableCanonicalsRequest]) (*connect.Response[v1.ListAvailableCanonicalsResponse], error)
+	// Resolve canonical symbols for a specific account (shows symbol_raw + tradability).
+	ResolveCanonicalsForAccount(context.Context, *connect.Request[v1.ResolveCanonicalsRequest]) (*connect.Response[v1.ResolveCanonicalsResponse], error)
+	// Set a strategy's canonical symbol whitelist.
+	UpdateStrategySymbols(context.Context, *connect.Request[v1.UpdateStrategySymbolsRequest]) (*connect.Response[v1.UpdateStrategySymbolsResponse], error)
+}
+
+// NewStrategySymbolServiceClient constructs a client for the alfq.v1.StrategySymbolService service.
+// By default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped
+// responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
+// connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewStrategySymbolServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) StrategySymbolServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	strategySymbolServiceMethods := v1.File_alfq_v1_strategy_proto.Services().ByName("StrategySymbolService").Methods()
+	return &strategySymbolServiceClient{
+		listAvailableCanonicals: connect.NewClient[v1.ListAvailableCanonicalsRequest, v1.ListAvailableCanonicalsResponse](
+			httpClient,
+			baseURL+StrategySymbolServiceListAvailableCanonicalsProcedure,
+			connect.WithSchema(strategySymbolServiceMethods.ByName("ListAvailableCanonicals")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveCanonicalsForAccount: connect.NewClient[v1.ResolveCanonicalsRequest, v1.ResolveCanonicalsResponse](
+			httpClient,
+			baseURL+StrategySymbolServiceResolveCanonicalsForAccountProcedure,
+			connect.WithSchema(strategySymbolServiceMethods.ByName("ResolveCanonicalsForAccount")),
+			connect.WithClientOptions(opts...),
+		),
+		updateStrategySymbols: connect.NewClient[v1.UpdateStrategySymbolsRequest, v1.UpdateStrategySymbolsResponse](
+			httpClient,
+			baseURL+StrategySymbolServiceUpdateStrategySymbolsProcedure,
+			connect.WithSchema(strategySymbolServiceMethods.ByName("UpdateStrategySymbols")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// strategySymbolServiceClient implements StrategySymbolServiceClient.
+type strategySymbolServiceClient struct {
+	listAvailableCanonicals     *connect.Client[v1.ListAvailableCanonicalsRequest, v1.ListAvailableCanonicalsResponse]
+	resolveCanonicalsForAccount *connect.Client[v1.ResolveCanonicalsRequest, v1.ResolveCanonicalsResponse]
+	updateStrategySymbols       *connect.Client[v1.UpdateStrategySymbolsRequest, v1.UpdateStrategySymbolsResponse]
+}
+
+// ListAvailableCanonicals calls alfq.v1.StrategySymbolService.ListAvailableCanonicals.
+func (c *strategySymbolServiceClient) ListAvailableCanonicals(ctx context.Context, req *connect.Request[v1.ListAvailableCanonicalsRequest]) (*connect.Response[v1.ListAvailableCanonicalsResponse], error) {
+	return c.listAvailableCanonicals.CallUnary(ctx, req)
+}
+
+// ResolveCanonicalsForAccount calls alfq.v1.StrategySymbolService.ResolveCanonicalsForAccount.
+func (c *strategySymbolServiceClient) ResolveCanonicalsForAccount(ctx context.Context, req *connect.Request[v1.ResolveCanonicalsRequest]) (*connect.Response[v1.ResolveCanonicalsResponse], error) {
+	return c.resolveCanonicalsForAccount.CallUnary(ctx, req)
+}
+
+// UpdateStrategySymbols calls alfq.v1.StrategySymbolService.UpdateStrategySymbols.
+func (c *strategySymbolServiceClient) UpdateStrategySymbols(ctx context.Context, req *connect.Request[v1.UpdateStrategySymbolsRequest]) (*connect.Response[v1.UpdateStrategySymbolsResponse], error) {
+	return c.updateStrategySymbols.CallUnary(ctx, req)
+}
+
+// StrategySymbolServiceHandler is an implementation of the alfq.v1.StrategySymbolService service.
+type StrategySymbolServiceHandler interface {
+	// List available canonical symbols for a tenant (from tenant_canonical_whitelist).
+	ListAvailableCanonicals(context.Context, *connect.Request[v1.ListAvailableCanonicalsRequest]) (*connect.Response[v1.ListAvailableCanonicalsResponse], error)
+	// Resolve canonical symbols for a specific account (shows symbol_raw + tradability).
+	ResolveCanonicalsForAccount(context.Context, *connect.Request[v1.ResolveCanonicalsRequest]) (*connect.Response[v1.ResolveCanonicalsResponse], error)
+	// Set a strategy's canonical symbol whitelist.
+	UpdateStrategySymbols(context.Context, *connect.Request[v1.UpdateStrategySymbolsRequest]) (*connect.Response[v1.UpdateStrategySymbolsResponse], error)
+}
+
+// NewStrategySymbolServiceHandler builds an HTTP handler from the service implementation. It
+// returns the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewStrategySymbolServiceHandler(svc StrategySymbolServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	strategySymbolServiceMethods := v1.File_alfq_v1_strategy_proto.Services().ByName("StrategySymbolService").Methods()
+	strategySymbolServiceListAvailableCanonicalsHandler := connect.NewUnaryHandler(
+		StrategySymbolServiceListAvailableCanonicalsProcedure,
+		svc.ListAvailableCanonicals,
+		connect.WithSchema(strategySymbolServiceMethods.ByName("ListAvailableCanonicals")),
+		connect.WithHandlerOptions(opts...),
+	)
+	strategySymbolServiceResolveCanonicalsForAccountHandler := connect.NewUnaryHandler(
+		StrategySymbolServiceResolveCanonicalsForAccountProcedure,
+		svc.ResolveCanonicalsForAccount,
+		connect.WithSchema(strategySymbolServiceMethods.ByName("ResolveCanonicalsForAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
+	strategySymbolServiceUpdateStrategySymbolsHandler := connect.NewUnaryHandler(
+		StrategySymbolServiceUpdateStrategySymbolsProcedure,
+		svc.UpdateStrategySymbols,
+		connect.WithSchema(strategySymbolServiceMethods.ByName("UpdateStrategySymbols")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/alfq.v1.StrategySymbolService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case StrategySymbolServiceListAvailableCanonicalsProcedure:
+			strategySymbolServiceListAvailableCanonicalsHandler.ServeHTTP(w, r)
+		case StrategySymbolServiceResolveCanonicalsForAccountProcedure:
+			strategySymbolServiceResolveCanonicalsForAccountHandler.ServeHTTP(w, r)
+		case StrategySymbolServiceUpdateStrategySymbolsProcedure:
+			strategySymbolServiceUpdateStrategySymbolsHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedStrategySymbolServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedStrategySymbolServiceHandler struct{}
+
+func (UnimplementedStrategySymbolServiceHandler) ListAvailableCanonicals(context.Context, *connect.Request[v1.ListAvailableCanonicalsRequest]) (*connect.Response[v1.ListAvailableCanonicalsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.StrategySymbolService.ListAvailableCanonicals is not implemented"))
+}
+
+func (UnimplementedStrategySymbolServiceHandler) ResolveCanonicalsForAccount(context.Context, *connect.Request[v1.ResolveCanonicalsRequest]) (*connect.Response[v1.ResolveCanonicalsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.StrategySymbolService.ResolveCanonicalsForAccount is not implemented"))
+}
+
+func (UnimplementedStrategySymbolServiceHandler) UpdateStrategySymbols(context.Context, *connect.Request[v1.UpdateStrategySymbolsRequest]) (*connect.Response[v1.UpdateStrategySymbolsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("alfq.v1.StrategySymbolService.UpdateStrategySymbols is not implemented"))
 }

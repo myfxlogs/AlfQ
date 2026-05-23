@@ -9,6 +9,7 @@ import (
 	"time"
 
 	pb "github.com/alfq/backend/go/gen/alfq/v1"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Rule is a named risk check.
@@ -47,7 +48,8 @@ func NewEngine() *Engine {
 	e.Register(&MaxPosition{maxPerSymbol: 10.0})
 	e.Register(&DailyLoss{maxDailyLoss: 5000.0})
 	e.Register(&Drawdown{maxDrawdown: 0.15})
-	e.Register(&Whitelist{})
+	// CanonicalAuth replaces legacy Whitelist (M4)
+	// Wire pool via WithCanonicalAuth() after engine creation if PG is available.
 	// M4 rules
 	e.Register(NewSession("UTC"))
 	e.Register(NewMargin(1.5))
@@ -57,6 +59,36 @@ func NewEngine() *Engine {
 	return e
 }
 
+// WithCanonicalAuth registers CanonicalAuth with PG pool and returns the engine.
+func (e *Engine) WithCanonicalAuth(pool *pgxpool.Pool) *Engine {
+	e.Register(NewCanonicalAuth(pool))
+	return e
+}
+
+// NewTestEngine creates a risk engine without time-dependent rules
+// (session, heartbeat, reject_rate) for deterministic unit tests.
+func NewTestEngine() *Engine {
+	e := &Engine{
+		state: make(map[string]*AccountState),
+	}
+	e.Register(&MaxLot{maxLot: 100.0})
+	e.Register(&MaxPosition{maxPerSymbol: 10.0})
+	e.Register(&DailyLoss{maxDailyLoss: 5000.0})
+	e.Register(&Drawdown{maxDrawdown: 0.15})
+	e.Register(NewMargin(1.5))
+	e.Register(NewSlippage(5.0))
+	return e
+}
+
+// Rules returns a copy of the registered rules (for inspection).
+func (e *Engine) Rules() []Rule {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	out := make([]Rule, len(e.rules))
+	copy(out, e.rules)
+	return out
+}
+
 // Register adds a rule to the engine.
 func (e *Engine) Register(r Rule) {
 	e.mu.Lock()
@@ -64,13 +96,13 @@ func (e *Engine) Register(r Rule) {
 	e.mu.Unlock()
 }
 
-// Whitelist returns the whitelist rule for dynamic symbol loading, or nil.
-func (e *Engine) Whitelist() *Whitelist {
+// CanonicalAuth returns the canonical auth rule or nil.
+func (e *Engine) CanonicalAuth() *CanonicalAuth {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	for _, r := range e.rules {
-		if w, ok := r.(*Whitelist); ok {
-			return w
+		if ca, ok := r.(*CanonicalAuth); ok {
+			return ca
 		}
 	}
 	return nil
@@ -151,50 +183,6 @@ func (r *Drawdown) Name() string { return "drawdown" }
 func (r *Drawdown) Check(_ context.Context, req *pb.OrderRequest, state *AccountState) *pb.RiskCheckResult {
 	if state.MaxDrawdown > r.maxDrawdown {
 		return &pb.RiskCheckResult{Approved: false, Reason: fmt.Sprintf("drawdown %.2f exceeds limit %.2f", state.MaxDrawdown, r.maxDrawdown), RuleId: r.Name()}
-	}
-	return &pb.RiskCheckResult{Approved: true}
-}
-
-// Whitelist rejects orders for symbols not in the allowed list.
-// Symbols can be loaded dynamically from broker_symbols via LoadSymbols().
-type Whitelist struct {
-	mu      sync.RWMutex
-	symbols map[string]bool // loaded from broker_symbols at runtime
-}
-
-func (r *Whitelist) Name() string { return "whitelist" }
-
-// LoadSymbols replaces the allowed symbol set (e.g. from broker_symbols table).
-func (r *Whitelist) LoadSymbols(symbols []string) {
-	r.mu.Lock()
-	r.symbols = make(map[string]bool, len(symbols))
-	for _, s := range symbols {
-		r.symbols[s] = true
-	}
-	r.mu.Unlock()
-}
-
-func (r *Whitelist) Check(_ context.Context, req *pb.OrderRequest, _ *AccountState) *pb.RiskCheckResult {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	// If symbols were loaded dynamically, use them.
-	if len(r.symbols) > 0 {
-		if r.symbols[req.Symbol] {
-			return &pb.RiskCheckResult{Approved: true}
-		}
-		return &pb.RiskCheckResult{Approved: false, Reason: fmt.Sprintf("symbol %s not in whitelist", req.Symbol), RuleId: r.Name()}
-	}
-
-	// Fallback: hardcoded major pairs (development without PG).
-	static := map[string]bool{
-		"EURUSD": true, "EURUSDm": true, "GBPUSD": true, "GBPUSDm": true,
-		"USDJPY": true, "USDJPYm": true, "USDCHF": true, "USDCHFm": true,
-		"AUDUSD": true, "AUDUSDm": true, "NZDUSD": true, "NZDUSDm": true,
-		"USDCAD": true, "USDCADm": true, "XAUUSD": true, "XAUUSDm": true,
-	}
-	if !static[req.Symbol] {
-		return &pb.RiskCheckResult{Approved: false, Reason: fmt.Sprintf("symbol %s not in whitelist", req.Symbol), RuleId: r.Name()}
 	}
 	return &pb.RiskCheckResult{Approved: true}
 }

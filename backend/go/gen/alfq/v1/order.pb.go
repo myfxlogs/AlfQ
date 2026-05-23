@@ -480,20 +480,24 @@ func (x *Position) GetRealizedPnl() *Money {
 }
 
 // OrderRequest is the normalized order submission request.
+// Symbol holds the canonical name (e.g. "BTCUSD").
+// BrokerSymbolRaw holds the broker-specific name (e.g. "BTCUSDm"),
+// resolved by the OMS executor before broker submission.
 type OrderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientOrderId string                 `protobuf:"bytes,1,opt,name=client_order_id,json=clientOrderId,proto3" json:"client_order_id,omitempty"`
-	TenantId      string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	AccountId     string                 `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	StrategyId    string                 `protobuf:"bytes,4,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
-	Symbol        string                 `protobuf:"bytes,5,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Side          OrderSide              `protobuf:"varint,6,opt,name=side,proto3,enum=alfq.v1.OrderSide" json:"side,omitempty"`
-	Type          OrderType              `protobuf:"varint,7,opt,name=type,proto3,enum=alfq.v1.OrderType" json:"type,omitempty"`
-	Price         *Money                 `protobuf:"bytes,8,opt,name=price,proto3" json:"price,omitempty"`
-	StopPrice     *Money                 `protobuf:"bytes,9,opt,name=stop_price,json=stopPrice,proto3" json:"stop_price,omitempty"`
-	Qty           float64                `protobuf:"fixed64,10,opt,name=qty,proto3" json:"qty,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ClientOrderId   string                 `protobuf:"bytes,1,opt,name=client_order_id,json=clientOrderId,proto3" json:"client_order_id,omitempty"`
+	TenantId        string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	AccountId       string                 `protobuf:"bytes,3,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	StrategyId      string                 `protobuf:"bytes,4,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
+	Symbol          string                 `protobuf:"bytes,5,opt,name=symbol,proto3" json:"symbol,omitempty"` // canonical symbol name
+	Side            OrderSide              `protobuf:"varint,6,opt,name=side,proto3,enum=alfq.v1.OrderSide" json:"side,omitempty"`
+	Type            OrderType              `protobuf:"varint,7,opt,name=type,proto3,enum=alfq.v1.OrderType" json:"type,omitempty"`
+	Price           *Money                 `protobuf:"bytes,8,opt,name=price,proto3" json:"price,omitempty"`
+	StopPrice       *Money                 `protobuf:"bytes,9,opt,name=stop_price,json=stopPrice,proto3" json:"stop_price,omitempty"`
+	Qty             float64                `protobuf:"fixed64,10,opt,name=qty,proto3" json:"qty,omitempty"`
+	BrokerSymbolRaw string                 `protobuf:"bytes,11,opt,name=broker_symbol_raw,json=brokerSymbolRaw,proto3" json:"broker_symbol_raw,omitempty"` // broker-specific symbol, resolved by OMS
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *OrderRequest) Reset() {
@@ -596,6 +600,13 @@ func (x *OrderRequest) GetQty() float64 {
 	return 0
 }
 
+func (x *OrderRequest) GetBrokerSymbolRaw() string {
+	if x != nil {
+		return x.BrokerSymbolRaw
+	}
+	return ""
+}
+
 // RiskCheckResult is returned by risk-svc.
 type RiskCheckResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -695,7 +706,7 @@ const file_alfq_v1_order_proto_rawDesc = "" +
 	"\x03qty\x18\x05 \x01(\x01R\x03qty\x12+\n" +
 	"\tavg_price\x18\x06 \x01(\v2\x0e.alfq.v1.MoneyR\bavgPrice\x125\n" +
 	"\x0eunrealized_pnl\x18\a \x01(\v2\x0e.alfq.v1.MoneyR\runrealizedPnl\x121\n" +
-	"\frealized_pnl\x18\b \x01(\v2\x0e.alfq.v1.MoneyR\vrealizedPnl\"\xe2\x02\n" +
+	"\frealized_pnl\x18\b \x01(\v2\x0e.alfq.v1.MoneyR\vrealizedPnl\"\x8e\x03\n" +
 	"\fOrderRequest\x12&\n" +
 	"\x0fclient_order_id\x18\x01 \x01(\tR\rclientOrderId\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x1d\n" +
@@ -710,7 +721,8 @@ const file_alfq_v1_order_proto_rawDesc = "" +
 	"\n" +
 	"stop_price\x18\t \x01(\v2\x0e.alfq.v1.MoneyR\tstopPrice\x12\x10\n" +
 	"\x03qty\x18\n" +
-	" \x01(\x01R\x03qty\"^\n" +
+	" \x01(\x01R\x03qty\x12*\n" +
+	"\x11broker_symbol_raw\x18\v \x01(\tR\x0fbrokerSymbolRaw\"^\n" +
 	"\x0fRiskCheckResult\x12\x1a\n" +
 	"\bapproved\x18\x01 \x01(\bR\bapproved\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x12\x17\n" +

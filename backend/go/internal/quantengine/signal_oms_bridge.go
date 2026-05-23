@@ -15,9 +15,12 @@ import (
 // SignalToOMS creates a SignalHandler that converts signals to OMS orders.
 //
 // The returned handler performs:
-//  1. Lookup broker symbol_raw from canonical (via symbolResolver)
-//  2. Build OrderRequest
-//  3. Submit via OrderExecutor (risk check + broker submit + SSE broadcast)
+//  1. Build OrderRequest with canonical symbol
+//  2. Submit via OrderExecutor (risk check + symbol resolution + broker submit + SSE broadcast)
+//
+// Symbol resolution (canonical → broker_symbol_raw) is handled by the OrderExecutor's
+// SymbolResolver (Gate-3: symbol_not_on_broker). The canonical is set as req.Symbol
+// and the executor resolves BrokerSymbolRaw before submitting to the broker adapter.
 func SignalToOMS(
 	executor *oms.OrderExecutor,
 	accountID string,
@@ -25,17 +28,7 @@ func SignalToOMS(
 	log *zap.Logger,
 ) SignalHandler {
 	return func(strategyID, canonical, side string, qty float64, reason string) {
-		// Resolve canonical → broker symbol_raw
-		symbolRaw, err := resolveSymbol(canonical)
-		if err != nil {
-			log.Warn("symbol resolution failed",
-				zap.String("canonical", canonical),
-				zap.Error(err),
-			)
-			return
-		}
-
-		// Build order request
+		// Build order request with canonical symbol
 		var orderSide pb.OrderSide
 		switch side {
 		case "long", "buy":
@@ -50,18 +43,17 @@ func SignalToOMS(
 		req := &pb.OrderRequest{
 			AccountId:  accountID,
 			StrategyId: strategyID,
-			Symbol:     symbolRaw,
+			Symbol:     canonical, // canonical name; executor resolves BrokerSymbolRaw
 			Side:       orderSide,
 			Type:       pb.OrderType_ORDER_TYPE_MARKET,
 			Qty:        qty,
 		}
 
-		// Submit via executor (risk check + broker + SSE)
+		// Submit via executor (risk check + symbol resolve + broker + SSE)
 		resp, err := executor.Submit(context.Background(), req)
 		if err != nil {
 			log.Warn("order submit failed",
 				zap.String("canonical", canonical),
-				zap.String("symbol_raw", symbolRaw),
 				zap.String("side", side),
 				zap.Error(err),
 			)
@@ -71,7 +63,7 @@ func SignalToOMS(
 		log.Info("order submitted",
 			zap.String("ticket", resp.Ticket),
 			zap.String("canonical", canonical),
-			zap.String("symbol_raw", symbolRaw),
+			zap.String("symbol_raw", req.BrokerSymbolRaw),
 			zap.String("side", side),
 			zap.Float64("qty", qty),
 			zap.String("state", resp.State.String()),
